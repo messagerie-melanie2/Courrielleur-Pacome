@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://pacome/content/pacome.css" type="text/css"?>
+
+<!DOCTYPE overlay SYSTEM "chrome://pacome/locale/pacome.dtd">
+
+<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeutils.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/accountmanager-overlay.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeparam.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeflux.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomechgmdp.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeassist.js"/>
+
+  <script type="application/x-javascript" src="chrome://global/content/globalOverlay.js"/>
+  <script type="application/x-javascript" src="chrome://messenger/content/AccountManager.js"/>
+
+
+  <menupopup id="accountActionsDropdown" onpopupshowing="initBoutonsCompte(this)">
+
+    <menuitem id="pacome.btcomptes"
+              label="&pacome.btcomptes;"
+              accesskey="&pacome.btcomptes.racc;"
+              tooltiptext="&pacome.btcomptestip;"
+              class="menuitem-iconic"
+              oncommand="btGererComptes();"
+              insertbefore="accountActionsAddMailAccount"/>
+
+    <menuitem id="pacome.btmotdepasse"
+              label="&pacome.ovelay.btmotdepasse;"
+              tooltiptext="&pacome.ovelay.btmotdepassetip;"
+              class="menuitem-iconic"
+              oncommand="btMotDePasse();"
+              insertbefore="accountActionsAddMailAccount"/>
+
+    <menuitem id="pacome.btdossier"
+              label="&pacome.btdossier;"
+              accesskey="&pacome.btdossier.racc;"
+              tooltiptext="&pacome.btdossiertip;"
+              class="menuitem-iconic"
+              oncommand="NouveauDossier();"
+              insertbefore="accountActionsAddMailAccount"/>
+
+    <menuseparator id="pacomesepbt" insertbefore="accountActionsAddMailAccount"/>
+
+    <!-- surcharge du bouton original -->
+    <menuitem id="accountActionsDropdownRemove" oncommand="onSupprimeCompte(event);"/>
+
+  </menupopup>
+
+</overlay>

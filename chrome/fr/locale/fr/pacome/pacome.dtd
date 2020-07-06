@@ -1,0 +1,162 @@
+
+<!-- pacomemsg -->
+<!ENTITY pacomemsg.titre "Pacome">
+
+<!-- pacomecompte.xul -->
+<!ENTITY pacome.titre "Assistant de gestion des comptes de messagerie Mél">
+<!ENTITY pacome.libnom "Identifiant(s) de l'utilisateur">
+
+<!ENTITY pacome.resume "Résumé des paramétrages à modifier">
+
+<!-- boutons de l'assistant -->
+<!ENTITY pacome.btRetour "&lt; Retour">
+<!ENTITY pacome.btSuivant "Continuer &gt;">
+<!ENTITY pacome.btQuitter "Quitter">
+
+<!ENTITY pacome.libconfiguration "Configuration:">
+
+<!ENTITY pacome.btOk "Fermer">
+<!ENTITY pacome.btOk.key "F">
+
+<!-- autres boutons et divers -->
+<!ENTITY pacome.btOUI "Oui">
+<!ENTITY pacome.btNON "Non">
+
+<!ENTITY pacome.btValider "Valider">
+<!ENTITY pacome.btValider.cle "V">
+<!ENTITY pacome.btAnnuler "Annuler">
+<!ENTITY pacome.btAnnuler.cle "A">
+
+<!ENTITY pacome.texteAide "Pour obtenir des informations sur le paramétrage Pacome, cliquer sur le lien :">
+<!ENTITY pacome.AideLigne "Aide en ligne">
+
+
+<!-- apropos.xul -->
+<!ENTITY pacome.apropos.titre "À propos de Pacome">
+<!ENTITY pacome.apropos.text1 "PAramétrage des COmptes de MEssagerie">
+<!ENTITY pacome.apropos.text2 "Version : &pacome.numver;">
+<!ENTITY pacome.apropos.text3 "Publié le : &pacome.datever;">
+<!ENTITY pacome.numver "8.5">
+<!ENTITY pacome.datever "17/1/2020">
+
+
+<!-- accountmanager-overlay.xul -->
+<!ENTITY pacome.btcomptes "Gérer les comptes...">
+<!ENTITY pacome.btcomptestip "Gérer les comptes Mél avec Pacome">
+<!ENTITY pacome.btcomptes.racc "G">
+
+<!ENTITY pacome.ovelay.btmotdepasse "Changer le mot de passe...">
+<!ENTITY pacome.ovelay.btmotdepassetip "Changer le mot de passe du compte principal">
+<!ENTITY pacome.ovelay.btrazmdp "Effacer le mot de passe...">
+<!ENTITY pacome.ovelay.btrazmdptip "Effacer le mot de passe du compte sélectionné dans la liste">
+
+<!ENTITY pacome.btdossier "Nouveau dossier local...">
+<!ENTITY pacome.btdossiertip "Ajouter un nouveau dossier local">
+<!ENTITY pacome.btdossier.racc "d">
+
+
+<!-- pacomechgmdp.xul -->
+<!ENTITY pacomechgmdp.titre "Pacome">
+
+<!ENTITY pacomemdp-titre "Mot de passe de boîte à lettres">
+<!ENTITY pacomechgmdp-titre "Modification de mot de passe">
+<!ENTITY pacomechgmdp.texte1 "Cette fenêtre permet le changement du mot de passe d'authentification réseau et d'accès aux applications du Ministère.
+                              Vous devez redémarrer votre session Windows afin de conserver votre accès aux partages réseau et aux applications Cerbérisées">
+
+<!--<!ENTITY pacomechgmdp.uid "Nom d'utilisateur:">-->
+<!ENTITY pacomechgmdp.uid "Identifiant:">
+<!ENTITY pacomechgmdp.ancien "Ancien mot de passe:">
+<!ENTITY pacomechgmdp.nouveau "Nouveau mot de passe:">
+<!ENTITY pacomechgmdp.confirm "Confirmation:">
+<!ENTITY pacomechgmdp.memomdp "Mémoriser le mot de passe dans l'application">
+<!ENTITY pacomechgmdp.majsrv "Changer le mot de passe sur le serveur">
+
+<!ENTITY pacomechgmdp.btValider "Valider">
+<!ENTITY pacomechgmdp.btValider.cle "Valider">
+<!ENTITY pacomechgmdp.btQuitter "Quitter">
+<!ENTITY pacomechgmdp.btQuitter.cle "Quitter">
+
+<!ENTITY pacomechgmdp.libcont "Contrôle de qualité du nouveau mot de passe">
+<!ENTITY pacomechgmdp.desccont "Le mot de passe doit comporter au moins 10 caractères avec au moins 1 caractère
+                                de chaque type: majuscule, minuscule, chiffre et caractère spécial.">
+<!ENTITY pacomechgmdp.libpolitiquemdp "Aide en ligne">
+
+
+<!-- grille des comptes -->
+<!ENTITY pacome.comptes.libboites "Boîtes à lettres">
+<!ENTITY pacome.comptes.col1 "Nom d'affichage">
+<!ENTITY pacome.comptes.col2 "Active">
+<!ENTITY pacome.comptes.col3 "Configuration">
+<!ENTITY pacome.fin.col2 "État">
+
+<!ENTITY pacome.flux.libflux "Flux d'informations">
+<!ENTITY pacome.flux.col1 "Nom d'affichage">
+<!ENTITY pacome.flux.col2 "Actif">
+
+<!-- boite de demande de mot de passe -->
+<!ENTITY pacomemdp.titre "Entrez votre mot de passe">
+<!--<!ENTITY pacomemdp.uid "Utilisateur:">-->
+<!ENTITY pacomemdp.uid "Identifiant:">
+<!ENTITY pacomemdp.mdp "Mot de passe:">
+<!ENTITY pacomemdp.btValider "Valider">
+<!ENTITY pacomemdp.btValider.cle "V">
+<!ENTITY pacomemdp.btAnnuler "Annuler">
+<!ENTITY pacomemdp.btAnnuler.cle "A">
+
+<!-- assistant de mise a jour automatique des comptes -->
+<!ENTITY pacomemaj.titre "Mise à jour du paramétrage">
+<!ENTITY pacomemaj.bandeau "Mise à jour du paramétrage du courrielleur">
+<!ENTITY pacomemaj.libmaj "Pacome a détecté que le paramétrage n'est pas à jour.
+Cliquer sur le bouton &#91;Mettre à jour&#93; pour effectuer automatiquement la mise à jour du paramétrage.">
+
+<!-- parametrage proxy -->
+<!ENTITY pacome.proxy.libconf "Configurer avec les paramètres:">
+<!ENTITY pacome.proxy.syslib "Système">
+<!ENTITY pacome.proxy.syskey "y">
+<!ENTITY pacome.proxy.pacomelib "Pacome">
+<!ENTITY pacome.proxy.pacomekey "P">
+
+
+<!-- assistant dossier local -->
+<!ENTITY dossierlocal.titre "Création d'un dossier local">
+<!ENTITY dossierlocal.btValider "Valider">
+<!ENTITY dossierlocal.btQuitter "Quitter">
+<!ENTITY dossierlocal_bandeau_titre "Paramétrage du nouveau dossier local">
+<!ENTITY dossierlocallibnom "Nom:">
+<!ENTITY dossierlocallibchemin "Emplacement:">
+<!ENTITY dossierlocalchemin.btlib "Sélectionner...">
+<!ENTITY dossierlocalchemin.btlibcle "S">
+<!ENTITY dossierlocalchemin.browsertitle "Sélectionner un dossier">
+
+
+<!-- resultat parametrage -->
+<!ENTITY  pacome.paramfin  "Paramétrage terminé">
+<!ENTITY  pacome.redemarre  "Pour terminer l'opération, le courrielleur va redémarrer.">
+<!ENTITY  pacome.parbals "Résultat des paramétrages des boîtes à lettres">
+<!ENTITY  pacome.parautres "Résultat des autres paramétrages">
+<!ENTITY  pacome.results "Résultat du paramétrage">
+
+
+<!-- agendas -->
+<!ENTITY  pacome.cal.libcals "Agendas">
+
+<!ENTITY pacomeaddcal-titre "Ajouter un agenda">
+<!ENTITY pacomeaddcal-bandeau "Sélectionner l'agenda à ajouter dans la liste ci-dessous">
+
+
+
+
+<!-- -->
+<!ENTITY  pacome.menudossier "Dossier local...">
+
+<!-- boite edition des etiquettes -->
+<!ENTITY partageTagButton.label "Partager">
+<!ENTITY partageTagButton.accesskey "p">
+<!ENTITY synchroTagButton.label "Synchroniser">
+<!ENTITY synchroTagButton.accesskey "y">
+
+
+<!ENTITY popimap.titre "Migration pop vers imap">
+<!ENTITY popimap-titre "Opération en cours...">
+
+<!ENTITY pacome.touchevernum "Touche Verr. Maj. active">

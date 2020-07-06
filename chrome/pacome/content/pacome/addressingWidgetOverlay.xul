@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE overlay>
+
+<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <textbox id="addressCol2#1" maxrows="16" timeout="800"/>
+
+</overlay>

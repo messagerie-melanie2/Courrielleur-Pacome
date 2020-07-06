@@ -1,0 +1,6 @@
+manifest chrome/pacome.manifest
+manifest chrome/fr.manifest
+manifest components/interfaces.manifest
+manifest components/pacomeSrvUtils.manifest
+manifest components/pacomeLMS.manifest
+manifest components/pacomePromptService.manifest

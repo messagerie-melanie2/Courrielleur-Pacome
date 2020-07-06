@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://pacome/content/pacome.css" type="text/css"?>
+
+<?xul-overlay href="chrome://courrielleur/content/ministeresOverlay.xul"?>
+
+
+<!DOCTYPE window SYSTEM "chrome://pacome/locale/pacome.dtd">
+
+<window class="pacomerespar"
+        title="&pacomemsg.titre;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        onload="InitPacomeRes();">
+
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomerespar.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeutils.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeimg.js"/>
+
+  <vbox id="bandeau" class="bandeau">
+    <description id="bandeau-titre" class="bandeau-titre">&pacome.paramfin;</description>
+  </vbox>
+
+  <vbox flex="1">
+
+    <vbox id="pacomepar-results" flex="3">
+      <description class="pacomepar-lib">&pacome.results;</description>
+      <richlistbox id="pacomepar-liste" disableKeyNavigation="true"/>
+    </vbox>
+
+    <hbox pack="center">
+      <description id="bredemarre">&pacome.redemarre;</description>
+    </hbox>
+
+    <hbox class="pacome_zone">
+      <vbox id="infosapropos"/>
+    </hbox>
+
+  </vbox>
+
+  <menuseparator/>
+
+  <!-- zone des boutons -->
+  <hbox  pack="center">
+    <button id="btOk" label="&pacome.btOk;" oncommand="btOk();" accesskey="&pacome.btOk.key;"/>
+  </hbox>
+
+</window>

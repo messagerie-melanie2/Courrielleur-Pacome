@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://pacome/content/pacome.css" type="text/css"?>
+
+<?xul-overlay href="chrome://courrielleur/content/ministeresOverlay.xul"?>
+
+<!DOCTYPE window SYSTEM "chrome://pacome/locale/pacome.dtd">
+
+<window id="dossierlocal"
+        title="&dossierlocal.titre;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        onload="initDlg();">
+
+  <script type="application/x-javascript" src="chrome://pacome/content/dossierlocal.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeutils.js"/>
+
+  <keyset id="keys">
+    <key keycode="VK_ESCAPE" oncommand="window.close();"/>
+  </keyset>
+
+  <vbox id="dossierlocalbandeau" class="bandeau">
+    <description id="dossierlocal_bandeau_titre" class="bandeau-titre">&dossierlocal_bandeau_titre;</description>
+  </vbox>
+
+
+  <vbox flex="1" class="pacome_zone">
+
+    <vbox id="dossierlocal-attrs">
+      <hbox flex="1">
+        <label value="&dossierlocallibnom;"/>
+        <textbox id="dossierlocalnom" flex="1"/>
+      </hbox>
+      <label value="&dossierlocallibchemin;"/>
+      <hbox flex="1">
+        <textbox id="dossierlocalchemin" flex="1"/>
+        <button label="&dossierlocalchemin.btlib;"
+                id="dossierlocalcheminbtsel"
+                browsertitle="&dossierlocalchemin.browsertitle;"
+                accesskey="&dossierlocalchemin.btlibcle;" oncommand="SelectChemin()"/>
+      </hbox>
+    </vbox>
+
+    <vbox  flex="1"/>
+
+    <hbox class="pacome_zone">
+      <vbox id="infosapropos"/>
+    </hbox>
+
+  </vbox>
+
+  <menuseparator/>
+
+  <hbox align="right">
+    <button id="dossierlocal.btValider" label="&dossierlocal.btValider;" oncommand="btCreeDossierLocal();" accesskey="V"/>
+    <button id="dossierlocal.btQuitter" label="&dossierlocal.btQuitter;" oncommand="close();" accesskey="Q"/>
+  </hbox>
+
+</window>

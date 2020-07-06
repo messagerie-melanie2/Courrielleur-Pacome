@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE overlay SYSTEM "chrome://pacome/locale/pacome.dtd">
+
+<overlay id="tagPanelOverlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <script type="application/javascript"
+            src="chrome://pacome/content/tagPanel.js"/>
+  <script type="application/javascript"
+            src="chrome://pacome/content/pacomeutils.js"/>
+
+  <prefpane id="paneDisplay" onpaneload="gDisplayPane.init();cm2TagsInit();"/>
+
+  <listbox id="tagList" flex="1" rows="14"
+            onselect="gDisplayPane.onSelect();cm2TagSelect();">
+    <tooltip id="cm2tagtip" onpopupshowing="majtagtip(document.tooltipNode);">
+      <description id="cm2tagtiplabel"></description>
+    </tooltip>
+  </listbox>
+
+  <vbox id="tagPanelBox">
+    <button id="editTagButton"
+            oncommand="gDisplayPane.editTag();BoutonEdit();"/>
+    <button id="removeTagButton"/>
+    <separator/>
+    <button id="partageTagButton" disabled="true" type="menu"
+            label="&partageTagButton.label;"
+            accesskey="&partageTagButton.accesskey;">
+      <menupopup id="partageMenu" onpopupshowing="UpdateMenuPartage()"/>
+    </button>
+    <separator/>
+    <button id="synchroTagButton"
+            label="&synchroTagButton.label;"
+            accesskey="&synchroTagButton.accesskey;"
+            oncommand="synchroTagButton();"/>
+  </vbox>
+
+</overlay>

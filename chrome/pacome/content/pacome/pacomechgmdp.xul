@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://pacome/content/pacome.css" type="text/css"?>
+
+<?xul-overlay href="chrome://courrielleur/content/ministeresOverlay.xul"?>
+
+<!DOCTYPE window SYSTEM "chrome://pacome/locale/pacome.dtd">
+
+<window id="pacomechgmdp"
+        title="&pacomechgmdp.titre;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        onload="InitChgMdp();">
+
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeutils.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomemdp.js"/>
+
+  <keyset id="keys">
+    <key keycode="VK_ESCAPE" oncommand="window.close();"/>
+    <key keycode="VK_RETURN" oncommand="ValiderChgMdp();"/>
+  </keyset>
+
+  <vbox id="bandeau" class="bandeau">
+    <description id="bandeau-titre" class="bandeau-titre">&pacomechgmdp-titre;</description>
+  </vbox>
+
+  <!-- espace central -->
+  <vbox id="pacome_zone" class="pacome_zone" flex="1">
+    <vbox flex="1">
+      <separator/>
+      <!-- elements de texte -->
+      <description id="pacomechgmdp.texte1" class="pacometexte">&pacomechgmdp.texte1;</description>
+
+      <!-- zone de saisie -->
+      <grid flex="1">
+        <columns>
+          <column />
+          <column flex="1"/>
+        </columns>
+        <rows>
+
+          <row>
+            <label value="&pacomechgmdp.uid;" control="pacomechgmdp.uid" class="pacomechgmdp-lib"/>
+            <textbox id="pacomechgmdp.uid" multiline="false" value="" flex="1"/>
+          </row>
+
+          <row>
+            <label align="righ" value="&pacomechgmdp.ancien;" control="pacomechgmdp.ancien" class="pacomechgmdp-lib"/>
+            <hbox>
+            <textbox id="pacomechgmdp.ancien" multiline="false" type="password" value="" class="pwd" flex="1"/>
+            </hbox>
+          </row>
+
+          <row>
+            <label value="&pacomechgmdp.nouveau;" control="pacomechgmdp.nouveau" class="pacomechgmdp-lib"/>
+            <hbox>
+            <textbox id="pacomechgmdp.nouveau" multiline="false" type="password" value="" class="pwd" flex="1"/>
+            </hbox>
+          </row>
+
+          <row>
+            <label value="&pacomechgmdp.confirm;" control="pacomechgmdp.confirm" class="pacomechgmdp-lib"/>
+            <hbox>
+            <textbox id="pacomechgmdp.confirm" multiline="false" type="password" value="" class="pwd" flex="1"/>
+            </hbox>
+          </row>
+
+        </rows>
+       </grid>
+
+    </vbox>
+
+    <groupbox flex="1">
+      <caption label="&pacomechgmdp.libcont;"/>
+
+      <textbox readonly="true" multiline="true" rows="8" id="mdptxt">&pacomechgmdp.desccont;</textbox>
+
+      <hbox>
+        <label value="Pour plus d'informations, consulter:"/>
+        <label id="pacomechgmdp.urlpolitiquemdp" class="pacome-url" value="&pacomechgmdp.libpolitiquemdp;"
+                onclick="PacomeOuvreLienPref('pacome.lienpolitiquemdp');"/>
+      </hbox>
+
+    </groupbox>
+
+    <hbox>
+      <vbox id="infosapropos" style="padding-left:4px"/>
+    </hbox>
+  </vbox>
+
+
+  <!-- zone des boutons -->
+  <menuseparator/>
+  <hbox align="right">
+    <button id="pacomechgmdp.btValider" label="&pacomechgmdp.btValider;" oncommand="ValiderChgMdp();" accesskey="&pacomechgmdp.btValider.cle;"/>
+    <button id="pacomechgmdp.btQuitter" label="&pacomechgmdp.btQuitter;" oncommand="window.close();" accesskey="&pacomechgmdp.btQuitter.cle;"/>
+  </hbox>
+
+
+</window>

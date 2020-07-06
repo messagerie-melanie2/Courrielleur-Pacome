@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://pacome/content/pacome.css" type="text/css"?>
+
+<!DOCTYPE window SYSTEM "chrome://pacome/locale/pacome.dtd">
+
+<window id="pacomesaisie"
+        title="&pacomemsg.titre;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        onload="InitPacomeSaisie();">
+
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeutils.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomesaisie.js"/>
+
+  <keyset id="keys">
+    <key keycode="VK_ESCAPE" oncommand="btAnnuler();"/>
+    <key keycode="VK_RETURN" oncommand="btValider();"/>
+  </keyset>
+
+  <vbox id="bandeau" class="bandeau">
+    <description id="bandeau-titre" class="bandeau-titre"> </description>
+  </vbox>
+
+  <vbox>
+    <description id="pacometexte" class="pacometexte"> </description>
+  </vbox>
+
+  <!-- espace central -->
+  <vbox id="pacome_zone" class="pacome_zone" flex="1">
+
+    <vbox flex="1">
+      <!-- zone de saisie -->
+      <grid flex="1">
+        <columns>
+          <column />
+          <column flex="1"/>
+        </columns>
+        <rows>
+          <row>
+            <label id="libelle" value=""/>
+            <textbox id="valeur" value="" flex="1" oninput="ValideSaisie();"/>
+          </row>
+        </rows>
+       </grid>
+    </vbox>
+
+  </vbox>
+
+
+  <!-- zone des boutons -->
+  <menuseparator/>
+  <hbox align="right">
+    <button id="pacome.btValider" label="&pacome.btValider;" oncommand="btValider();" accesskey="&pacome.btValider.cle;"/>
+    <button id="pacome.btAnnuler" label="&pacome.btAnnuler;" oncommand="btAnnuler();" accesskey="&pacome.btAnnuler.cle;"/>
+  </hbox>
+
+
+</window>

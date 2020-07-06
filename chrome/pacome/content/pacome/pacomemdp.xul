@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://pacome/content/pacome.css" type="text/css"?>
+
+<?xul-overlay href="chrome://courrielleur/content/ministeresOverlay.xul"?>
+
+<!DOCTYPE window SYSTEM "chrome://pacome/locale/pacome.dtd">
+
+
+<window id="pacomemdp"
+        windowtype="pacomemdp"
+        title="&pacomemdp.titre;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        xmlns:html="http://www.w3.org/1999/xhtml"
+        onload="InitPacomeMdp();"
+        onunload="QuittePacomeMdp();">
+
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeutils.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomemdp.js"/>
+
+  <keyset id="keys">
+    <key keycode="VK_ESCAPE" oncommand="AnnulerMdp();"/>
+    <key keycode="VK_RETURN" oncommand="ValiderMdp();"/>
+  </keyset>
+
+  <vbox flex="1">
+
+    <vbox id="pacomebandeau" class="bandeau">
+      <description id="pacome_bandeau_titre" class="bandeau-titre">&pacomemdp-titre;</description>
+    </vbox>
+
+    <!-- espace central -->
+    <vbox flex="1">
+      <!-- zone de saisie -->
+      <grid flex="1" id="grid-saisie">
+        <columns>
+          <column />
+          <column flex="1"/>
+        </columns>
+        <rows>
+          <row>
+            <label value="&pacomemdp.uid;" control="pacomemdp.uid"/>
+            <textbox id="pacomemdp.uid" readonly="true" value="" flex="1"/>
+          </row>
+          <row>
+            <label align="righ" value="&pacomemdp.mdp;" control="pacomemdp.mdp"/>
+            <hbox>
+             <textbox id="pacomemdp.mdp" type="password" value="" flex="1" onkeydown="onCarMDP(event);" onblur="blurMDP();" onfocus="focusMDP();"/>
+
+              <tooltip id="majuscule" noautohide="true">
+                <image src='vermajactif.png'/>
+              </tooltip>
+            </hbox>
+          </row>
+        </rows>
+        </grid>
+    </vbox>
+
+    <vbox id="infosapropos" style="padding-left:12px">
+      <description id="listeministeres" autresministeres="true"/>
+    </vbox>
+
+    <!-- zone des boutons -->
+    <menuseparator/>
+    <hbox align="right">
+      <button id="pacomemdp.btValider" label="&pacomemdp.btValider;" oncommand="ValiderMdp();" accesskey="&pacomemdp.btValider.cle;"/>
+      <button id="pacomemdp.btAnnuler" label="&pacome.btAnnuler;" oncommand="AnnulerMdp();"/>
+    </hbox>
+
+  </vbox>
+
+</window>

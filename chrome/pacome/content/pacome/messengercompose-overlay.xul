@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+
+<!DOCTYPE overlay>
+
+
+<overlay xmlns:nc="http://home.netscape.com/NC-rdf#"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeutils.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/messengercompose-overlay.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeassist.js"/>
+
+</overlay>

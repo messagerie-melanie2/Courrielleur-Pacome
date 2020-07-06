@@ -1,0 +1,9 @@
+content pacome pacome/content/pacome/
+overlay  chrome://messenger/content/messenger.xul  chrome://pacome/content/messenger-overlay.xul
+overlay  chrome://messenger/content/AccountManager.xul  chrome://pacome/content/accountmanager-overlay.xul
+overlay  chrome://messenger/content/messengercompose/messengercompose.xul chrome://pacome/content/messengercompose-overlay.xul
+overlay  chrome://messenger/content/am-main.xul  chrome://pacome/content/am-main-overlay.xul
+overlay  chrome://messenger/content/am-server.xul  chrome://pacome/content/am-server-overlay.xul
+overlay  chrome://messenger/content/am-serverwithnoidentities.xul  chrome://pacome/content/am-serverwithnoidentities-overlay.xul
+overlay  chrome://messenger/content/messengercompose/messengercompose.xul  chrome://pacome/content/addressingWidgetOverlay.xul
+overlay  chrome://messenger/content/preferences/display.xul  chrome://pacome/content/tagPanel.xul

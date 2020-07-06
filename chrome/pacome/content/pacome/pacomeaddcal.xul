@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://pacome/content/pacome.css" type="text/css"?>
+
+<?xul-overlay href="chrome://courrielleur/content/ministeresOverlay.xul"?>
+
+
+<!DOCTYPE window SYSTEM "chrome://pacome/locale/pacome.dtd">
+
+<window id="pacomeaddcal"
+        class="pacome"
+        title="&pacomeaddcal-titre;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        onload="InitAddCal();">
+
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeutils.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomereq.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeparam.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomecalp.js"/>
+
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeaddcal.js"/>
+
+
+  <keyset id="keys">
+    <key keycode="VK_ESCAPE" oncommand="window.close();"/>
+    <key keycode="VK_RETURN" oncommand="AjouteAgenda();"/>
+  </keyset>
+
+  <vbox flex="1">
+
+    <vbox id="pacomebandeau" class="bandeau">
+      <description id="pacome_bandeau_titre" class="bandeau-titre">&pacomeaddcal-bandeau;</description>
+    </vbox>
+
+    <!-- espace central -->
+    <vbox id="pacome_zone" class="pacome_zone" flex="1">
+
+      <listbox id="pacomeaddcal-ags"/>
+
+    </vbox>
+
+    <!-- lien d'aide-->
+    <hbox class="pacome_zone">
+      <description flex="1">&pacome.texteAide;
+      <label id="pacome.lienaide" class="pacome-url" value="&pacome.AideLigne;" onclick="PacomeOuvreLienPref('pacome.aideparametrage');"/>
+      </description>
+    </hbox>
+
+    <spacer height="10px"/>
+
+    <hbox class="pacome_zone">
+      <vbox id="infosapropos"/>
+    </hbox>
+
+    <menuseparator/>
+
+    <!-- zone des boutons -->
+    <hbox align="right">
+      <button id="btValider" label="&pacome.btValider;" disabled="true" oncommand="AjouteAgenda();" accesskey="&pacome.btValider.cle;"/>
+      <button id="btAnnuler" label="&pacome.btAnnuler;" oncommand="window.close();" accesskey="&pacome.btAnnuler.cle;"/>
+    </hbox>
+
+  </vbox>
+</window>

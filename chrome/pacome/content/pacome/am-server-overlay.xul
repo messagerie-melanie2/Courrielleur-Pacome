@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE overlay>
+
+<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <textbox id="server.realHostName" size="36"/>
+  <textbox id="server.realUsername" size="36"/>
+
+</overlay>
