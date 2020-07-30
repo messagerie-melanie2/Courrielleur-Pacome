@@ -329,3 +329,49 @@ function majtagtip(listitem){
     }
   }
 }
+
+// Surcharge de tb: appends the tag to the tag list box
+gDisplayPane.appendTagItem=function(aTagName, aKey, aColor)
+{
+  cm2TagsInit();
+  
+  let item = this.mTagListBox.appendItem(aTagName, aKey);
+  item.style.color = aColor;
+  if(aTagName.includes(INFOTAG_PARTAGE))
+    item.setAttribute("tooltiptext", getToolTip(aKey));
+  
+  return item;
+}
+
+function getToolTip(key)
+{
+  console.log("getToolTip, key = " + key);
+  toolTip = "";
+  sep = "";
+  
+  // balis
+  let nb=gBaliConf.length;
+  for (var i=0;i<nb;i++){
+    let uid=gBaliConf[i]["uid"];
+    let par=uid+":"+key;
+    if (gSynchro.balis.includes(par)){
+      toolTip+=sep+gBaliConf[i]["cn"];
+      sep="\u000A";
+      break;
+    }
+  }
+
+  // balps
+  nb=gBalpConf.length;
+  for (var i=0;i<nb;i++){
+    let uid=gBalpConf[i]["uid"];
+    let par=uid+":"+key;
+    if (gSynchro.partages.includes(par)){
+      toolTip+=sep+gBalpConf[i]["cn"];
+      sep="\u000A";
+      break;
+    }
+  }
+  console.log("tooltip = " + toolTip);
+  return(toolTip);
+}
