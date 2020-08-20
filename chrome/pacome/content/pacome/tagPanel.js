@@ -68,7 +68,8 @@ function InitMenuPartage(){
     let pos=uid.indexOf(".-.");
     if (-1!=pos)
       uid=uid.substr(pos+3);
-
+    
+    var labelList = [];
     for (var b=0;b<nbc;b++)
     if (gBalpConf[b]["uid"]==uid){
       let cn=gBalpConf[b]["cn"];
@@ -78,8 +79,13 @@ function InitMenuPartage(){
       item.setAttribute("value", uid);
       item.setAttribute("type", "checkbox");
       item.setAttribute("oncommand",  "partageTagButton('"+uid+"');");
-
-      partageMenu.appendChild(item);
+      
+      // #5846
+      if(!labelList.includes(cn))
+      {
+        labelList.push(cn);
+        partageMenu.appendChild(item);
+      }
     }
   }
 }
@@ -238,7 +244,7 @@ function BoutonEdit(){
 }
 
 // reconstruction de la liste des etiquettes
-// surcharge tb
+// surcharge tb // #5846
 gDisplayPane.buildTagList=function(){
 
   let tagArray=MailServices.tags.getAllTags({});
@@ -292,7 +298,7 @@ function SauveRapportTest(config){
 }
 
 
-function majtagtip(listitem){
+/*function majtagtip(listitem){
 
   if (null==gSynchro ||
       null==listitem)
@@ -328,7 +334,7 @@ function majtagtip(listitem){
       sep="\u000A";
     }
   }
-}
+}*/
 
 // Surcharge de tb: appends the tag to the tag list box
 gDisplayPane.appendTagItem=function(aTagName, aKey, aColor)
@@ -343,11 +349,13 @@ gDisplayPane.appendTagItem=function(aTagName, aKey, aColor)
   return item;
 }
 
+// #5846 génération des tooltip
 function getToolTip(key)
 {
-  console.log("getToolTip, key = " + key);
+  //console.log("getToolTip, key = " + key);
   toolTip = "";
   sep = "";
+  var toolTipArray = [];
   
   // balis
   let nb=gBaliConf.length;
@@ -355,23 +363,25 @@ function getToolTip(key)
     let uid=gBaliConf[i]["uid"];
     let par=uid+":"+key;
     if (gSynchro.balis.includes(par)){
-      toolTip+=sep+gBaliConf[i]["cn"];
+      toolTipArray.push(sep+gBaliConf[i]["cn"]);//toolTip+=sep+gBaliConf[i]["cn"];
       sep="\u000A";
-      break;
     }
   }
-
+  
   // balps
   nb=gBalpConf.length;
   for (var i=0;i<nb;i++){
     let uid=gBalpConf[i]["uid"];
     let par=uid+":"+key;
     if (gSynchro.partages.includes(par)){
-      toolTip+=sep+gBalpConf[i]["cn"];
+      toolTipArray.push(gBalpConf[i]["cn"]);//toolTip+=sep+gBalpConf[i]["cn"];
       sep="\u000A";
-      break;
     }
   }
-  console.log("tooltip = " + toolTip);
+  
+  uniqToolTipArray = [...new Set(toolTipArray)];
+  toolTip = uniqToolTipArray.join(sep);
+  
+  //console.log("tooltip = " + toolTip);
   return(toolTip);
 }
