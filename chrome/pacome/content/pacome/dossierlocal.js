@@ -163,7 +163,8 @@ function creeDossierLocal(libelle, chemin){
 
     //v3.1T2 - identifiant unique
     let libid=encodeURIComponent(libelle);
-    let ident=PacomeGetUniqueIdLocal(libid);
+    // Ajout de SRV pour être sûr d'avoir des lettres dans ident.
+    let ident=PacomeGetUniqueIdLocal("srv"+libid);
 
     let accman=MailServices.accounts;
     let srv=accman.createIncomingServer("nobody",  ident, "none");
