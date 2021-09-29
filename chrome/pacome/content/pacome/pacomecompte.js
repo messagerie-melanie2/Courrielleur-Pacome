@@ -20,8 +20,16 @@ const PACOME_PARAM_ERREUR="Erreur";
 /* variables globales */
 var gPacomeAssitVars={
 
+  // par défaut on ne fait pas de kerberos
+  kerberosAvailable: false,
+  // checkbox permettant à l'utilisteur d'ignoer kerberos
+  krbDisable: false,
+  // au final, utilise-t-on kerberos ?
+  useKerberos: false,
+
   //controle saisie identifiant dans l'assistant
   ctrlSaisieUid:null,
+
 
   //tableau des identifiants de pages (depend du mode d'execution)
   pagesids:null,
@@ -154,11 +162,27 @@ function InitAssistant(){
 
     PacomeTrace("InitAssistant");
 
+    if (Services.prefs.getBoolPref("pacome.krbauth.enabled", false)) {
+      gPacomeAssitVars.kerberosAvailable = true;
+      gPacomeAssitVars.useKerberos = true; // utilisation effective au début (user n'a pas désactivé)
+    }
+
     gPacomeAssitVars.fncrappel=null;
     if (window.arguments && window.arguments[0].okCallback)
       gPacomeAssitVars.fncrappel=window.arguments[0].okCallback;
 
     gPacomeAssitVars.ctrlSaisieUid=document.getElementById("pacomeuid");
+    Array.from(document.getElementsByClassName(gPacomeAssitVars.kerberosAvailable ? "nokrbwidget":"krbwidget")).forEach(
+      (e) => e.setAttribute("collapsed", true)
+    );
+    Array.from(document.getElementsByClassName(gPacomeAssitVars.kerberosAvailable ? "krbwidget":"nokrbwidget")).forEach(
+      (e) => e.removeAttribute("collapsed")
+    );
+
+    gPacomeAssitVars.krbDisable=document.getElementById("pacomekrbdisable");
+    if (!gPacomeAssitVars.kerberosAvailable) {
+      document.getElementById("pacomekrbdisable").setAttribute("hidden", true);
+    }
 
     //déterminer mode d'exécution
     let uids=PacomeListeUid();
@@ -341,10 +365,48 @@ function PacomeRedemarreTB(){
 function InitPageUid(){
 
   PageInit();
-  document.getElementById("pacomeuid").focus();
+  if (gPacomeAssitVars.useKerberos) fetchKerberosId();
+  //document.getElementById("pacomeuid").focus();
 }
 
+function fetchKerberosId() {
+  const whoamiurl = Services.prefs.getCharPref("pacome.krbauth.whoami");
+  if (!whoamiurl) return false;
 
+  gPacomeAssitVars.btsuivant.setAttribute("disabled",true);
+  document.getElementById("krbrunning").removeAttribute("hidden");
+  kerberosRAZ();
+
+  fetch(whoamiurl, {
+    credentials: 'include'
+  }).then( response => {
+    gPacomeAssitVars.btsuivant.removeAttribute("disabled");
+    document.getElementById("krbrunning").setAttribute("hidden", true);
+
+    // response => response.ok ?
+    if (!response.ok || response.status != 200) {
+      console.log("Erreur Fetch Kerberos", response.status)
+      PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Erreur Fetch Kerberos", response.status);
+      document.getElementById("krbfailed").removeAttribute("hidden");
+      return;
+    }
+    response.json().then( data => {
+      document.getElementById("krbuid").setAttribute("label", "Identifiant: "+data.uid);
+      document.getElementById("pacomeuid").value = data.uid;
+      document.getElementById("krbname").setAttribute("label", data.displayname);
+      document.getElementById("krbok").removeAttribute("hidden");
+      document.getElementById("pacome.btSuivant").focus();
+      PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Auth Kerberos", data.uid);
+      console.log("Auth Kerberos", data)
+    })
+  }).catch( error => {
+    gPacomeAssitVars.btsuivant.removeAttribute("disabled");
+    document.getElementById("krbfailed").removeAttribute("hidden");
+    document.getElementById("krbprogress").setAttribute("mode", "determined");
+    console.log("Catch Fetch Kerberos", error);
+    PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Catch Fetch Kerberos", error);
+  })
+}
 /* sortie page saisie identifiant */
 function SortiePageSaisieUid(){
 
@@ -1849,6 +1911,46 @@ function onSaisieUid(){
   return true;
 }
 
+/**
+ * Nettoie les champs kerberos
+ */
+function kerberosRAZ() {
+  // remet les zones de texte uid et caption à vide
+  gPacomeAssitVars.ctrlSaisieUid.value="";
+  document.getElementById("krbuid").setAttribute("label", "");
+  document.getElementById("krbname").setAttribute("label", "");
+  document.getElementById("krbok").setAttribute("hidden", true)
+  // annule les erreurs et affichage
+  Array.from(document.getElementsByClassName("krbfailed")).forEach(
+    (e) => e.setAttribute("hidden", true)
+  );
+}
+
+/**
+ * Desactive Kerberos
+ */
+function onKerberosToggle() {
+
+  const krbOk = gPacomeAssitVars.kerberosAvailable && gPacomeAssitVars.krbDisable.checked;
+
+  Array.from(document.getElementsByClassName(krbOk ? "nokrbwidget":"krbwidget")).forEach(
+    (e) => e.setAttribute("collapsed", true)
+  );
+  Array.from(document.getElementsByClassName(krbOk ? "krbwidget":"nokrbwidget")).forEach(
+    (e) => e.removeAttribute("collapsed")
+  );
+
+  kerberosRAZ();
+
+  gPacomeAssitVars.useKerberos = krbOk;
+  if (krbOk) {
+    fetchKerberosId();
+  } else {
+    setTimeout(() =>
+      document.getElementById("pacomeuid").focus(), 200);
+  }
+
+}
 
 /* entree page agendas - initialisation */
 function InitPageCals() {

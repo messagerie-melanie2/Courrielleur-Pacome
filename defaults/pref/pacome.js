@@ -1,6 +1,14 @@
 pref("pacome.trace", false);
 pref("pacome.majauto", true);
 
+// prise en compte de Kerberos
+pref("pacome.krbauth.enabled", true);
+// TODO: Kerberos et rien d'autre ?
+// TODO: pref("pacome.krbauth.strict", true);
+// url de récupération de l'identité
+pref("pacome.krbauth.whoami", "http://intranet.krb.gendarmerie.fr:14382/krbWhoAmI.php");
+// url de negotiate autorisées au lancement
+pref("network.negotiate-auth.trusted-uris", ".krb.gendarmerie.fr, intranet.sso.gendarmerie.fr");
 
 //url du serveur pacome de parametrage
 pref("pacome.urlparam", "https://pacome.s2.m2.e2.rie.gouv.fr/param.php");

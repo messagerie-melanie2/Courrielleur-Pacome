@@ -60,10 +60,29 @@
 
     <!-- page saisie identifiant -->
     <groupbox id="PageUid" hidden="true" flex="1">
-      <caption label="Identifiant"/>
-      <hbox>
-        <textbox id="pacomeuid" flex="1" value="" oninput="onSaisieUid();" maxlength="64"/>
-      </hbox>
+      <vbox class="nokrbwidget">
+        <description class="pacometexte">&pacome.saisieuid;</description>
+        <caption label=" " />
+        <caption label="Identifiant :" />
+        <hbox>
+          <textbox id="pacomeuid" flex="1" value="" oninput="onSaisieUid();" maxlength="64"/>
+        </hbox>
+      </vbox>
+      <vbox id="krbrunning" class="krbwidget" hidden="true">
+        <caption label="Recherche de vos éléments d'identification..." />
+        <progressmeter id="krbprogress" mode="undetermined" value="100" />
+      </vbox>
+      <vbox id="krbfailed" class="krbfailed" hidden="true">
+        <caption label="Une erreur est survenue lors de la recherche de votre identification" />
+        <button label="Recommencer" oncommand="fetchKerberosId();" />
+      </vbox>
+      <vbox id="krbok" hidden="true">
+        <description class="pacometexte">Le courrielleur va pouvoir être configuré pour le compte suivant :</description>
+        <caption id="krbuid" label="Identifiant : " />
+        <caption id="krbname" label="Compte : " />
+      </vbox>
+      <spacer flex="1" />
+      <checkbox id="pacomekrbdisable" label="&pacome.krbdisable;" checked="false" onclick="onKerberosToggle();"/>
     </groupbox>
 
     <!-- page gestion des identifiants  -->
