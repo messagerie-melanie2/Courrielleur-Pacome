@@ -7,7 +7,7 @@
  *  Le document est au format JSON
  *
  *
- *  Liste complète des étiquettes
+ *  Liste complete des etiquettes
  *  -----------------------------
  *  "etiquettes":[ ETIQ, ... ],
  *  ETIQ={"key":"","tag":"","color":"","ordinal":""}
@@ -63,7 +63,6 @@ ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/iteratorUtils.jsm");
 ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
 ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
-
 
 const EXPORTED_SYMBOLS = ["ConfigCm2Tags", "MajConfigCm2Tags",
                     "cm2TagsPartage", "cm2TagsKeyIsShared", "cm2TagsPartageExist",
@@ -599,13 +598,17 @@ function cm2ReqServiceTags(strConfig, fncRappel){
 
   let url=ETIQUETTES_SERVICE_URL;
   try {
-    url=Services.prefs.getCharPref("courrielleur.etiquettes.service");
+    const krb = Services.prefs.getBoolPref('pacome.krbauth.enabled', false) && !Services.prefs.getBoolPref('pacome.krbauth.skip', false);
+    url=Services.prefs.getCharPref("courrielleur.etiquettes.service"+(krb ? '.krb':''));
   } catch(ex){}
   cm2DebugMsg("cm2ReqServiceTags url:"+url);
   cm2DebugMsg("cm2ReqServiceTags configuration:"+strConfig);
 
 
   httpRequest.open("POST", url, true);
+
+  // pour kerberos
+  httpRequest.withCredentials = true;
 
   httpRequest.setRequestHeader("Accept-Charset", "UTF-8");
   httpRequest.setRequestHeader("Content-Type", "application/json");
