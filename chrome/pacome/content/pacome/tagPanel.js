@@ -2,6 +2,7 @@
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/mailServices.js");
 ChromeUtils.import("resource://gre/modules/cm2tags.jsm");
+ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
 
 
 
@@ -28,9 +29,9 @@ function cm2TagsInit(){
         "pop3"==server.type) &&
         null!=server.getCharValue("pacome.confid")) {
       let uid=server.username;
-      let pos=uid.indexOf(".-.");
-      if (-1!=pos)
-        uid=uid.substr(pos+3);
+      let compos=SplitUserBalp(uid);
+      if (compos && 2==compos.length)
+        uid=compos[1];
       let balp=[];
       balp["uid"]=uid;
       balp["cn"]=server.prettyName;
@@ -65,9 +66,9 @@ function InitMenuPartage(){
   for (var i=0;i<nbp;i++){
     let balp=gSynchro.droitsbalp[i];
     let uid=balp["uid"];
-    let pos=uid.indexOf(".-.");
-    if (-1!=pos)
-      uid=uid.substr(pos+3);
+    let compos=SplitUserBalp(uid);
+    if (compos && 2==compos.length)
+      uid=compos[1];
     
     var labelList = [];
     for (var b=0;b<nbc;b++)
