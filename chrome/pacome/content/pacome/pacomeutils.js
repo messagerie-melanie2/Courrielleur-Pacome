@@ -148,7 +148,12 @@ function PacomeAfficheMsgIdGlobalErr(msgid){
   let titre=PacomeMessageFromId(msgid);
 
   let txt="D\u00e9tail de l'erreur\nCode:"+gPacomeCodeErreur;
-  txt+="\nMessage:"+gPacomeMsgErreur;
+
+  if (gPacomeCodeErreur === 401) {
+    txt = "\n\nL'adresse mail ou le mot de passe est incorrect";
+  } else {
+    txt += "\nMessage:" + gPacomeMsgErreur;
+  }
 
   PacomeMsgNotif(titre, txt);
 }
