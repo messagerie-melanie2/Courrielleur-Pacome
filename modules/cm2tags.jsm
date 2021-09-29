@@ -62,6 +62,7 @@ ChromeUtils.import("resource:///modules/mailServices.js");
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/iteratorUtils.jsm");
 ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
 
 
 const EXPORTED_SYMBOLS = ["ConfigCm2Tags", "MajConfigCm2Tags",
@@ -128,9 +129,9 @@ function cm2TagsListeBoites(){
 
   let uid=MailServices.accounts.defaultAccount.incomingServer.username;
   if (uid){
-    let pos=uid.indexOf(".-.");
-    if (-1!=pos) {
-      uid=uid.substr(0,pos);
+    let compos=SplitUserBalp(uid);
+    if (compos && 2==compos.length) {
+      uid=compos[0];
     }
   }
   cm2DebugMsg("cm2TagsListeBoites uid principal:"+uid);
@@ -279,12 +280,12 @@ function cm2TagsPartage(key, uid){
   if (!exist){
     return false;
   }
-  
+
   // nom de partage
   let partage=uid;
-  let pos=uid.indexOf(".-.");
-  if (-1!=pos) {
-    partage=uid.substr(pos+3);
+  let compos = SplitUserBalp(uid);
+  if (compos && 2==compos.length) {
+    partage=compos[1];
   }
   partage+=":"+key;
 
