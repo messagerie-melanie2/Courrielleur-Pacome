@@ -162,16 +162,32 @@ function InitAssistant(){
 
     PacomeTrace("InitAssistant");
 
-    if (Services.prefs.getBoolPref("pacome.krbauth.enabled", false)) {
+    if (Services.prefs.getBoolPref(gParams.PREF_KRB_ENABLED, false)) {
       gPacomeAssitVars.kerberosAvailable = true;
-      gPacomeAssitVars.useKerberos = true; // utilisation effective au début (user n'a pas désactivé)
+      // peut-Ãªtre que l'utilisateur a dÃ©sactivÃ© kerberos (Parcome mode manuel)
+      gPacomeAssitVars.useKerberos = ! Services.prefs.getBoolPref(gParams.PREF_KRB_SKIP, false);
+      
+      Array.from(document.getElementsByClassName("authparam")).forEach(
+        (e) => e.removeAttribute("hidden")
+      );
     }
 
+    // doit-on demander un mot de passe ?
+    gPacomeAssitVars.paramsAuth = Services.prefs.getBoolPref(gParams.PREF_URLPARAM_AUTH, false);
+    if (gPacomeAssitVars.paramsAuth) {
+      //document.getElementById("pacomepw").removeAttribute("hidden");
+      Array.from(document.getElementsByClassName("pacomepw")).forEach(
+        (e) => e.removeAttribute("hidden")
+      );
+     }
+    
     gPacomeAssitVars.fncrappel=null;
     if (window.arguments && window.arguments[0].okCallback)
       gPacomeAssitVars.fncrappel=window.arguments[0].okCallback;
 
     gPacomeAssitVars.ctrlSaisieUid=document.getElementById("pacomeuid");
+
+    // affiche les bons widget en fonction de la prise en charge de kerberos
     Array.from(document.getElementsByClassName(gPacomeAssitVars.kerberosAvailable ? "nokrbwidget":"krbwidget")).forEach(
       (e) => e.setAttribute("collapsed", true)
     );
@@ -186,10 +202,11 @@ function InitAssistant(){
 
     //déterminer mode d'exécution
     let uids=PacomeListeUid();
-    if (0==uids.length){
+    // aucun compte paramÃ©trÃ© ou mode de paramÃ©trage authentifiÃ©
+    if (0===uids.length || Services.prefs.getBoolPref(gParams.PREF_URLPARAM_AUTH, false)){
       //1ere utilisation de pacome
-      PacomeTrace("InitAssistant mode 1ere utilisation");
-      PacomeEcritLog(PACOME_LOGS_ASSISTANT, "initialiation en mode 1ere utilisation", "");
+      PacomeTrace("InitAssistant mode 1ere utilisation ou paramÃ©trage authentifiÃ©");
+      PacomeEcritLog(PACOME_LOGS_ASSISTANT, "initialiation en mode 1ere utilisation paramÃ©trage authentifiÃ©", "");
 
       gPacomeAssitVars.pagesids=PACOME_PAGES_NOUVEAU_IDS;
       gPacomeAssitVars.pagesinit=PACOME_PAGES_NOUVEAU_INIT;
@@ -197,17 +214,19 @@ function InitAssistant(){
       gPacomeAssitVars.etatsbtprec=PACOME_PAGES_NOUVEAU_BTPREC;
       gPacomeAssitVars.etatsbtsuiv=PACOME_PAGES_NOUVEAU_BTSUIV;
 
-    } else{
-      //Au moins 1 compte pacome
+    } else {
+      //Au moins 1 compte pacome et pas de mode de paramÃ©trage authentifiÃ©
       PacomeEcritLog(PACOME_LOGS_ASSISTANT, "initialiation", "");
       PacomeTrace("InitAssistant mode parametrage manuel");
 
-      gPacomeAssitVars.pagesids=PACOME_PAGES_PARAM_IDS;
-      gPacomeAssitVars.pagesinit=PACOME_PAGES_PARAM_INIT;
-      gPacomeAssitVars.pagesquitte=PACOME_PAGES_PARAM_QUITTE;
-      gPacomeAssitVars.etatsbtprec=PACOME_PAGES_PARAM_BTPREC;
-      gPacomeAssitVars.etatsbtsuiv=PACOME_PAGES_PARAM_BTSUIV;
+      gPacomeAssitVars.pagesids = PACOME_PAGES_PARAM_IDS;
+      gPacomeAssitVars.pagesinit = PACOME_PAGES_PARAM_INIT;
+      gPacomeAssitVars.pagesquitte = PACOME_PAGES_PARAM_QUITTE;
+      gPacomeAssitVars.etatsbtprec = PACOME_PAGES_PARAM_BTPREC;
+      gPacomeAssitVars.etatsbtsuiv = PACOME_PAGES_PARAM_BTSUIV;
 
+    }
+    if (0!==uids.length) {
       MailServices.accounts.addIncomingServerListener(gIncomingServerListener);
       gIncomingServerListener.actif=true;
     }
@@ -365,7 +384,26 @@ function PacomeRedemarreTB(){
 function InitPageUid(){
 
   PageInit();
-  if (gPacomeAssitVars.useKerberos) fetchKerberosId();
+
+  PacomeTrace("useKerberos: " + (gPacomeAssitVars.useKerberos ? "true" : "false"));
+  PacomeEcritLog(PACOME_LOGS_ASSISTANT, "useKerberos:", gPacomeAssitVars.useKerberos);
+  PacomeTrace("paramsAuth: " + (gPacomeAssitVars.paramsAuth ? "true" : "false"));
+  PacomeEcritLog(PACOME_LOGS_ASSISTANT, "paramsAuth:", gPacomeAssitVars.paramsAuth);
+
+  if (gPacomeAssitVars.useKerberos) {
+    fetchKerberosId();
+  } else
+    // gÃ¨re-t-on un password ?
+    if (gPacomeAssitVars.paramsAuth) {
+    // Si on a un login/password dans le gestionnaire de mots de passe, on le prÃ©renseigne (mode mÃ j)
+    const login = PacomeFetchParamsCreds(PacomeGetUrlParams());
+    PacomeTrace("login recu: " + login.username);
+    PacomeEcritLog(PACOME_LOGS_ASSISTANT, "login recu:", login.username);
+    document.getElementById("pacomeuid").value = login.username;
+    document.getElementById("pacomepw").value = login.password;
+    // on rafraÃ®chit l'affichage
+    onKerberosToggle(true);
+  }
   //document.getElementById("pacomeuid").focus();
 }
 
@@ -374,6 +412,7 @@ function fetchKerberosId() {
   if (!whoamiurl) return false;
 
   gPacomeAssitVars.btsuivant.setAttribute("disabled",true);
+  document.getElementById("krbprogress").setAttribute("mode", "undetermined");
   document.getElementById("krbrunning").removeAttribute("hidden");
   kerberosRAZ();
 
@@ -381,12 +420,14 @@ function fetchKerberosId() {
     credentials: 'include'
   }).then( response => {
     gPacomeAssitVars.btsuivant.removeAttribute("disabled");
-    document.getElementById("krbrunning").setAttribute("hidden", true);
+    document.getElementById("krbrunning").setAttribute("hidden", "true");
+    // document.getElementById("krbprogress").setAttribute("mode", "determined");
 
     // response => response.ok ?
     if (!response.ok || response.status != 200) {
       console.log("Erreur Fetch Kerberos", response.status)
-      PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Erreur Fetch Kerberos", response.status);
+      PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Erreur Fetch Kerberos", response.status);f
+      document.getElementById("krbprogress").setAttribute("mode", "determined");
       document.getElementById("krbfailed").removeAttribute("hidden");
       return;
     }
@@ -398,6 +439,12 @@ function fetchKerberosId() {
       document.getElementById("pacome.btSuivant").focus();
       PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Auth Kerberos", data.uid);
       console.log("Auth Kerberos", data)
+    }).catch( error => {
+      gPacomeAssitVars.btsuivant.removeAttribute("disabled");
+      document.getElementById("krbfailed").removeAttribute("hidden");
+      document.getElementById("krbprogress").setAttribute("mode", "determined");
+      console.log("Catch json Kerberos", error);
+      PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Catch json Kerberos", error);
     })
   }).catch( error => {
     gPacomeAssitVars.btsuivant.removeAttribute("disabled");
@@ -410,9 +457,9 @@ function fetchKerberosId() {
 /* sortie page saisie identifiant */
 function SortiePageSaisieUid(){
 
-  //vérifier identifiant
   let uid=document.getElementById("pacomeuid").value;
-  if (null==uid || 0==uid.length){
+  //vÃ©rifier identifiant, sauf si requÃªte authentifiÃ©e => sera fourni par popup (TODO: utiliser des inputs lorsque pb tags rÃ©solu)
+  if (!gPacomeAssitVars.paramsAuth && (null==uid || 0==uid.length)){
     PacomeAfficheMsgIdMsgId("PacomeCompteEtatErreur", "RenseignerUtil");
     return false;
   }
@@ -436,8 +483,14 @@ function SortiePageSaisieUid(){
 
   PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - envoie de la requete", cfg);
 
+  let creds = null;
+  if (gPacomeAssitVars.paramsAuth && document.getElementById("pacomepw").value) {
+    creds = {uid, pw: document.getElementById("pacomepw").value};
+    PacomeEcritLog(PACOME_LOGS_ASSISTANT, "login/pw fournis", uid);
+  }
+
   //envoyer la requete
-  let ret=RequeteParametrage(cfg, ReceptionParametrage, false);
+  let ret=RequeteParametrage(cfg, ReceptionParametrage, false, creds);
 
   if (false==ret){
     PacomeAfficheMsgIdGlobalErr("PacomeErreurInitListeUid");
@@ -1914,24 +1967,35 @@ function onSaisieUid(){
 /**
  * Nettoie les champs kerberos
  */
-function kerberosRAZ() {
-  // remet les zones de texte uid et caption à vide
-  gPacomeAssitVars.ctrlSaisieUid.value="";
+function kerberosRAZ(useKrb=true) {
+
+  // Si on utilise vraiment kerberos, on remet les zones de texte uid Ã  vide (sinon simple nettoyage visuel)
+  // if (useKrb) {
+  //   gPacomeAssitVars.ctrlSaisieUid.value = "";
+  // }
+
   document.getElementById("krbuid").setAttribute("label", "");
   document.getElementById("krbname").setAttribute("label", "");
-  document.getElementById("krbok").setAttribute("hidden", true)
+  document.getElementById("krbok").setAttribute("hidden", "true");
   // annule les erreurs et affichage
   Array.from(document.getElementsByClassName("krbfailed")).forEach(
-    (e) => e.setAttribute("hidden", true)
+    (e) => e.setAttribute("hidden", "true")
   );
 }
 
 /**
  * Desactive Kerberos
  */
-function onKerberosToggle() {
+function onKerberosToggle(checked=null) {
 
-  const krbOk = gPacomeAssitVars.kerberosAvailable && gPacomeAssitVars.krbDisable.checked;
+  console.log("onKerberosToggle " + (checked === null ? "null" : checked ));
+  PacomeEcritLog(PACOME_LOGS_ASSISTANT, "onKerberosToggle", checked === null ? "null": checked);
+
+  let krbOk = gPacomeAssitVars.kerberosAvailable && gPacomeAssitVars.krbDisable.checked;
+  if (checked !== null) {
+    gPacomeAssitVars.krbDisable.checked = checked;
+    krbOk = !checked;
+  }
 
   Array.from(document.getElementsByClassName(krbOk ? "nokrbwidget":"krbwidget")).forEach(
     (e) => e.setAttribute("collapsed", true)
@@ -1940,9 +2004,12 @@ function onKerberosToggle() {
     (e) => e.removeAttribute("collapsed")
   );
 
-  kerberosRAZ();
-
   gPacomeAssitVars.useKerberos = krbOk;
+  Services.prefs.setBoolPref(gParams.PREF_KRB_SKIP, !krbOk);
+  PacomeEcritLog(PACOME_LOGS_ASSISTANT, "*** Utilisateur positionne kerberos", krbOk);
+  console.log("** Utilisateur positionne kerberos", krbOk);
+
+  kerberosRAZ(krbOk);
   if (krbOk) {
     fetchKerberosId();
   } else {
