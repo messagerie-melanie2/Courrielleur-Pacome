@@ -2,7 +2,6 @@
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/MailUtils.js");
 ChromeUtils.import("resource:///modules/mailServices.js");
-ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
 
 
 /* constantes des actions de parametrage */
@@ -1838,12 +1837,11 @@ function onSaisieUid(){
   str=str[0];
 
   //v0.91 suppression .-.
-  if (-1!=str.indexOf(MCE_SEP_BOITE)){
+  if (-1!=str.indexOf(".-.")){
     //message utilisateur
     PacomeAfficheMsgId("PacomeSaisieUidCar");
   }
-  const re = new RegExp(MCE_SEP_BOITE, "g");
-  str=str.replace(re, "");
+  str=str.replace(/\.\-\./g, "");
   gPacomeAssitVars.ctrlSaisieUid.value=str;
 
   return true;

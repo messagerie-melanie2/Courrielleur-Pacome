@@ -190,7 +190,7 @@ var gPacomeFolderListener={
           //valider courrier entrant balp
           let username=folder.username;
           if (username) {
-            let parts=username.split(MCE_SEP_BOITE);
+            let parts=username.split(".-.");
             if (2==parts.length &&
                 folder.name==parts[1]){
               folder.setFlag(nsMsgFolderFlags.Inbox);

@@ -1,7 +1,6 @@
 
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/mailServices.js");
-ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
 
 
 //traitement du bouton "Gérer les comptes"
@@ -102,11 +101,11 @@ function btMotDePasse(){
     PacomeAfficheMsgId("PacomeErreurCompteSel");
     return;
   }
-  //cas identifiant boite partagée .-.
+  //cas identifiant boite partagée
   let uid=compte.incomingServer.username;
-  let compos=SplitUserBalp(uid);
-  if (compos && 2==compos.length)
-    uid=compos[0];
+  let pos=uid.indexOf(".-.");
+  if (-1!=pos)
+    uid=uid.substr(0,pos);
 
   //appel de la boite de changement de mot de passe
   PacomeDlgChangeMDP(uid);

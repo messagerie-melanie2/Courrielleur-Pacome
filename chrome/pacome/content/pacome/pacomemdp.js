@@ -649,7 +649,7 @@ function MajMdpClient(uid,mdp){
 
   //serveurs entrants
   PacomeTrace("MajMdpClient serveurs entrants");
-  let uid2=uid+MCE_SEP_BOITE;
+  let uid2=uid+".-.";
   let serveurs=MailServices.accounts.allServers;
   for (var i=0;i<serveurs.length;i++){
     let s=serveurs.queryElementAt(i, Components.interfaces.nsIMsgIncomingServer);

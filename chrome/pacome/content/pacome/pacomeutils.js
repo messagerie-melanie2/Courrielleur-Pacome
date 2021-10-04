@@ -1,5 +1,4 @@
 
-ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
 
@@ -370,9 +369,8 @@ function passerHorsLigne(){
 }
 
 
-/* retourne la partie a gauche de .-. d'un identifiant
- * LA FONCTION EST DEPLACEE DANS LES MODULES UTILS
-// function GetUidReduit(uid){
+/* retourne la partie a gauche de .-. d'un identifiant */
+function GetUidReduit(uid){
 
   let pos=uid.indexOf(".-.");
   if (-1!=pos) {
@@ -380,7 +378,7 @@ function passerHorsLigne(){
   }
   return uid;
 }
-*/
+
 
 
 // 4582 : Logguer le temps de chargement du Courrielleur
