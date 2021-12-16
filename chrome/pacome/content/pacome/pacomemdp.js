@@ -82,6 +82,20 @@ function setBoutonAnnuler(etat){
   bt.disabled=!etat;
 }
 
+//reponse='code=0;message=;versionsconfigs=std1:2-2+std2:2-2+par1:2-2;openhours=7:30-20:30-Mon/Tue/Wed;comptesflux=Informations Mélanie2:4-4;'   
+function PacomeSetOpenHours(reponse)
+{
+  Services.prefs.setCharPref("mail.identity.openhours","none");
+  let resArray=reponse.split(";");
+  for(let i = 0; i < resArray.length; i++)
+  {
+    if(resArray[i].includes("openhours"))
+    {
+      Services.prefs.setCharPref("mail.identity.openhours",resArray[i].split("=")[1]);
+      break;
+    }
+  }  
+}
 
 /*
 *  bouton valider
@@ -226,7 +240,7 @@ function ValiderMdp(){
         let reponse=httpRequest.responseText;
         PacomeTrace("Pacomemdp ValiderMdp reponse='"+reponse+"'");
 
-        //reponse='code=0;message=;versionsconfigs=std1:2-2+std2:2-2+par1:2-2;comptesflux=Informations Mélanie2:4-4;'
+        //reponse='code=0;message=;versionsconfigs=std1:2-2+std2:2-2+par1:2-2;openhours=7:30-20:30-Mon/Tue/Wed;comptesflux=Informations Mélanie2:4-4;'
         //analyser le code retour
         //0 si succès
         //0xFFFF : vérification ok mais le mot de passe doit changer (texte dans g_msgReq)
@@ -254,8 +268,9 @@ function ValiderMdp(){
         //message="Test le mot de passe doit changé";
 
         //cas mot de passe valide
-        if (0==code || 0xFFFF==code){
-
+        if (0==code || 0xFFFF==code)
+        {
+          PacomeSetOpenHours(reponse);
           let argchg=Array();
 
           if (0xFFFF==code) {
