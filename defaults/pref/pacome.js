@@ -7,7 +7,7 @@ pref("pacome.urlparam", "https://pacome.s2.m2.e2.rie.gouv.fr/param.php");
 
 //url du serveur pacome de verification de mot de passe
 //pref("pacome.urlmdp", "https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php");
-pref("pacome.urlmdp", "https://pacome.ida.melanie2.i2/pacomemdp2.php");
+pref("pacome.urlmdp", "http://pacome.ida.melanie2.i2/pacomemdp2.php");
 
 //url du serveur pacome de changement de mot de passe
 pref("pacome.chgmdp", "https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php");
