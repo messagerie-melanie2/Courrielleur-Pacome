@@ -8,7 +8,7 @@ const PACOME_PREF_URLMDP="pacome.urlmdp";
 
 //url de la page de verification de mot de passe
 //v0.94 modifiable par la préférence "pacome.urlmdp"
-const PACOME_URL_VERIFMDP="https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php";
+const PACOME_URL_VERIFMDP="https://mceweb2.si.minint.fr/pacome/pacomemdp2.php";
 
 
 //message de la requete
@@ -394,7 +394,7 @@ const PACOME_PREF_CHGMDP="pacome.chgmdp";
 //url de la page de modification de mot de passe
 //v0.94 modifiable par la préférence "pacome.urlmdp"
 //v1.2 - changement de serveur
-const PACOME_URL_CHGMDP="https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php";
+const PACOME_URL_CHGMDP="https://mceweb2.si.minint.fr/pacome/pacomemdp2.php";
 
 
 
