@@ -1,9 +1,9 @@
-pref("pacome.trace", false);
+pref("pacome.trace", true);
 pref("pacome.majauto", true);
 
 
 //url du serveur pacome de parametrage
-pref("pacome.urlparam", "https://pacome.s2.m2.e2.rie.gouv.fr/param.php");
+pref("pacome.urlparam", "https://mce-conf.krb.gendarmerie.fr/param.php");
 
 //url du serveur pacome de verification de mot de passe
 pref("pacome.urlmdp", "https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php");
@@ -24,7 +24,7 @@ pref("pacome.aidemiseajour", "http://bureautique.metier.e2.rie.gouv.fr/supports/
 
 
 //url synchronisation des etiquettes
-pref("courrielleur.etiquettes.service", "https://pacome.s2.m2.e2.rie.gouv.fr/pacometags.php");
+pref("courrielleur.etiquettes.service", "https://mce-conf.krb.gendarmerie.fr/pacometags.php");
 
 // synchronisation automatique des etiquettes au demarrage (si true)
 pref("courrielleur.etiquettes.majauto", true);
