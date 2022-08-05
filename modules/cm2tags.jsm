@@ -7,62 +7,61 @@
  *  Le document est au format JSON
  *
  *
- *  Liste complète des étiquettes
+ *  Liste complete des etiquettes
  *  -----------------------------
  *  "etiquettes":[ ETIQ, ... ],
  *  ETIQ={"key":"","tag":"","color":"","ordinal":""}
- *   => même attributs que nsIMsgTag
+
+ *   => meme attributs que nsIMsgTag
  *
- *  Liste des boîtes
+ *  Liste des boites
  *  -----------------------------
  *   "boites": [<uid>, ...]
  *  liste d'identifiants.
  *  Par convention, identifiant principal en premier.
  *
- *  Liste des étiquettes partagées
+ *  Liste des etiquettes partagees
  *  -----------------------------
- *  liste d'identifiants d'étiquettes partagées.
+ *  liste d'identifiants d'etiquettes partagees.
  *  "partages":[balp:key,...]
- *  balp : nom de partage
- *  key : identifiant d'étiquette
+ *  balp: nom de partage
+ *  key: identifiant d'etiquette
  *
- *  Liste des étiquettes synchronisées
+ *  Liste des etiquettes synchronisees
  *  -----------------------------
- *  (retournées par le service lors de la synchronisation précédente)
+ *  (retournees par le service lors de la synchronisation precedente)
  *  "synchro":{
  *  	"etiquettes":[ ETIQ, ... ],
  *  	"partages":[balp:key,...]
- *  },
 
-Format de configuration retournee par le service
-================================================
- *  Liste complète des étiquettes
+ Format de configuration retournee par le service
+ ================================================
+ *  Liste complete des etiquettes
  *  -----------------------------
  *  "etiquettes":[ ETIQ, ... ],
  *  ETIQ={"key":"","tag":"","color":"","ordinal":""}
- *   => même attributs que nsIMsgTag
+ *   => meme attributs que nsIMsgTag
  *
- *  Liste des boîtes partagees avec droit d'ecriture
+ *  Liste des boites partagees avec droit d'ecriture
  *  -----------------------------
  *   "droitsbalp": [<uid>, ...]
  *  liste d'identifiants.
  *  Par convention, identifiant principal en premier.
  *
- *  Liste des étiquettes partagées
+ *  Liste des etiquettes partagees
  *  -----------------------------
- *  liste d'identifiants d'étiquettes partagées.
+ *  liste d'identifiants d'etiquettes partagees.
  *  "partages":[balp:key,...]
- *  balp : nom de partage
- *  key : identifiant d'étiquette
-
-*/
-
+ *  balp: nom de partage
+ *  key: identifiant d'etiquette
+ 
+ */
 
 ChromeUtils.import("resource:///modules/mailServices.js");
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/iteratorUtils.jsm");
 ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
-
+ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
 
 const EXPORTED_SYMBOLS = ["ConfigCm2Tags", "MajConfigCm2Tags",
                     "cm2TagsPartage", "cm2TagsKeyIsShared", "cm2TagsPartageExist",
@@ -188,7 +187,7 @@ function ConfigCm2Tags(){
 
 
 /**
-* Met à jour la configuration a partir de la configuration du service
+* Met a jour la configuration a partir de la configuration du service
 * specifie la nouvelle configuration
 * strConfigService: chaine json de configuration retournee par le service
 * retour 0 si succes, -1 si erreur
@@ -471,12 +470,12 @@ function cm2TagsReadConfigFile(){
 
 /**
 * Fonction principal du processus de synchronisation des etiquettes
-* Séquence de synchronisation :
+* Sequence de synchronisation :
 * - Construction de la configuration de client
-* - Requête http auprès du service : envoie de la configuration
+* - Requete http auprès du service : envoie de la configuration
 * - Attente retour du service
-* - Si succès, traitement de la configuration retournée par le service :
-* - - mise a jour du client (étiquettes et partages)
+* - Si succes, traitement de la configuration retournee par le service :
+* - - mise a jour du client (etiquettes et partages)
 * - - sauvegarde de la nouvelle configuration
 * - Si erreur, log et/ou message
 *
@@ -503,7 +502,7 @@ function cm2SynchroniseTags(fncRappel){
   
   // si aucune boite pas de synchro
   if (0==configCm2.boites.length){
-    cm2DebugMsg("cm2SynchroniseTags aucune boîte pas de synchro");
+    cm2DebugMsg("cm2SynchroniseTags aucune boite pas de synchro");
     if (fncRappel){
       let result={};
       result.code="-1";
@@ -592,19 +591,23 @@ function cm2SynchroniseTags(fncRappel){
 */
 function cm2ReqServiceTags(strConfig, fncRappel){
 
-  // Requête http auprès du service : envoie de la configuration
+  // Requête http aupres du service : envoie de la configuration
   // asynchrone
   let httpRequest=new XMLHttpRequest();
 
   let url=ETIQUETTES_SERVICE_URL;
   try {
-    url=Services.prefs.getCharPref("courrielleur.etiquettes.service");
+    const krb = Services.prefs.getBoolPref('pacome.krbauth.enabled', false) && !Services.prefs.getBoolPref('pacome.krbauth.skip', false);
+    url=Services.prefs.getCharPref("courrielleur.etiquettes.service"+(krb ? '.krb':''));
   } catch(ex){}
   cm2DebugMsg("cm2ReqServiceTags url:"+url);
   cm2DebugMsg("cm2ReqServiceTags configuration:"+strConfig);
 
 
   httpRequest.open("POST", url, true);
+
+  // pour kerberos
+  httpRequest.withCredentials = true;
 
   httpRequest.setRequestHeader("Accept-Charset", "UTF-8");
   httpRequest.setRequestHeader("Content-Type", "application/json");
@@ -652,7 +655,7 @@ function cm2ReqServiceTags(strConfig, fncRappel){
     if (fncRappel){
       let result={};
       result.code=(0==statut)?-1:statut;
-      result.erreur=(0==statut)?"Erreur réseau lors de la synchronisation":request.statusText;
+      result.erreur=(0==statut)?"Erreur reseau lors de la synchronisation":request.statusText;
       fncRappel(result, null);
     }
     return;
