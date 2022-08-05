@@ -2,6 +2,7 @@
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/MailUtils.js");
 ChromeUtils.import("resource:///modules/mailServices.js");
+ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
 
 
 /* constantes des actions de parametrage */
@@ -58,7 +59,7 @@ var gPacomeAssitVars={
 }
 
 
-//liste des caractères valides pour l'identifiant
+//liste des caracteres valides pour l'identifiant
 //v2.4: pas de majuscules
 //const PACOME_FILTRE_UID=/([a-zA-Z0-9\.\-])+/g;
 //const PACOME_FILTRE_UID=/([a-z0-9\.\-])+/g;
@@ -72,18 +73,18 @@ const PACOME_FILTRE_UID=/[a-z0-9\-\.\'_]+(\@[a-z0-9\-\.]*)?/i;
 * Configuration 1ere utilisation
 * Configuration parametrage manuel
 *
-*  Paramétrage des pages:
-*  PACOME_PAGES_xxx_IDS : identifiants des pages dans l'ordre d'exécution
+*  Parametrage des pages:
+*  PACOME_PAGES_xxx_IDS : identifiants des pages dans l'ordre d'execution
 *  PACOME_PAGES_xxx_INIT : fonctions d'initialisation des pages
 *  PACOME_PAGES_xxx_QUITTE : fonctions de sortie des page sur bouton suivant
 *
 * Navigation et fonctions de pages:
 * Bouton suivant:
-*  la fonction de sortie de page est appelée pour la page courante
-* la fonction d'initialisation est appelée pour la page suivant
+*  la fonction de sortie de page est appelee pour la page courante
+* la fonction d'initialisation est appelee pour la page suivant
 *  Bouton retour:
-*  la page courante est masquée
-*  la page précédente est affichée dans son état précédent
+*  la page courante est masquee
+*  la page precedente est affichee dans son etat precedent
 */
 
 /* pages en mode 1ere utilisation (ordre d'execution) */
@@ -143,10 +144,10 @@ var gIncomingServerListener = {
 
 
 /**
-*  Fonctions appelées par les pages de l'assistant
+*  Fonctions appelees par les pages de l'assistant
 */
 
-//méthode d'initialisation au démarrage
+//methode d'initialisation au demarrage
 function InitAssistant(){
 
   try{
@@ -159,7 +160,7 @@ function InitAssistant(){
 
     gPacomeAssitVars.ctrlSaisieUid=document.getElementById("pacomeuid");
 
-    //déterminer mode d'exécution
+    //determiner mode d'execution
     let uids=PacomeListeUid();
     if (0==uids.length){
       //1ere utilisation de pacome
@@ -224,7 +225,7 @@ function FermeAssistant(){
     gPacomeAssitVars.fncrappel();
 }
 
-/* initialisation page générique */
+/* initialisation page generique */
 function PageInit(){
 
   let page=gPacomeAssitVars.pagesids[gPacomeAssitVars.pagecourante];
@@ -246,7 +247,7 @@ function PageInit(){
   gPacomeAssitVars.pages[gPacomeAssitVars.pagecourante].hidden=false;
 }
 
-/* fonction générique sortie de page (sur bouton suivant)
+/* fonction generique sortie de page (sur bouton suivant)
   return : true si sortie valide, sinon false et reste sur la page
  */
 function PageQuitte(){
@@ -255,7 +256,7 @@ function PageQuitte(){
 }
 
 
-//wizard simulé : bouton Retour
+//wizard simule : bouton Retour
 function btPagePrecedente(){
 
   if (0==gPacomeAssitVars.pagecourante)
@@ -284,7 +285,7 @@ function btPagePrecedente(){
   gPacomeAssitVars.pages[gPacomeAssitVars.pagecourante].hidden=false;
 }
 
-//wizard simulé : bouton Suivant
+//wizard simule : bouton Suivant
 function btPageSuivante(){
 
   //sortie de page
@@ -347,14 +348,14 @@ function InitPageUid(){
 /* sortie page saisie identifiant */
 function SortiePageSaisieUid(){
 
-  //vérifier identifiant
+  //verifier identifiant
   let uid=document.getElementById("pacomeuid").value;
   if (null==uid || 0==uid.length){
     PacomeAfficheMsgIdMsgId("PacomeCompteEtatErreur", "RenseignerUtil");
     return false;
   }
 
-  //construire paramètres de requete
+  //construire parametres de requete
   let config="<pacome><identifiants><identifiant>"+uid+"</identifiant></identifiants>";
 
   //document de configuration
@@ -468,7 +469,7 @@ function btAjoutIdent(){
 
   let val=PacomeDlgSaisie(titre, texte, "Identifiant:", "", PACOME_FILTRE_UID);
   if (null!=val){
-    //vérifier que la valeur n'est pas dans la liste
+    //verifier que la valeur n'est pas dans la liste
     let pacomeuids=document.getElementById("pacomeuids");
     let items=pacomeuids.getElementsByTagName("listitem");
     if (null!=items && 0!=items.length){
@@ -505,7 +506,7 @@ function btSupprimeIdent(){
   }
 }
 
-//selection dans la liste des identifiants a changé
+//selection dans la liste des identifiants a change
 function SelectionIdents(){
 
   let idents=document.getElementById("pacomeuids");
@@ -1000,7 +1001,7 @@ function CreeElemLibelle(libelle){
   return elemlib;
 }
 
-/* retourne la sélection d'un élément richlistitem
+/* retourne la selection d'un element richlistitem
   sous forme d'un tableau avec "uid", "action", "libelle", "confid" et "libmenu"
 */
 function GetInfosElemList(richlistitem){
@@ -1022,7 +1023,7 @@ function GetInfosElemList(richlistitem){
   return infos;
 }
 
-/* retourne les éléments richlistitem d'une page */
+/* retourne les elements richlistitem d'une page */
 function GetPageListItems(pageid){
 
   let page=document.getElementById(pageid);
@@ -1033,7 +1034,7 @@ function GetPageListItems(pageid){
 
 
 /* sortie de la page Autres parametrages
-  vérifie qu'au moins une operation de paramétrage a été sélectionnée
+  verifie qu'au moins une operation de parametrage a ete selectionnee
 */
 function SortiePageAutres(){
 
@@ -1340,13 +1341,13 @@ function SortiePageFin(){
             tbl_results_p.push(results);
           }
         } else if (PACOME_ACTION_PRESERVE==infos["action"]) {
-          //mettre à jour numéro de version sans parametrer
+          //mettre à jour numero de version sans parametrer
           PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Mise a jour du numero de version du proxy sans parametrage", "");
           MajVersionProxy(gPacomeAssitVars.docpacomesrv);
         }
       }
     }
-    //sauvegarde préférence
+    //sauvegarde preference
     Services.prefs.savePrefFile(null);
   }
 
@@ -1507,7 +1508,7 @@ function SortiePageFin(){
 
   window.setCursor("auto");
 
-  //sauvegarde préférence
+  //sauvegarde preference
   Services.prefs.savePrefFile(null);
 
   // detection migration pop => imap
@@ -1554,8 +1555,8 @@ function GetImageRichListItem(richlistitem){
 
 
 /* traite l'action sur un element boite
-  simul: si true n'effectue pas les opérations en réel
-  return -1 si erreur, 0 si ne nécessite pas de traitement, 1 si succès
+  simul: si true n'effectue pas les operations en reel
+  return -1 si erreur, 0 si ne necessite pas de traitement, 1 si succes
 */
 function TraiteElementCompte(uid, confid, action, simul){
 
@@ -1603,7 +1604,7 @@ function TraiteElementCompte(uid, confid, action, simul){
     return 1;
   }
 
-  //non utilisée
+  //non utilisee
   else if (PACOME_ACTION_IGNORE==action){
 
     if (PACOME_ETAT_IGNORE==etat)
@@ -1648,10 +1649,10 @@ function TraiteElementCompte(uid, confid, action, simul){
   //preserve -> ne rien faire
   return 0;
 }
-
+// 
 /* traite l'action sur un element flux
-  simul: si true n'effectue pas les opérations en réel
-  return -1 si erreur, 0 si ne nécessite pas de traitement, 1 si succès
+  simul: si true n'effectue pas les operations en reel
+  return -1 si erreur, 0 si ne necessite pas de traitement, 1 si succes
 */
 function TraiteElementFlux(libelle, confid, action, simul){
 
@@ -1700,7 +1701,7 @@ function TraiteElementFlux(libelle, confid, action, simul){
     return 1;
   }
 
-  //non utilisée
+  //non utilisee
   else if (PACOME_ACTION_IGNORE==action){
 
     if (PACOME_ETAT_IGNORE==etat)
@@ -1820,12 +1821,12 @@ function ExtraitElementFlux(libelle){
 *
 *  @return true
 *
-*  implémentation :
+*  implementation :
 *
 */
 function onSaisieUid(){
 
-  //caractères autorisés
+  //caracteres autorises
   let str=gPacomeAssitVars.ctrlSaisieUid.value;
   if (""==str)
     return true;
@@ -1837,11 +1838,12 @@ function onSaisieUid(){
   str=str[0];
 
   //v0.91 suppression .-.
-  if (-1!=str.indexOf(".-.")){
+  if (-1!=str.indexOf(MCE_SEP_BOITE)){
     //message utilisateur
     PacomeAfficheMsgId("PacomeSaisieUidCar");
   }
-  str=str.replace(/\.\-\./g, "");
+  const re = new RegExp(MCE_SEP_BOITE, "g");
+  str=str.replace(re, "");
   gPacomeAssitVars.ctrlSaisieUid.value=str;
 
   return true;
@@ -1915,8 +1917,8 @@ function InsertCalUI(listecals, docagenda) {
 }
 
 /* traite l'action sur un element agenda
-  simul: si true n'effectue pas les opérations en réel
-  return -1 si erreur, 0 si ne nécessite pas de traitement, 1 si succès
+  simul: si true n'effectue pas les operations en reel
+  return -1 si erreur, 0 si ne necessite pas de traitement, 1 si succes
 */
 function TraiteElementAgenda(url, action, simul) {
 
@@ -1962,7 +1964,7 @@ function TraiteElementAgenda(url, action, simul) {
     return 1;
   }
 
-  //non utilisée
+  //non utilisee
   else if (PACOME_ACTION_IGNORE==action){
 
     if (PACOME_ETAT_IGNORE==etat){
@@ -2071,7 +2073,7 @@ function PacomeAffAg(){
 
 // detection migration pop => imap
 // tbl_results tableau remplit dans SortiePageFin
-// recherche des uid qui ont été paramétrés en imap et qui existent en pop
+// recherche des uid qui ont ete parametres en imap et qui existent en pop
 // retourne true si au moins une migration pop => imap
 function detectMigrePopImap(tbl_results){
 

@@ -1,9 +1,10 @@
 
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/mailServices.js");
+ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
 
 
-//traitement du bouton "Gérer les comptes"
+//traitement du bouton "Gerer les comptes"
 //appel l'assistant Pacome
 function btGererComptes() {
 
@@ -16,7 +17,7 @@ function btGererComptes() {
   let ret=PacomeAfficheAssistant();
 
   if (1==ret){
-    //l'assistant a modifier des données fermer le gestionnaire
+    //l'assistant a modifier des donnees fermer le gestionnaire
     window.close();
   }
 }
@@ -29,10 +30,10 @@ function initBoutonsCompte(menupopup){
   //appel fonction thunderbird originale
   initAccountActionsButtons(menupopup);
 
-  //compte sélectionné : AccountManager.js currentAccount
+  //compte selectionne : AccountManager.js currentAccount
   let account=getSelAccount();
 
-  //détection compte géré par Pacome
+  //detection compte gere par Pacome
   let bSupport=false;
   if (null!=account) {
     let confid=account.incomingServer.getCharValue("pacome.confid")
@@ -80,7 +81,7 @@ function initBoutonsCompte(menupopup){
 *  appelle la boîte de changement de mot de passe
 *
 *
-*  implémentation : détermine l'uid de l'utilisateur de compte par défaut et le passe en paramètre uid
+*  implementation : determine l'uid de l'utilisateur de compte par defaut et le passe en parametre uid
 *
 */
 function btMotDePasse(){
@@ -91,7 +92,7 @@ function btMotDePasse(){
     return;
   }
 
-  //uid de l'utilisateur du compte sélectionné
+  //uid de l'utilisateur du compte selectionne
   let compte=getSelAccount();
   if (null==compte){
     PacomeMsgNotif("Erreur", gPacomeMsgErreur);
@@ -101,11 +102,11 @@ function btMotDePasse(){
     PacomeAfficheMsgId("PacomeErreurCompteSel");
     return;
   }
-  //cas identifiant boite partagée
+  //cas identifiant boite partagee .-.
   let uid=compte.incomingServer.username;
-  let pos=uid.indexOf(".-.");
-  if (-1!=pos)
-    uid=uid.substr(0,pos);
+  let compos=SplitUserBalp(uid);
+  if (compos && 2==compos.length)
+    uid=compos[0];
 
   //appel de la boite de changement de mot de passe
   PacomeDlgChangeMDP(uid);
@@ -114,7 +115,7 @@ function btMotDePasse(){
 
 
 /**
-*  retourne l'objet du compte sélectionné dans le gestionnaire de comptes
+*  retourne l'objet du compte selectionne dans le gestionnaire de comptes
 *
 *
 *  @return si succes retourne une instance nsIMsgAccount
@@ -136,14 +137,14 @@ function getSelAccount(){
 
 
 /**
-*  gére le bouton de suppression de compte original
+*  gere le bouton de suppression de compte original
 *
 *
 *  @return si succes retourne true
 * si erreur retourne false
 *
-*  implémentation : appelle la fonction originale onRemoveAccount
-*  si le compte est effectivement supprimé, la configuration Pacome du compte est supprimée (préférence pacome.comptes)
+*  implementation : appelle la fonction originale onRemoveAccount
+*  si le compte est effectivement supprime, la configuration Pacome du compte est supprimee (preference pacome.comptes)
 *
 */
 function onSupprimeCompte(e){

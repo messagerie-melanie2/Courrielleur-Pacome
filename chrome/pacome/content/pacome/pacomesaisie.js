@@ -1,4 +1,6 @@
 
+ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
+
 var gPacomeSaisieRegExp=null;
 
 var gPacomeSaisieCtrl=null;
@@ -52,11 +54,12 @@ function ValideSaisie(){
   str=str[0];
 
   //v0.91 suppression .-.
-  if (-1!=str.indexOf(".-.")){
+  if (-1!=str.indexOf(MCE_SEP_BOITE,)){
     //message utilisateur
     PacomeAfficheMsgId("PacomeSaisieUidCar");
   }
-  
-  str=str.replace(/\.\-\./g, "");
+
+  const re = new RegExp(MCE_SEP_BOITE, "g");
+  str=str.replace(re, "");
   gPacomeSaisieCtrl.value=str;
 }

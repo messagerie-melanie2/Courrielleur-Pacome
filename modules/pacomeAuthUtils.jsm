@@ -3,6 +3,7 @@
 */
 
 
+ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/mailServices.js");
 ChromeUtils.import("resource://calendar/modules/calUtils.jsm");
@@ -11,12 +12,12 @@ const Cc=Components.classes;
 const Ci=Components.interfaces;
 
 
-const EXPORTED_SYMBOLS = [ "PacomeAuthUtils", "NON_MELANIE2", "MSG_MELANIE2", "APP_MELANIE2"];
+const EXPORTED_SYMBOLS = [ "PacomeAuthUtils", "NON_MELANIE2", "MSG_MELANIE2", "APP_MELANIE2", "MCE_SEP_BOITE", "SplitUserBalp"];
 
 //serveurs de messagerie melanie2
 const regServeursMel2=/^amelie-([\d]{1,2}\.ac|ida01(\.ida)?)\.melanie2\.i2$|^(amelie|smtp)\.s2\.m2\.e2\.rie\.gouv\.fr$/;
 
-//serveurs melanie2 dont l'authentification est basée sur le compte principal
+//serveurs melanie2 dont l'authentification est basee sur le compte principal
 const regServeursAppM2=/^(pacome|pacome\.ida|melanie2web|agenor|edroh|davy\.ida|davy|yvad|syncon|nocnys)(\.melanie2\.i2|defi\.application\.i2|\.s2\.m2\.e2\.rie\.gouv\.fr)$/;
 
 const ExpProxyAmande=/(.e2.rie.gouv.fr|.i2)$/;
@@ -61,8 +62,8 @@ var PacomeAuthUtils= {
   },
 
   // retourne instance nsIMsgAccount
-  //Test du compte de messagerie par défaut. Si compte pacome, on prend l'uid réduit.
-  //Sinon parcours de comptes de messagerie et prise en compte du premier compte pacome trouvé.
+  //Test du compte de messagerie par defaut. Si compte pacome, on prend l'uid reduit.
+  //Sinon parcours de comptes de messagerie et prise en compte du premier compte pacome trouve.
   GetComptePrincipal: function() {
 
     let accmanager=MailServices.accounts;
@@ -103,21 +104,21 @@ var PacomeAuthUtils= {
 
     let uid=cp.incomingServer.username;
 
-    return this.GetUidReduit(uid);
+    return /*this.*/GetUidReduit(uid);
   },
 
-  // retourne uid réduit de uid (partie à gauche de .-.)
-  GetUidReduit: function(uid){
+  /*/ retourne uid reduit de uid (partie a gauche de .-.)
+  // GetUidReduit: function(uid){
 
     if (null==uid || ""==uid)
       return uid;
 
-    let pos=uid.indexOf(".-.");
+    let pos=uid.indexOf(MCE_SEP_BOITE);
     if (-1!=pos) {
       return uid.substr(0,pos);
     }
     return uid;
-  },
+  },*/
 
   // test si hostname est dans melanie2 (courrier, agenda, etc)
   isMelanie2Host: function(hostname){
@@ -153,7 +154,7 @@ var PacomeAuthUtils= {
   },
 
   // v3.4 - recherche uid pour agenda
-  // recherche agenda correspondant, si l'identité mail associée est valide retourne identifiant
+  // recherche agenda correspondant, si l'identite mail associee est valide retourne identifiant
   // sinon retour null
   GetUidAgenda: function(urlagenda){
 
@@ -282,11 +283,11 @@ var PacomeAuthUtils= {
     }
 
     let args=new Object();
-    args.uid=this.GetUidReduit(username);
+    args.uid=/*this.*/GetUidReduit(username);
 
     aParent.openDialog("chrome://pacome/content/pacomemdp.xul", "_blank", "chrome,modal,centerscreen,titlebar", args);
 
-    // 0005099: Action en cas de non-saisie de mot de passe au démarrage
+    // 0005099: Action en cas de non-saisie de mot de passe au demarrage
     if (0==args.res &&
         ""==args.mdp){
       Services.io.offline=true;
@@ -328,13 +329,13 @@ var PacomeAuthUtils= {
 
     //gestion pacome -> determiner login sur la base de l'identifiant (reduit)
     //v6.5 ajout :
-    //mantis 4171 : La règle à implémenter serait :
+    //mantis 4171 : La regle a implementer serait :
     //Lors d'une demande d'authentification avec un identifiant <uid0>,
     //si <uid0> se trouve être la partie droite d'un compte de balp <uid1.-.uid0>
     //et que <uid1> existe comme compte supportant authentification M2 alors utiliser le mdp de <uid1> pour <uid0>
     let logins=[];
     let srvname=this.extraitServeur(hostname);
-    let uidreduit=this.GetUidReduit(username);
+    let uidreduit=/*this.*/GetUidReduit(username);
     let serveurs=MailServices.accounts.allServers;
     const nbs=serveurs.length;
     for (let i=0;i<nbs;i++){
@@ -344,7 +345,7 @@ var PacomeAuthUtils= {
           null!=srv.password && ""!=srv.password &&
           MSG_MELANIE2==this.TestServeurMelanie2(srv.hostName)){
           //test sur uid reduit
-          if (uidreduit==this.GetUidReduit(srv.username)){
+          if (uidreduit==/*this.*/GetUidReduit(srv.username)){
             let login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Components.interfaces.nsILoginInfo);
             login.init(srvname, null, null, username, srv.password, null, null);
             logins.push(login);
@@ -353,8 +354,8 @@ var PacomeAuthUtils= {
 
           } else {
             //mantis 4171
-            let compos=srv.username.split(/\.-\./);
-            if (2==compos.length){
+            let compos=SplitUserBalp(srv.username);
+            if (compos && 2==compos.length){
               let user=compos[0];
               let partage=compos[1];
               //ici pas uidreduit mais username presente
@@ -489,7 +490,7 @@ var PacomeAuthUtils= {
       }
       let login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
 
-      login.init(hostname, null, null, this.GetUidReduit(cp.incomingServer.username),
+      login.init(hostname, null, null, /*this.*/GetUidReduit(cp.incomingServer.username),
                   cp.incomingServer.password, null, null);
       logins.push(login);
       count.value=1;
@@ -500,7 +501,7 @@ var PacomeAuthUtils= {
 
   //Modification du mot de passe pour les comptes Pacome
   //si uid null => tous les comptes Pacome
-  //si mdp null => mot de passe réinitialise.
+  //si mdp null => mot de passe reinitialise.
   modifyMdpPacome: function(uid, mdp) {
 
     if (null==uid || ""==uid)
@@ -508,7 +509,7 @@ var PacomeAuthUtils= {
 
     let uidm=null;
     if (null!=uid)
-      uidm=this.GetUidReduit(uid);
+      uidm=/*this.*/GetUidReduit(uid);
 
     //serveurs entrants
     let serveurs=MailServices.accounts.allServers;
@@ -519,7 +520,7 @@ var PacomeAuthUtils= {
           (s.type=="imap" || s.type=="pop3") &&
           this.isMelanie2Host(s.hostName)){
         if (null!=uidm) {
-          let uid2=this.GetUidReduit(s.username);
+          let uid2=/*this.*/GetUidReduit(s.username);
           if (uidm!=uid2)
             continue;
         }
@@ -533,7 +534,7 @@ var PacomeAuthUtils= {
       if (s instanceof Ci.nsISmtpServer &&
           this.isMelanie2Host(s.hostname)){
         if (null!=uidm) {
-          let uid2=this.GetUidReduit(s.username);
+          let uid2=/*this.*/GetUidReduit(s.username);
           if (uidm!=uid2)
             continue;
         }

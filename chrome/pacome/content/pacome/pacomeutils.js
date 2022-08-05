@@ -1,4 +1,5 @@
 
+ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
 
@@ -30,8 +31,8 @@ function PacomeGetCharPref(pref){
 /**
 *  Ouvre un lien externe
 *
-*  @param pref nom de la préférence qui contient l'url
-*  si la préférence n'existe pas, prendre la valeur dans le tableau gUrlsAidesPacome
+*  @param pref nom de la preference qui contient l'url
+*  si la preference n'existe pas, prendre la valeur dans le tableau gUrlsAidesPacome
 */
 function PacomeOuvreLienPref(pref){
 
@@ -62,9 +63,9 @@ function PacomeOuvreUrlExterne(url){
 //liste des chaines pacome.properties
 var g_messages_pacome=null;
 
-//code dernière erreur
+//code derniere erreur
 var gPacomeCodeErreur=0;
-//message dernière erreur
+//message derniere erreur
 var gPacomeMsgErreur="";
 
 function PacomeSetErreurGlobale(code, msg){
@@ -107,7 +108,7 @@ function PacomeAfficheMsgId(msgid){
 *  Affichage d'un message à partir de l'identifiant dans pacome.properties
 *
 *  @param msgid identifiant du message
-*  @param msg2 message additionnel affiché sur nouvelle ligne (optionnel)
+*  @param msg2 message additionnel affiche sur nouvelle ligne (optionnel)
 */
 function PacomeAfficheMsgId2(msgid,msg2){
 
@@ -120,8 +121,8 @@ function PacomeAfficheMsgId2(msgid,msg2){
 *  Affichage d'un message à partir de l'identifiant dans pacome.properties
 *
 *  @param msgid identifiant du message
-*  @param msg2 message additionnel affiché sur nouvelle ligne
-*  @param msg3 message additionnel affiché sur nouvelle ligne
+*  @param msg2 message additionnel affiche sur nouvelle ligne
+*  @param msg3 message additionnel affiche sur nouvelle ligne
 */
 function PacomeAfficheMsgId3(msgid, msg2, msg3){
 
@@ -155,7 +156,7 @@ function PacomeAfficheMsgIdGlobalErr(msgid){
 
 
 /**
-*  Génération de traces
+*  Generation de traces
 */
 var gPacomeInitTrace=false;
 var gPacomeConsole=null;
@@ -216,7 +217,7 @@ function PacomeMsgConfirm(titre, texte){
   return 0;
 }
 
-//message de confirmation avec libellés boutons -> boutons libbtOUI/libbtNON
+//message de confirmation avec libelles boutons -> boutons libbtOUI/libbtNON
 //retour: 1 si OUI, sinon 0
 function PacomeMsgConfirmBt(titre, texte, libbtOUI, libbtNON){
 
@@ -326,7 +327,7 @@ function PacomeInitLogs(){
 }
 
 
-//écriture evenement
+//ecriture evenement
 function PacomeEcritLog(source, description, donnees){
 
   if (null==gPacomeFichierLogs)
@@ -359,7 +360,7 @@ function PacomeEcritLog(source, description, donnees){
 
 
 /*
-*  passe le client en mode hors-ligne (déconnecté)
+*  passe le client en mode hors-ligne (deconnecte)
 *
 */
 function passerHorsLigne(){
@@ -369,8 +370,9 @@ function passerHorsLigne(){
 }
 
 
-/* retourne la partie a gauche de .-. d'un identifiant */
-function GetUidReduit(uid){
+/* retourne la partie a gauche de .-. d'un identifiant
+ * LA FONCTION EST DEPLACEE DANS LES MODULES UTILS
+// function GetUidReduit(uid){
 
   let pos=uid.indexOf(".-.");
   if (-1!=pos) {
@@ -378,7 +380,7 @@ function GetUidReduit(uid){
   }
   return uid;
 }
-
+*/
 
 
 // 4582 : Logguer le temps de chargement du Courrielleur
