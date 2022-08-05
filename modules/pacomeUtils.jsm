@@ -13,7 +13,7 @@ const Ci=Components.interfaces;
 
 this.EXPORTED_SYMBOLS=[
   "gParams", "PacomeStoreParamsCreds", "PacomeFetchParamsCreds", "PacomeGetUrlParams",
-  "GetUidReduit", "SplitUserBalp", "MCE_SEP_BOITE"
+  "GetUidReduit", "SplitUserBalp", "MCE_SEP_BOITE", "regServeursMCE"
 ];
 
 const gParams = {

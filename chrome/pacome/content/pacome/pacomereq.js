@@ -28,6 +28,9 @@ const PACOMESRV_PARAM_VER="extver";
 */
 function RequeteParametrage(config, fncrappel, bmaj, creds = null){
 
+//amr
+console.log('+++++++++++ RequeteParametrage +++', config, creds);
+
   try {
 
     PacomeTrace("RequeteParametrage");

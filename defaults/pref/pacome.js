@@ -10,7 +10,7 @@ pref("network.negotiate-auth.trusted-uris", ".krb.gendarmerie.fr, intranet.sso.g
 
 //url du serveur pacome de parametrage
 pref("pacome.urlparam", "https://mce-conf.krb.gendarmerie.fr/param.php");
-pref("pacome.urlparam.krb", "http://intranet.krb.gendarmerie.fr:14382/krbparam.php");
+pref("pacome.urlparam.krb", "https://mce-conf.krb.gendarmerie.fr/krbparam.php");
 //url du serveur pacome de parametrage securisee hors krb ?
 pref("pacome.urlparam.auth", true);
 
