@@ -5,6 +5,8 @@
 <!-- pacomecompte.xul -->
 <!ENTITY pacome.titre "Assistant de gestion des comptes de messagerie Mél">
 <!ENTITY pacome.libnom "Identifiant(s) de l'utilisateur">
+<!ENTITY pacome.saisieuid "Saisir l'identifiant ou l'adresse courriel pour configurer automatiquement les boites a lettres. Les caractÃ¨res autorises sont: a-z 0-9 .-@">
+<!ENTITY pacome.krbdisable "Ne pas utiliser la gestion automatique de l'identite (DECONSEILLÃ‰)">
 
 <!ENTITY pacome.resume "Résumé des paramétrages à modifier">
 
