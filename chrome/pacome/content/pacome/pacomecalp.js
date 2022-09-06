@@ -55,7 +55,7 @@ function pacomeCalConfiguration() {
 
     let agenda=agendas[i];
 
-    if (agenda.getProperty("pacome")) {
+    if (agenda && agenda.getProperty("pacome")) {
 
       let url=agenda.getProperty("uri");
       PacomeTrace("pacomeCalConfiguration url="+url);
@@ -417,7 +417,8 @@ function pacomeCalIdentiteFromUid(uid) {
     let ident=idents.queryElementAt(i,Components.interfaces.nsIMsgIdentity);
 
     let pref="mail.identity."+ident.key+".identityName";
-    let uid_pref=Services.prefs.getCharPref(pref);
+    // la pref peut etre absente si on n'est pas sur un compte Pacome => null
+    let uid_pref=Services.prefs.getCharPref(pref, null);
 
     PacomeTrace("pacomeCalIdentiteFromUid uid_pref="+uid_pref);
     if (uid_pref==uid) {
@@ -472,7 +473,7 @@ function pacomeCalEtat(url) {
 
     let agenda=agendas[i];
 
-    if (agenda.getProperty("pacome") &&
+    if (agenda && agenda.getProperty("pacome") &&
         url==agenda.getProperty("uri")) {
       return PACOME_ETAT_PARAM;
     }

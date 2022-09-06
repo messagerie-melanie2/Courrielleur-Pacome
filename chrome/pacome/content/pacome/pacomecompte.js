@@ -3,6 +3,8 @@ ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/MailUtils.js");
 ChromeUtils.import("resource:///modules/mailServices.js");
 ChromeUtils.import("resource:///modules/pacomeUtils.jsm");
+//dggn on ajoute de quoi chercher le compte par default pour savoir si on doit le changer
+ChromeUtils.import("resource://gre/modules/pacomeAuthUtils.jsm");
 
 
 /* constantes des actions de parametrage */
@@ -22,11 +24,11 @@ var gPacomeAssitVars={
 
   // par defaut on ne fait pas de kerberos
   kerberosAvailable: false,
-  // checkbox permettant a l'utilisteur d'ignoer kerberos
+  // checkbox permettant a l'utilisteur d'ignorer kerberos
   krbDisable: null,
   // au final, utilise-t-on kerberos ?
   useKerberos: false,
-  // la requÃªte des paramÃ¨tres doit-elle Ãªtre authentifiee ?
+  // la requete des parametres doit-elle etre authentifiee ?
   paramsAuth: false,
 
   //controle saisie identifiant dans l'assistant
@@ -167,7 +169,7 @@ function InitAssistant(){
     if (Services.prefs.getBoolPref(gParams.PREF_KRB_ENABLED, false)) {
 
       gPacomeAssitVars.kerberosAvailable = true;
-      // peut-Ãªtre que l'utilisateur a desactive kerberos (Parcome mode manuel)
+      // peut-etre que l'utilisateur a desactive kerberos (Pacome mode manuel)
       gPacomeAssitVars.useKerberos = ! Services.prefs.getBoolPref(gParams.PREF_KRB_SKIP, false);
 
       Array.from(document.getElementsByClassName("authparam")).forEach(
@@ -396,7 +398,7 @@ function InitPageUid(){
   if (gPacomeAssitVars.useKerberos) {
     fetchKerberosId();
   } else
-    // gÃ¨re-t-on un password ?
+    // gere-t-on un password ?
     if (gPacomeAssitVars.paramsAuth) {
     // Si on a un login/password dans le gestionnaire de mots de passe, on le prerenseigne (mode maj)
     const login = PacomeFetchParamsCreds(PacomeGetUrlParams());
@@ -1474,6 +1476,13 @@ function SortiePageFin(){
 
   let elems=GetPageListItems(pagecompteid);
   if (null!=elems){
+
+    // DGGN on va ajouter des comptes. Mais a-t-on deja un bon compte Pacome par defaut ? Sinon faudra le setter
+    let cp=PacomeAuthUtils.GetComptePrincipal();
+    console.log('=============================================================');
+    console.log(cp ? 'ON A UN COMPTE':'ON N A PAS DE COMPTE', cp);
+    console.log('=============================================================');
+
     for (var i=0;i<elems.length;i++){
 
       let res=0;
@@ -1516,7 +1525,21 @@ function SortiePageFin(){
           tbl_results.push(results);
         }
       }
+      }
+
+    // peut-etre que nous venons de creer le premier compte pacome
+    // si nous avions des comptes existants, il faut le passer en compte par default
+    if (!cp) {
+      cp=PacomeAuthUtils.GetComptePrincipal();
+      if (cp && cp.incomingServer && cp.incomingServer.key) {
+        console.log('=============================================================');
+        console.log('ON POSITIONNE LE SERVEUR PAR DEFAULT A ',cp.incomingServer.key);
+        Services.prefs.setCharPref("mail.accountmanager.defaultaccount", cp.incomingServer.key);
+        MailServices.accounts.defaultAccount = cp;
+        console.log('============================================================');
+      }
     }
+
   }
 
   //operations de parametrage des agendas

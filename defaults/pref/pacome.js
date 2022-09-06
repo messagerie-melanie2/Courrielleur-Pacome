@@ -40,3 +40,7 @@ pref("courrielleur.etiquettes.majauto", true);
 
 // synchronisation des etiquettes : generation d'un rapport de tests
 pref("courrielleur.etiquettes.rapportdetest", false);
+
+// les 2 devront etre kerberisees
+pref("calendar.attachments.url.melanie2web", "https://mce-conf.krb.gendarmerie.fr/services/download/");
+pref("calendar.attachments.url.login", "https://mce-conf.krb.gendarmerie.fr/login.php");
