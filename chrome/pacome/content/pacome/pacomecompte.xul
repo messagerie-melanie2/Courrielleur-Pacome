@@ -81,7 +81,7 @@
         <button label="Recommencer" class="pacome-btn-spaced" oncommand="fetchKerberosId();" />
       </vbox>
       <vbox id="krbok" hidden="true">
-        <description class="pacometexte">Le courrielleur va pouvoir Ãªtre configurÃ© pour le compte suivant :</description>
+        <description class="pacometexte">Le courrielleur va pouvoir être configuré pour le compte suivant :</description>
         <caption id="krbuid" label="Identifiant : " />
         <caption id="krbname" label="Compte : " />
       </vbox>
