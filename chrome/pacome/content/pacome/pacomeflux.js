@@ -111,6 +111,33 @@ function ParamCompteFlux(elemcompteflux){
   return 0;
 }
 
+/* Suppression d'un compte de flux non Pacome (migration DGGN)
+*/
+function DGGNpacomeSupCompteFlux(libelle){
+
+  try{
+    //parcours des comptes
+    let nbacc=MailServices.accounts.accounts.length;
+    for (var j=0;j<nbacc;j++){
+      let compte=MailServices.accounts.accounts.queryElementAt(j,Components.interfaces.nsIMsgAccount);
+      if (null==compte || null==compte.incomingServer) continue;
+
+      let prettyName=compte.incomingServer.prettyName;
+      PacomeTrace("Trouve le compte "+prettyName+ " de type "+compte.incomingServer.type+" serveur "+compte.incomingServer.hostName);
+
+      if (libelle===prettyName && "rss"===compte.incomingServer.type && !compte.incomingServer.getCharValue("pacome.confid")){
+        PacomeTrace("Suppression compte flux non Pacome " + libelle);
+        MailServices.accounts.removeAccount(compte);
+        return 1;
+      }
+    }
+  } catch(ex){
+    PacomeTrace("DGGNpacomeSupCompteFlux exception:"+ex);
+  }
+
+  return -1;
+}
+
 /* Suppression d'un compte de flux
   return 1 compte supprimé, -1 erreur
 */

@@ -77,8 +77,11 @@ var PacomeAuthUtils= {
     } catch(ex){}
 
     if (null!=cp && null!=cp.incomingServer && null!=cp.incomingServer.getCharValue("pacome.confid")){
+      console.log("Compte principal Pacome trouve : ", cp.incomingServer.hostName);
       return cp;
     }
+
+    console.log('compte principal non pacome ', cp.incomingServer.hostName);
 
     let nb=accmanager.accounts.length;
     for (let c=0;c<nb;c++){
@@ -86,9 +89,11 @@ var PacomeAuthUtils= {
       if (null!=cp && null!=cp.incomingServer &&
           ("imap"==cp.incomingServer.type || "pop3"==cp.incomingServer.type) &&
             null!=cp.incomingServer.getCharValue("pacome.confid")) {
+        console.log("Compte principal Pacome trouve en parsing: ", cp.incomingServer.hostName);
         return cp;
       }
     }
+    console.log("Compte principal Pacome non trouve");
     return null;
   },
 

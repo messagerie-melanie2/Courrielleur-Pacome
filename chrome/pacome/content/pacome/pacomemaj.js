@@ -43,6 +43,8 @@ function PacomeMajParam(retourfin){
 /* reception reponse parametrage de mise à jour */
 function ReceptionMajParam(responseXML){
 
+  PacomeEcritLog(PACOME_LOGS_MAJ, "++++++++ reponse serveur", JSON.stringify(responseXML));
+
   if (null==responseXML){
     PacomeTrace("ReceptionMajParam null==responseXML");
     PacomeEcritLog(PACOME_LOGS_MAJ, "reponse serveur absente", "");

@@ -1239,6 +1239,52 @@ function PacomeElementProxy(docparam){
   return null;
 }
 
+/* MIGRATION DGGN : suppression des adressbook tbSync
+*/
+function DGGNMigreAnnuaires(){
+
+  PacomeTrace("DGGNMigreAnnuaires");
+
+  abObm = Services.prefs.getCharPref("extensions.obm.addressbooks", "").split(",");
+
+  let supprimes = 0;
+  try {
+    let addressBooks=MailServices.ab.directories;
+    while (addressBooks.hasMoreElements()) {
+
+      let adrBook = addressBooks.getNext();
+
+      if (adrBook instanceof Components.interfaces.nsIAbDirectory) {
+
+        let prefid = adrBook.dirPrefId;
+        let shortId = prefid ? prefid.split(".")[2] : "*";
+        PacomeTrace("DGGNMigreAnnuaires dirPrefId=" + prefid);
+        if (Services.prefs.getCharPref(prefid + '.tbSyncProvider', null)) {
+          PacomeEcritLog(PACOME_LOGS_MODULE, "Suppression du carnet " + prefid, adrBook.URI);
+          MailServices.ab.deleteAddressBook(adrBook.URI);
+          Services.prefs.deleteBranch(prefid);
+          supprimes += 1;
+          PacomeEcritLog(PACOME_LOGS_MODULE, "Carnet supprime : " + prefid, adrBook.URI);
+        }
+        if (shortId && abObm.indexOf(shortId) !== -1) {
+          PacomeEcritLog(PACOME_LOGS_MODULE, "Suppression du carnet OBM " + prefid, adrBook.URI);
+          MailServices.ab.deleteAddressBook(adrBook.URI);
+          Services.prefs.deleteBranch(prefid);
+          supprimes += 1;
+          PacomeEcritLog(PACOME_LOGS_MODULE, "Carnet OBM supprime : " + prefid, adrBook.URI);
+        }
+
+
+      }
+    }
+  } catch (ex) {
+    PacomeTrace("DGGNMigreAnnuaires exception:"+ex);
+    PacomeEcritLog(PACOME_LOGS_MODULE, "DGGNMigreAnnuaires exception:"+ex);
+    return -2;
+  }
+  return supprimes;
+}
+
 
 /* pacome v3
 identifiant : Amde, Maia (identifiant dans le document de paramétrage)

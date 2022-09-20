@@ -23,6 +23,51 @@ const PACOME_IGNORE_CAL_SEPELEMS=";";
 
 const PACOME_CAL_PROVIDER="caldav";
 
+/*
+  Migration DGGN : on supprime les calendriers avec des URL MCE non geres par Pacome
+ */
+function DGGNpurgeCalMCEnonPacome() {
+
+  //agendas actifs
+  let calMan = cal.getCalendarManager();
+  if (null == calMan) {
+    PacomeTrace("DGGNpurgeCalMCEnonPacome pas de configuration d'agenda");
+    return -1;
+  }
+  let supprimes = 0;
+  try {
+    let agendas = calMan.getCalendars({});
+    const nb = agendas.length;
+    PacomeTrace("DGGNpurgeCalMCEnonPacome nb=" + nb);
+
+    for (var i = 0; i < nb; i++) {
+      let agenda = agendas[i];
+      if (agenda && agenda.getProperty("uri")) {
+
+        let uri = agenda.getProperty("uri");
+        PacomeEcritLog(PACOME_LOGS_MODULE, "Agenda tbsync ? " + uri, agenda.getProperty("tbSyncProvider") ? "oui":"non");
+        PacomeEcritLog(PACOME_LOGS_MODULE, "Agenda OBM ? " + uri, agenda.getProperty("X-OBM-EMAIL") ? "oui":"non");
+
+        if (uri && ((uri.match(/^https:\/\/mce-dav.krb.gendarmerie.fr\//)
+            && agenda.getProperty("tbSyncProvider") && !agenda.getProperty("pacome"))
+            || agenda.getProperty("X-OBM-EMAIL")) ) {
+
+          PacomeEcritLog(PACOME_LOGS_MODULE, "Ancien agenda OBM ou MCE non Pacome trouve tbSync?" + uri, agenda.getProperty("tbSyncProvider"));
+          calMan.unregisterCalendar(agenda);
+          calMan.removeCalendar(agenda);
+          supprimes += 1;
+          PacomeEcritLog(PACOME_LOGS_MODULE, "Ancien agenda MCE non Pacome supprime", uri);
+          PacomeTrace("DGGNpurgeCalMCEnonPacome agenda supprime url=" + uri);
+        }
+      }
+    }
+  } catch(ex){
+    PacomeTrace("DGGNpurgeCalMCEnonPacome exception:"+ex);
+    PacomeEcritLog(PACOME_LOGS_MODULE, "DGGNpurgeCalMCEnonPacome exception:"+ex, ex);
+    return -2;
+  }
+  return supprimes;
+}
 
 /* calcul la configuration des agendas pour les requetes client
  retourne le contenu pour la fonction PacomeDocumentConfig

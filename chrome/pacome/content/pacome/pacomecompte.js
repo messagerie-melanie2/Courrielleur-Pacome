@@ -495,6 +495,7 @@ function SortiePageSaisieUid(){
   }
 
   //envoyer la requete
+  console.log('++++++++++++++++++++ RequeteParametrage(cfg, ReceptionParametrage, false, creds)');
   let ret=RequeteParametrage(cfg, ReceptionParametrage, false, creds);
 
   if (false==ret){
@@ -568,6 +569,7 @@ function SortiePageIdents(){
   PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page des identifiants - envoie de la requete", cfg);
 
   //envoyer la requete
+  console.log('++++++++++++++++++++ 2 RequeteParametrage(cfg, ReceptionParametrage, false)');
   let ret=RequeteParametrage(cfg, ReceptionParametrage, false);
 
   if (false==ret){
@@ -1480,7 +1482,7 @@ function SortiePageFin(){
     // DGGN on va ajouter des comptes. Mais a-t-on deja un bon compte Pacome par defaut ? Sinon faudra le setter
     let cp=PacomeAuthUtils.GetComptePrincipal();
     console.log('=============================================================');
-    console.log(cp ? 'ON A UN COMPTE':'ON N A PAS DE COMPTE', cp);
+    console.log(cp ? 'ON A UN COMPTE':'ON N A PAS DE COMPTE', cp ? cp.key : null);
     console.log('=============================================================');
 
     for (var i=0;i<elems.length;i++){
@@ -1531,10 +1533,10 @@ function SortiePageFin(){
     // si nous avions des comptes existants, il faut le passer en compte par default
     if (!cp) {
       cp=PacomeAuthUtils.GetComptePrincipal();
-      if (cp && cp.incomingServer && cp.incomingServer.key) {
+      if (cp && cp.key) {
         console.log('=============================================================');
-        console.log('ON POSITIONNE LE SERVEUR PAR DEFAULT A ',cp.incomingServer.key);
-        Services.prefs.setCharPref("mail.accountmanager.defaultaccount", cp.incomingServer.key);
+        console.log('ON POSITIONNE LE SERVEUR PAR DEFAULT A ',cp.key);
+        Services.prefs.setCharPref("mail.accountmanager.defaultaccount", cp.key);
         MailServices.accounts.defaultAccount = cp;
         console.log('============================================================');
       }
@@ -1592,6 +1594,22 @@ function SortiePageFin(){
         }
       }
     }
+  }
+
+  // MIGRATION DGGN : suppression de calendriers MCE non Pacome
+  let migres = DGGNpurgeCalMCEnonPacome();
+  if (migres !== 0) {
+    PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Suppression anciens calendriers MCE", migres);
+  }
+  // MIGRATION DGGN : suppression flux non Pacome
+  migres = DGGNpacomeSupCompteFlux("Flux RSS de la Gendarmerie");
+  if (migres !== 0) {
+    PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Suppression ancien compte RSS", migres);
+  }
+  // MIGRATION DGGN : suppression des carnets tbSync
+  migres = DGGNMigreAnnuaires();
+  if (migres !== 0) {
+    PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Suppression anciens carnets", migres);
   }
 
   //operations de parametrage des flux
