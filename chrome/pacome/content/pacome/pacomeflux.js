@@ -293,7 +293,8 @@ function pacomeAjoutFlux(serveur, flux){
 
   } catch(ex){
     PacomeTrace("pacomeAjoutFlux exception:"+ex);
-    return -1;
+    if (""+ex !== "TypeError: this._rowMap is null")
+      return -1;
   }
 
   return 0;

@@ -261,17 +261,18 @@ function cm2ReparePbHostnames(){
         continue;
 
       // verifier hostname du flux
-      let hostName=server.hostName;
-      if ("Feeds"!=hostName &&
-          "InformationsMelanie2"!=hostName){
-
-        server.hostName="Feeds";
-
-        // forcer maj
-        server.setCharValue("pacome.version", 3);
-
-        bRestart=true;
-      }
+      // DGGN : verification desactivee, specifique MTES
+      // let hostName=server.hostName;
+      // if ("Feeds"!=hostName &&
+      //     "InformationsMelanie2"!=hostName){
+      //
+      //   server.hostName="Feeds";
+      //
+      //   // forcer maj
+      //   server.setCharValue("pacome.version", 3);
+      //
+      //   bRestart=true;
+      // }
     }
   }
 
