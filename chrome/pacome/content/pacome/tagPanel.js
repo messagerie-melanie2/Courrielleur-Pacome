@@ -35,10 +35,9 @@ function cm2TagsInit(){
       let balp=[];
       balp["uid"]=uid;
       balp["cn"]=server.prettyName;
-      if (-1==pos)
-        gBaliConf.push(balp);
-      else
-        gBalpConf.push(balp);
+      
+      // #11 Gitlab - Impossible de gérer les étiquettes
+      gBaliConf.push(balp);
     }
   }
   // derniere synchro
