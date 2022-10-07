@@ -49,7 +49,7 @@ function DGGNpurgeCalMCEnonPacome() {
         PacomeEcritLog(PACOME_LOGS_MODULE, "Agenda OBM ? " + uri, agenda.getProperty("X-OBM-EMAIL") ? "oui":"non");
 
         if (uri && ((uri.match(/^https:\/\/mce-dav.krb.gendarmerie.fr\//)
-            && agenda.getProperty("tbSyncProvider") && !agenda.getProperty("pacome"))
+            /* && agenda.getProperty("tbSyncProvider") */ && !agenda.getProperty("pacome"))
             || agenda.getProperty("X-OBM-EMAIL")) ) {
 
           PacomeEcritLog(PACOME_LOGS_MODULE, "Ancien agenda OBM ou MCE non Pacome trouve tbSync?" + uri, agenda.getProperty("tbSyncProvider"));

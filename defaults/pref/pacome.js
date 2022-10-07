@@ -26,9 +26,9 @@ pref("pacome.proxy.version", "14");
 
 pref("pacome.lienpolitiquemdp", "http://bureautique.metier.e2.rie.gouv.fr/supports/messagerie/courrielleur/co/81changerMDP.html");
 
-pref("pacome.aideparametrage", "http://bureautique.metier.e2.rie.gouv.fr/supports/messagerie/courrielleur/co/85gererCompte.html");
+pref("pacome.aideparametrage", "http://wiki.sso.gendarmerie.fr/intranet/Messagerie:Parametrage_Courrielleur");
 
-pref("pacome.aidemiseajour", "http://bureautique.metier.e2.rie.gouv.fr/supports/messagerie/courrielleur/co/85gererCompte.html");
+pref("pacome.aidemiseajour", "http://wiki.sso.gendarmerie.fr/intranet/Messagerie:Parametrage_Courrielleur");
 
 
 //url synchronisation des etiquettes

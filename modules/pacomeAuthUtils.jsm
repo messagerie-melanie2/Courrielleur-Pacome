@@ -81,7 +81,7 @@ var PacomeAuthUtils= {
       return cp;
     }
 
-    console.log('compte principal non pacome ', cp.incomingServer.hostName);
+    console.log('compte principal non pacome ', cp ? cp.incomingServer.hostName: '');
 
     let nb=accmanager.accounts.length;
     for (let c=0;c<nb;c++){
