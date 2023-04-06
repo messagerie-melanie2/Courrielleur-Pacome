@@ -6,6 +6,7 @@
 
 
 ChromeUtils.import("resource://gre/modules/Services.jsm");
+ChromeUtils.import("resource:///modules/customMinistere.jsm");
 
 const Cc=Components.classes;
 const Ci=Components.interfaces;
