@@ -26,6 +26,8 @@
 <!ENTITY pacome.btValider.cle "V">
 <!ENTITY pacome.btAnnuler "Annuler">
 <!ENTITY pacome.btAnnuler.cle "A">
+<!ENTITY pacomemdp.btCerbere "Connexion avec Cerbère">
+<!ENTITY pacomemdp.btCerbere.cle "C">
 
 <!ENTITY pacome.texteAide "Pour obtenir des informations sur le paramétrage Pacome, cliquer sur le lien :">
 <!ENTITY pacome.AideLigne "Aide en ligne">

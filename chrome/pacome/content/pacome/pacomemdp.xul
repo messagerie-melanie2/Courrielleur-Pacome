@@ -14,7 +14,7 @@
         title="&pacomemdp.titre;"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         xmlns:html="http://www.w3.org/1999/xhtml"
-        onload="InitPacomeMdp();"
+        onload="checkSSO();"
         onunload="QuittePacomeMdp();">
 
   <script type="application/x-javascript" src="chrome://pacome/content/pacomeutils.js"/>
@@ -65,6 +65,8 @@
     <!-- zone des boutons -->
     <menuseparator/>
     <hbox align="right">
+      <button id="pacomemdp.btCerbere" label="&pacomemdp.btCerbere;" oncommand="triggerSSO();" accesskey="&pacomemdp.btCerbere.cle;"/>
+      <spacer flex="8" />
       <button id="pacomemdp.btValider" label="&pacomemdp.btValider;" oncommand="ValiderMdp();" accesskey="&pacomemdp.btValider.cle;"/>
       <button id="pacomemdp.btAnnuler" label="&pacome.btAnnuler;" oncommand="AnnulerMdp();"/>
     </hbox>

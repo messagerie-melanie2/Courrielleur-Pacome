@@ -1,7 +1,7 @@
 
 ChromeUtils.import("resource:///modules/mailServices.js");
 ChromeUtils.import("resource://gre/modules/pacomeAuthUtils.jsm");
-
+ChromeUtils.import("resource://gre/modules/oidcAuthUtils.jsm");
 
 //préférence serveur pacomemdp2 de vérification de mot de passe
 const PACOME_PREF_URLMDP="pacome.urlmdp";
@@ -13,6 +13,59 @@ const PACOME_URL_VERIFMDP="https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php";
 
 //message de la requete
 var g_msgReq="";
+
+function authMethodCallbackSSO()
+{
+  PacomeTrace("Pacomemdp authMethodCallbackSSO");
+
+  if(TbbbbUtils._token)
+  {
+    PacomeTrace("Pacomemdp authMethodCallbackSSO avec Jeton OIDC");
+
+    // Remplacement des identifiants
+    document.getElementById("pacomemdp.mdp").value = TbbbbUtils._token;
+    document.getElementById("pacomemdp.uid").value = window.arguments[0].uid; // /!\ Valeur récupérée par la fenêtre et non par Cerbère
+
+    // Appel à la validation
+    ValiderMdp();
+  }
+  else
+  {
+    PacomeTrace("Pacomemdp authMethodCallbackSSO sans Jeton OIDC");
+  }
+}
+
+function triggerSSO()
+{
+  PacomeTrace("Pacomemdp triggerSSO");
+
+  TbbbbUtils.launchSSO(authMethodCallbackSSO);
+}
+
+function checkSSO()
+{
+  try
+  {
+    PacomeTrace("Pacomemdp checkSSO");
+    InitPacomeMdp();
+
+    if(TbbbbUtils._token)
+    {
+      // InitPacomeMdp();
+
+      setTimeout(FocusPacomeDlg, 1000);
+
+      pacomeLogStartTime();
+
+      authMethodCallbackSSO();
+    }
+  }
+  catch (error)
+  {
+    PacomeTrace("Pacomemdp checkSSO - ERROR");
+    PacomeTrace(error);
+  }
+}
 
 /*
 *  initialisation de la boîte de demande de mot de passe
@@ -45,10 +98,6 @@ function InitPacomeMdp(){
   let uid=window.arguments[0].uid;
 
   document.getElementById("pacomemdp.uid").value=uid;
-
-  setTimeout(FocusPacomeDlg, 1000);
-
-  pacomeLogStartTime();
 }
 
 function FocusPacomeDlg() {

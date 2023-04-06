@@ -281,10 +281,32 @@ var PacomeAuthUtils= {
       aParent=Services.wm.getMostRecentWindow("mail:3pane");
     }
 
-    let args=new Object();
-    args.uid=this.GetUidReduit(username);
+    const args = { uid: /*this.*/GetUidReduit(username), };
+    args.wrappedJSObject = args;
 
-    aParent.openDialog("chrome://pacome/content/pacomemdp.xul", "_blank", "chrome,modal,centerscreen,titlebar", args);
+    try
+    {      
+      const dg = aParent.openDialog(
+        // -----
+        // aUrl: The url which will be loaded into the new window. Must already be escaped, if applicable. It can be null.
+        "chrome://pacome/content/pacomemdp.xul",
+        // -----
+        // aName: The window name from JS window.open. It can be null.
+        "_blank",
+        // -----
+        // aFeatures: Window features from JS window.open. It can be null.
+        "chrome,modal,centerscreen,titlebar",
+        // -----
+        // aArguments: Extra argument(s) to the new window, to be attached as the arguments property. An nsISupportsArray will be unwound into multiple arguments (but not recursively!). It can be null.
+        args,
+      );
+
+    }
+    catch (error)
+    {
+      console.log('openDialog ERROR');
+      console.log('error', error);
+    }
 
     // 0005099: Action en cas de non-saisie de mot de passe au démarrage
     if (0==args.res &&
