@@ -281,7 +281,7 @@ var PacomeAuthUtils= {
       aParent=Services.wm.getMostRecentWindow("mail:3pane");
     }
 
-    const args = { uid: /*this.*/GetUidReduit(username), };
+    const args = { uid: this.GetUidReduit(username), };
     args.wrappedJSObject = args;
 
     try
