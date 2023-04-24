@@ -3,7 +3,7 @@
 <!ENTITY pacomemsg.titre "Pacome">
 
 <!-- pacomecompte.xul -->
-<!ENTITY pacome.titre "Assistant de gestion des comptes de messagerie Mél">
+<!ENTITY pacome.titre "Assistant de gestion des comptes de messagerie MCE">
 <!ENTITY pacome.libnom "Identifiant(s) de l'utilisateur">
 
 <!ENTITY pacome.resume "Résumé des paramétrages à modifier">
@@ -42,7 +42,7 @@
 
 <!-- accountmanager-overlay.xul -->
 <!ENTITY pacome.btcomptes "Gérer les comptes...">
-<!ENTITY pacome.btcomptestip "Gérer les comptes Mél avec Pacome">
+<!ENTITY pacome.btcomptestip "Gérer les comptes MCE avec Pacome">
 <!ENTITY pacome.btcomptes.racc "G">
 
 <!ENTITY pacome.ovelay.btmotdepasse "Changer le mot de passe...">
