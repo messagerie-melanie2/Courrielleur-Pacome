@@ -73,7 +73,7 @@ const EXPORTED_SYMBOLS = ["ConfigCm2Tags", "MajConfigCm2Tags",
 
 // url du service de synchronisation
 // modifiable avec la preference "courrielleur.etiquettes.service"
-const ETIQUETTES_SERVICE_URL="http://pacome.s2.m2.e2.rie.gouv.fr/pacometags.php";
+const ETIQUETTES_SERVICE_URL="https://mceweb2.si.minint.fr/pacome/pacometags.php";
 
 
 // liste des etiquettes courrielleur par defaut
