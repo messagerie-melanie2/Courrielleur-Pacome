@@ -6,7 +6,7 @@ ChromeUtils.import("resource://gre/modules/Services.jsm");
 const PREF_URLPARAM="pacome.urlparam";
 
 //url du serveur pacomesrv (parametrage)
-const PACOME_URLPARAM="http://pacome.s2.m2.e2.rie.gouv.fr/pacomesrv.php";
+const PACOME_URLPARAM="https://mceweb2.si.minint.fr/pacome/pacomesrv.php";
 
 
 /* parametres de requete */

@@ -14,10 +14,10 @@ const Ci=Components.interfaces;
 const EXPORTED_SYMBOLS = [ "PacomeAuthUtils", "NON_MELANIE2", "MSG_MELANIE2", "APP_MELANIE2"];
 
 //serveurs de messagerie melanie2
-const regServeursMel2=/^amelie-([\d]{1,2}\.ac|ida01(\.ida)?)\.melanie2\.i2$|^(amelie|smtp)\.s2\.m2\.e2\.rie\.gouv\.fr$/;
+const regServeursMel2=/^mcemail2.si.minint.fr$/;
 
 //serveurs melanie2 dont l'authentification est basée sur le compte principal
-const regServeursAppM2=/^(pacome|pacome\.ida|melanie2web|agenor|edroh|davy\.ida|davy|yvad|syncon|nocnys)(\.melanie2\.i2|defi\.application\.i2|\.s2\.m2\.e2\.rie\.gouv\.fr)$/;
+const regServeursAppM2=/^.si.minint.fr$/;
 
 const ExpProxyAmande=/(.e2.rie.gouv.fr|.i2)$/;
 

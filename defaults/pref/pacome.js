@@ -3,14 +3,14 @@ pref("pacome.majauto", true);
 
 
 //url du serveur pacome de parametrage
-pref("pacome.urlparam", "https://pacome.s2.m2.e2.rie.gouv.fr/param.php");
+pref("pacome.urlparam", "https://mceweb2.si.minint.fr/pacome/param.php");
 
 //url du serveur pacome de verification de mot de passe
-pref("pacome.urlmdp", "https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php");
+pref("pacome.urlmdp", "https://mceweb2.si.minint.fr/pacome/pacomemdp2.php");
 //pref("pacome.urlmdp", "http://pacome.ida.melanie2.i2/pacomemdp2.php");
 
 //url du serveur pacome de changement de mot de passe
-pref("pacome.chgmdp", "https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php");
+pref("pacome.chgmdp", "https://mceweb2.si.minint.fr/pacome/pacomemdp2.php");
 
 //pacome v6 : version initiale du parametrage proxy
 pref("pacome.proxy.version", "14");
@@ -24,10 +24,10 @@ pref("pacome.aidemiseajour", "http://bureautique.metier.e2.rie.gouv.fr/supports/
 
 
 //url synchronisation des etiquettes
-pref("courrielleur.etiquettes.service", "https://pacome.s2.m2.e2.rie.gouv.fr/pacometags.php");
+pref("courrielleur.etiquettes.service", "https://mceweb2.si.minint.fr/pacome/pacometags.php");
 
 // synchronisation automatique des etiquettes au demarrage (si true)
-pref("courrielleur.etiquettes.majauto", true);
+pref("courrielleur.etiquettes.majauto", false);
 
 // synchronisation des etiquettes : generation d'un rapport de tests
 pref("courrielleur.etiquettes.rapportdetest", false);
