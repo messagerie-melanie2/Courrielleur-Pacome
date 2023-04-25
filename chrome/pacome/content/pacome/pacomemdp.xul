@@ -54,6 +54,10 @@
               </tooltip>
             </hbox>
           </row>
+					<row>
+            <hbox/>
+            <checkbox id="memomdp" checked="false" label="&pacome-memomdp;" hidden="true"/>
+          </row>
         </rows>
         </grid>
     </vbox>

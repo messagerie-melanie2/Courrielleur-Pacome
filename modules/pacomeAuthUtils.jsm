@@ -6,6 +6,7 @@
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/mailServices.js");
 ChromeUtils.import("resource://calendar/modules/calUtils.jsm");
+ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 const Cc=Components.classes;
 const Ci=Components.interfaces;
@@ -32,6 +33,23 @@ const APP_MELANIE2=2;
 
 var PacomeAuthUtils= {
 
+	// liste des uid dont le mdp est enregistré dans le gestionnaire tb
+	_memo_mdp_uids:[],
+	// true si mdp de uid enregistré
+	isUidMdpMemo(uid){
+		return this._memo_mdp_uids.includes(uid);
+	},
+	// retire uid de la liste
+	delUidMdpMemo(uid){
+		if (this.isUidMdpMemo(uid))
+			this._memo_mdp_uids=this._memo_mdp_uids.filter(ident=>ident!=uid);
+	},
+	// ajoute uid dans la liste
+	addUidMdpMemo(uid){
+		if (!this.isUidMdpMemo(uid))
+			this._memo_mdp_uids.push(uid);
+	},
+
   // test si hostname est du type melanie2
   // retourne le type NON_MELANIE2, MSG_MELANIE2 ou APP_MELANIE2
   TestServeurMelanie2: function(hostname) {
@@ -46,16 +64,12 @@ var PacomeAuthUtils= {
       return NON_MELANIE2;
 
     //tester serveur de messagerie
-    if (srv.match(regServeursMel2)){
-
+    if (srv.match(regServeursMel2))
       return MSG_MELANIE2;
-    }
 
     //tester serveur application M2
-    if (srv.match(regServeursAppM2)){
-
+    if (srv.match(regServeursAppM2))
       return APP_MELANIE2;
-    }
 
     return NON_MELANIE2;
   },
@@ -66,13 +80,10 @@ var PacomeAuthUtils= {
   GetComptePrincipal: function() {
 
     let accmanager=MailServices.accounts;
-
     let cp=null;
 
     try {
-
       cp=accmanager.defaultAccount;
-
     } catch(ex){}
 
     if (null!=cp && null!=cp.incomingServer && null!=cp.incomingServer.getCharValue("pacome.confid")){
@@ -97,9 +108,8 @@ var PacomeAuthUtils= {
 
     let cp=this.GetComptePrincipal();
 
-    if (null==cp || null==cp.incomingServer) {
+    if (null==cp || null==cp.incomingServer)
       return null;
-    }
 
     let uid=cp.incomingServer.username;
 
@@ -127,10 +137,8 @@ var PacomeAuthUtils= {
 
     let srvm2=this.TestServeurMelanie2(hostname);
 
-    if (NON_MELANIE2!=srvm2) {
-
+    if (NON_MELANIE2!=srvm2)
       return true;
-    }
 
     return false;
   },
@@ -145,9 +153,8 @@ var PacomeAuthUtils= {
     const r=/((imap|mailbox|smtp|https|moz-proxy):\/\/)?([^\/:]+)/;
     let m=hostname.match(r);
 
-    if (m && 1<m.length){
+    if (m && 1<m.length)
       return m[m.length-1];
-    }
 
     return null;
   },
@@ -161,15 +168,12 @@ var PacomeAuthUtils= {
       return null;
 
     let calendarManager=cal.getCalendarManager();
-
     let agendas=calendarManager.getCalendars({});
-
     const nb=agendas.length;
 
     for (let i=0; i<nb; i++) {
 
       let agenda=agendas[i];
-
       let caluri=agenda.getProperty("uri");
 
       if (0==urlagenda.indexOf(caluri)||
@@ -183,9 +187,8 @@ var PacomeAuthUtils= {
           ident=MailServices.accounts.defaultAccount.defaultIdentity;
         }
 
-        if (null==ident || ""==ident) {
+        if (null==ident || ""==ident)
           break;
-        }
 
         let uid;
         try {
@@ -231,9 +234,8 @@ var PacomeAuthUtils= {
       if (!(Components.interfaces.nsIAuthInformation.AUTH_PROXY & flags)){
         return false;
       }
-      if (null==aChannel.proxyInfo){
+      if (null==aChannel.proxyInfo)
         return false;
-      }
 
       let host=aChannel.proxyInfo.host;
       let scheme=authInfo.authenticationScheme;
@@ -242,7 +244,6 @@ var PacomeAuthUtils= {
       if (this.isHostProxyAmande(host) &&
           "digest"==scheme.toLowerCase() &&
           "AMANDE"==realm) {
-
         return true;
       }
     }
@@ -259,27 +260,24 @@ var PacomeAuthUtils= {
       }
       let exp=new RegExp(val+"$");
       return exp;
-    } catch(ex) {
-    }
+    } catch(ex) {}
 
     return ExpProxyAmande;
   },
-
 
   // appel boite authentification pacome
   // aParent : window parente
   // username : identifiant
   // outmdp : objet pour retour mdp
+	// outmemomdp : objet pour retour mémorisation mdp (true/false)
   // retourn true si OK, sinon false
-  PromptMdp: function(aParent, username, outmdp){
+  PromptMdp: function(aParent, username, outmdp, outmemomdp){
 
     if (Services.io.offline)
       return false;
 
-    if (null==aParent ||
-        null==aParent.openDialog){
+    if (null==aParent || null==aParent.openDialog)
       aParent=Services.wm.getMostRecentWindow("mail:3pane");
-    }
 
     let args=new Object();
     args.uid=this.GetUidReduit(username);
@@ -287,14 +285,18 @@ var PacomeAuthUtils= {
     aParent.openDialog("chrome://pacome/content/pacomemdp.xul", "_blank", "chrome,modal,centerscreen,titlebar", args);
 
     // 0005099: Action en cas de non-saisie de mot de passe au démarrage
-    if (0==args.res &&
-        ""==args.mdp){
+    if (0==args.res && ""==args.mdp){
       Services.io.offline=true;
       return false;
     }
 
     if (outmdp && null!=args.mdp)
       outmdp.value=args.mdp;
+		if (outmemomdp && null!=args.memomdp)
+      outmemomdp.value=args.memomdp;
+
+		if (args.memomdp)
+			this.MemoriseMdp(username, args.mdp);
 
     if (1==args.res)
       return true;
@@ -320,11 +322,42 @@ var PacomeAuthUtils= {
       }
     }
 
-    if (0==pacome ||
-        NON_MELANIE2==this.TestServeurMelanie2(hostname)) {
+    if (0==pacome || NON_MELANIE2==this.TestServeurMelanie2(hostname)) {
       count.value=0;
       return [];
     }
+		
+		let logins=[];
+    let srvname=this.extraitServeur(hostname);
+    let uidreduit=this.GetUidReduit(username);
+		
+		if (null==uidreduit || ""==uidreduit){
+			// cas serveur géré par pacome et uid non fournit => on prend uid compte principal
+			uidreduit=this.GetUidComptePrincipal();
+		}
+
+		// cas fonctionnalité mot de passe enregistré activée
+		if (Services.prefs.getBoolPref("pacome.memomdp")){
+
+			try {				
+				let signons = Services.logins.getAllLogins();
+				const nb=signons.length;
+			
+				for (let i=0;i<nb;i++){
+					let login=signons[i];
+					if (uidreduit==login.username){
+
+						this.addUidMdpMemo(login.username);
+
+						logins.push(login);
+						count.value=1;
+						return logins;
+					}
+				}
+			} catch (ex) {
+				Services.console.logStringMessage("[PACOME] exception searchLogins:"+ex);
+			}
+		}
 
     //gestion pacome -> determiner login sur la base de l'identifiant (reduit)
     //v6.5 ajout :
@@ -332,9 +365,6 @@ var PacomeAuthUtils= {
     //Lors d'une demande d'authentification avec un identifiant <uid0>,
     //si <uid0> se trouve être la partie droite d'un compte de balp <uid1.-.uid0>
     //et que <uid1> existe comme compte supportant authentification M2 alors utiliser le mdp de <uid1> pour <uid0>
-    let logins=[];
-    let srvname=this.extraitServeur(hostname);
-    let uidreduit=this.GetUidReduit(username);
     let serveurs=MailServices.accounts.allServers;
     const nbs=serveurs.length;
     for (let i=0;i<nbs;i++){
@@ -404,6 +434,30 @@ var PacomeAuthUtils= {
     let logins=[];
     count.value=0;
 
+		// cas fonctionnalité mot de passe enregistré activée
+		if (Services.prefs.getBoolPref("pacome.memomdp")){
+
+			try {
+
+				let signons = Services.logins.getAllLogins();
+
+				const nb=signons.length;
+				for (let i=0;i<nb;i++){
+					let login=signons[i];
+					if (this.TestServeurMelanie2(login.hostname)){
+
+						this.addUidMdpMemo(login.username);
+
+						logins.push(login);
+						count.value=1;
+						return logins;
+					}
+				}
+			} catch (ex) {
+				Services.console.logStringMessage("[PACOME] exception findLogins:"+ex);
+			}
+		}
+
     if (MSG_MELANIE2==srvm2) {
 
       let lms=this;
@@ -416,8 +470,7 @@ var PacomeAuthUtils= {
           if (logins[i].username==srv.username)
             break;
         }
-        if (i==nb &&
-            null!=srv.password && ""!=srv.password){
+        if (i==nb && null!=srv.password && ""!=srv.password){
           let srvname;
           if (srv instanceof Ci.nsISmtpServer)
             srvname=srv.hostname;
@@ -439,12 +492,8 @@ var PacomeAuthUtils= {
       const nbs=serveurs.length;
       for (let i=0;i<nbs;i++){
         let s=serveurs.queryElementAt(i, Ci.nsIMsgIncomingServer);
-        if (s &&
-            (s.type=="imap" || s.type=="pop3") &&
-            srvname==s.hostName){
-
-            addlogins(s);
-        }
+        if (s && (s.type=="imap" || s.type=="pop3") && srvname==s.hostName)
+          addlogins(s);
       }
 
       count.value=logins.length;
@@ -465,6 +514,7 @@ var PacomeAuthUtils= {
             let s=srv.queryElementAt(i, Ci.nsIMsgIncomingServer);
             if (s.username==uid && (s.type=="imap" || s.type=="pop3") &&
                 this.isMelanie2Host(s.hostName)) {
+
               if (s.password && ""!=s.password){
                 let login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
                 login.init(hostname, null, null, uid, s.password, null, null);
@@ -481,18 +531,18 @@ var PacomeAuthUtils= {
       }
 
       let cp=this.GetComptePrincipal();
+
       if (null==cp || null==cp.incomingServer ||
           null==cp.incomingServer.password || ""==cp.incomingServer.password) {
-
         count.value=0;
         return logins;
       }
-      let login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
 
+      let login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
       login.init(hostname, null, null, this.GetUidReduit(cp.incomingServer.username),
                   cp.incomingServer.password, null, null);
       logins.push(login);
-      count.value=1;
+			count.value=1;
     }
 
     return logins;
@@ -545,6 +595,79 @@ var PacomeAuthUtils= {
   removeAllLogins: function () {
 
     this.modifyMdpPacome(null, null);
-  }
+  },
+
+	// ajout d'un login dans le gestionnaire de login thunderbird (enregistrement)
+	// en principe un seul enregistrement
+	// le parametre login ne correspond pas forcement à un identifiant réduit (sans .-.)
+	MemoriseMdp: function(uid, mdp){
+
+		try {
+
+			let uid2;
+			let pos=uid.indexOf(".-.");
+			if (-1==pos)
+				uid2=uid;
+			else
+				uid2=uid.substr(0, pos);
+
+			// recherche serveur pour uid
+			let serveur=this.GetServeurUid(uid2);
+
+			let login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Components.interfaces.nsILoginInfo);
+			if (MSG_MELANIE2==this.TestServeurMelanie2(serveur))
+				login.init("imap://"+serveur, null, "imap://"+serveur, uid2, mdp, "", "");
+			else
+				login.init("https://"+serveur, null, "("+serveur+")", uid2, mdp, "", "");
+
+			Services.logins.addLogin(login);
+
+		} catch (ex) {
+			Services.console.logStringMessage("[PACOME] exception MemoriseMdp:"+ex);
+		}
+	},
+
+	GetServeurUid: function(uid){
+
+		// parcours serveurs de messagerie
+		let serveurs=MailServices.accounts.allServers;
+		const nbs=serveurs.length;
+		for (let i=0;i<nbs;i++){
+			let s=serveurs.queryElementAt(i, Ci.nsIMsgIncomingServer);
+			if (s &&
+					(s.type=="imap" || s.type=="pop3") &&
+					 this.TestServeurMelanie2(s.hostName)){
+
+				return s.hostName;
+			}
+		}
+
+		// sinon agendas
+		let calendarManager=cal.getCalendarManager();
+    let agendas=calendarManager.getCalendars({});
+    const nb=agendas.length;
+    for (let i=0; i<nb; i++) {
+      let caluri=agenda[i].getProperty("uri");
+			if (this.TestServeurMelanie2(caluri))
+				return this.extraitServeur(caluri);
+		}
+	},
+
+	// recherche login dans la gestionnaire pour uid
+	findLoginToRemove:function(uid){
+
+		try {
+			let signons = Services.logins.getAllLogins();
+			const nb=signons.length;
+			for (let i=0;i<nb;i++){
+				let loginM2=signons[i];
+				if (uid==loginM2.username && this.TestServeurMelanie2(loginM2.hostname))
+					return loginM2;
+			}
+		} catch (ex) {
+			Services.console.logStringMessage("[PACOME] exception findLoginToRemove:"+ex);
+		}
+		return null;
+	}
 }
 

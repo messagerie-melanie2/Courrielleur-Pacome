@@ -34,6 +34,7 @@ function InitPacomeMdp(){
   //annulation par défaut
   window.arguments[0].res=0;
   window.arguments[0].mdp="";
+  window.arguments[0].memomdp=false;
 
   //identifiant
   if (null==window.arguments[0] || null==window.arguments[0].uid){
@@ -45,6 +46,10 @@ function InitPacomeMdp(){
   let uid=window.arguments[0].uid;
 
   document.getElementById("pacomemdp.uid").value=uid;
+	
+	let memo=Services.prefs.getBoolPref("pacome.memomdp");
+	if (memo)
+		document.getElementById("memomdp").removeAttribute("hidden");
 
   setTimeout(FocusPacomeDlg, 1000);
 
@@ -94,7 +99,7 @@ function PacomeSetOpenHours(reponse)
       Services.prefs.setCharPref("mail.identity.openhours",resArray[i].split("=")[1]);
       break;
     }
-  }  
+  }
 }
 
 /*
@@ -223,6 +228,7 @@ function ValiderMdp(){
           //annulation
           window.arguments[0].res=-1;
           window.arguments[0].mdp="";
+		  window.arguments[0].memomdp=false;
 
         }  else{
 
@@ -230,6 +236,7 @@ function ValiderMdp(){
 
           window.arguments[0].res=1;
           window.arguments[0].mdp=mdp;
+					window.arguments[0].memomdp=false;// pas de memorisation si erreur de verification par le serveur
         }
 
         window.close();
@@ -301,6 +308,9 @@ function ValiderMdp(){
 
           window.arguments[0].res=1;
           window.arguments[0].mdp=mdp;
+          
+          if ("true"==document.getElementById("memomdp").getAttribute("checked"))
+				window.arguments[0].memomdp=true;
 
           window.close();
 
