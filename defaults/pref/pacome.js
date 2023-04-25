@@ -31,3 +31,6 @@ pref("courrielleur.etiquettes.majauto", false);
 
 // synchronisation des etiquettes : generation d'un rapport de tests
 pref("courrielleur.etiquettes.rapportdetest", false);
+
+// si true affiche la case Enregistrer le mot de passe dans le courrielleur (true pour Min.Int)
+pref("pacome.memomdp", true);
