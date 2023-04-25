@@ -17,7 +17,7 @@ const EXPORTED_SYMBOLS = [ "PacomeAuthUtils", "NON_MELANIE2", "MSG_MELANIE2", "A
 const regServeursMel2=/^mcemail2.si.minint.fr$/;
 
 //serveurs melanie2 dont l'authentification est basée sur le compte principal
-const regServeursAppM2=/^.si.minint.fr$/;
+const regServeursAppM2=/^.*.si.minint.fr$/;
 
 const ExpProxyAmande=/(.e2.rie.gouv.fr|.i2)$/;
 
