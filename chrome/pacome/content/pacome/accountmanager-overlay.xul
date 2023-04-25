@@ -29,13 +29,14 @@
               oncommand="btGererComptes();"
               insertbefore="accountActionsAddMailAccount"/>
 
+		<!-- [MinInt] : masquer le bouton Changer le mot de passe 
     <menuitem id="pacome.btmotdepasse"
               label="&pacome.ovelay.btmotdepasse;"
               tooltiptext="&pacome.ovelay.btmotdepassetip;"
               class="menuitem-iconic"
               oncommand="btMotDePasse();"
               insertbefore="accountActionsAddMailAccount"/>
-
+		-->
     <menuitem id="pacome.btdossier"
               label="&pacome.btdossier;"
               accesskey="&pacome.btdossier.racc;"
