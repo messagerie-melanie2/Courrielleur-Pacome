@@ -56,10 +56,38 @@ function cm2ExecPacome(okCallback){
 
       //synchronisation etiquettes
       cm2SynchroEtiquettes();
+
+			PacomeAfficheCourrier();
+			PacomeSelectEntrant();
     }
   }
 
   setTimeout(PacomeAfficheAssistant, 0, msgWindow, cm2ExecPacomeCallback);
+}
+
+// bascule sur l'onglet courrier
+function PacomeAfficheCourrier(){
+
+	let mail3PaneWindow = Services.wm.getMostRecentWindow("mail:3pane");
+	if (mail3PaneWindow) {
+		tabmail = mail3PaneWindow.document.getElementById("tabmail");
+		mail3PaneWindow.focus();
+		if (tabmail)
+			tabmail.switchToTab(0);
+	}
+}
+
+// sélectionne le courrier entrant du compte par défaut (principal)
+function PacomeSelectEntrant(){
+
+	if (null!==MailServices.accounts.defaultAccount &&
+			null!==MailServices.accounts.defaultAccount.incomingServer){
+
+		let rootMsgFolder = MailServices.accounts.defaultAccount.incomingServer.rootMsgFolder;
+		const kInboxFlag = Ci.nsMsgFolderFlags.Inbox;
+    let inboxFolder = rootMsgFolder.getFolderWithFlags(kInboxFlag);
+		gFolderTreeView.selectFolder(inboxFolder);
+	}
 }
 
 
