@@ -27,7 +27,7 @@ pref("pacome.aidemiseajour", "http://bureautique.metier.e2.rie.gouv.fr/supports/
 pref("courrielleur.etiquettes.service", "https://mceweb2.si.minint.fr/pacome/pacometags.php");
 
 // synchronisation automatique des etiquettes au demarrage (si true)
-pref("courrielleur.etiquettes.majauto", false);
+pref("courrielleur.etiquettes.majauto", true);
 
 // synchronisation des etiquettes : generation d'un rapport de tests
 pref("courrielleur.etiquettes.rapportdetest", false);
