@@ -69,8 +69,6 @@ function btCreeDossierLocal(){
 			return false;
 		}
 
-		return;//tests
-
     //création du dossier local
     let ret=creeDossierLocal(nom,dossier);
 
