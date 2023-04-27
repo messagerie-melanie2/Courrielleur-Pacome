@@ -53,6 +53,24 @@ function btCreeDossierLocal(){
       return;
     }
 
+		// valider le chemin (cas copie manuelle)
+		let courant=Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+    courant.initWithPath(dossier);
+		let bValid=ValidRepLocal(courant);
+		if (false==bValid){
+			PacomeAfficheMsgId("RepNonValide");
+			return false;
+		}
+
+		// vérifier dossier libre
+		bValid=VerifieDossierLibre(courant);
+		if (false==bValid){
+			PacomeAfficheMsgId("RepertoireDejaUtilise");
+			return false;
+		}
+
+		return;//tests
+
     //création du dossier local
     let ret=creeDossierLocal(nom,dossier);
 
@@ -118,15 +136,11 @@ function SelectChemin(){
       }
 
       //vérifier que l'emplacement n'est pas déjà utilisé
-      let serveurs=MailServices.accounts.allServers;
-      for (var i=0;i<serveurs.length;i++) {
-      let srv=serveurs.queryElementAt(i, Ci.nsIMsgIncomingServer);
-        if (srv.localPath.equals(dossier)){
-
-          PacomeAfficheMsgId("RepertoireDejaUtilise");
-          return false;
-        }
-      }
+			bValid=VerifieDossierLibre(dossier);
+			if (false==bValid){
+				PacomeAfficheMsgId("RepertoireDejaUtilise");
+				return false;
+			}
 
       selection.value=dossier.path;
 
@@ -271,4 +285,20 @@ function ValidRepLocal(rep){
   }
 
   return false;
+}
+
+
+// verifie que le dossier n'est pas déjà utilisé
+function VerifieDossierLibre(dossier){
+
+	//vérifier que l'emplacement n'est pas déjà utilisé
+	let serveurs=MailServices.accounts.allServers;
+	for (var i=0;i<serveurs.length;i++) {
+	let srv=serveurs.queryElementAt(i, Ci.nsIMsgIncomingServer);
+		if (srv.localPath.equals(dossier)){
+			return false;
+		}
+	}
+
+	return true;	
 }
