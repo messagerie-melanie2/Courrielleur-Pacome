@@ -277,3 +277,26 @@
   -moz-appearance: none;
   border-style:none;
 }
+
+/* Masquer les options de création de comptes tb */
+#accountActionsAddMailAccount{
+	display:none;
+}
+
+#accountActionsAddIMAccount{
+	display:none;
+}
+
+#accountActionsAddFeedAccount{
+	display:none;
+}
+
+#accountActionsAddOtherAccount{
+	display:none;
+}
+
+#accountActionsDropdownSep1{
+	display:none;
+}
+
+
