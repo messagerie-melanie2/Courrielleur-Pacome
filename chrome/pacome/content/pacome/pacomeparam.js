@@ -1066,7 +1066,7 @@ function ParamProxy(docparam) {
     }
   }
 
-  if ("WINNT"!=os) {
+  if ("WINNT"!=os || ""==pacomeconfig) {
     PacomeTrace("ParamProxy traitement preferences");
     res=PacomeSetPreferences(elemprx);
     if (false==res){
