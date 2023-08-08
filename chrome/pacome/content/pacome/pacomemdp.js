@@ -201,7 +201,7 @@ function ValiderMdp(){
 
   //#7754: Prise en compte du cas d'authentification Cerbere depuis un compte Mél sans auth Cerbere activée
   let SsoPassword = false;
-  if(mdp.length > 1000)
+  if(mdp.length >= 250)
     SsoPassword = true;
 
   //Bug mantis 0004135: Traces incontournables avec uid et version du courrielleur
