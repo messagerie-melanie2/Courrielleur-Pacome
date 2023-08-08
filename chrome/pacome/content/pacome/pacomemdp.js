@@ -131,7 +131,7 @@ function setBoutonAnnuler(etat){
   bt.disabled=!etat;
 }
 
-//reponse='code=0;message=;versionsconfigs=std1:2-2+std2:2-2+par1:2-2;openhours=7:30-20:30-Mon/Tue/Wed;comptesflux=Informations Mélanie2:4-4;'   
+//reponse='code=0;message=;versionsconfigs=std1:2-2+std2:2-2+par1:2-2;openhours=7:30-20:30-Mon/Tue/Wed;comptesflux=Informations Mélanie2:4-4;'
 function PacomeSetOpenHours(reponse)
 {
   Services.prefs.setCharPref("mail.identity.openhours","none");
@@ -143,7 +143,7 @@ function PacomeSetOpenHours(reponse)
       Services.prefs.setCharPref("mail.identity.openhours",resArray[i].split("=")[1]);
       break;
     }
-  }  
+  }
 }
 
 /*
@@ -198,6 +198,11 @@ function ValiderMdp(){
   let param="op=verifmdp&uid="+encodeURIComponent(uid);
   param+="&mdp="+encodeURIComponent(mdp);
   param+="&extver="+encodeURIComponent(VERSION_PACOME);
+
+  //#7754: Prise en compte du cas d'authentification Cerbere depuis un compte Mél sans auth Cerbere activée
+  let SsoPassword = false;
+  if(mdp.length >= 255)
+    SsoPassword = true;
 
   //Bug mantis 0004135: Traces incontournables avec uid et version du courrielleur
   let cm2ver=PacomeGetCharPref("courrielleur.version");
@@ -355,9 +360,14 @@ function ValiderMdp(){
 
           return;
 
-        }  else{
-
-          PacomeEcritLog(PACOME_LOGS_MDP, "mot de passe non valide code:", code);
+        }
+        else
+        {
+          //#7754: Prise en compte du cas d'authentification Cerbere depuis un compte Mél sans auth Cerbere activée
+          if(SsoPassword)
+            PacomeEcritLog(PACOME_LOGS_MDP, "sso non disponible, code:", code);
+          else
+            PacomeEcritLog(PACOME_LOGS_MDP, "mot de passe non valide, code:", code);
 
           //le mot de passe n'est pas valide ou erreur
           //mot de passe non valide
@@ -379,10 +389,18 @@ function ValiderMdp(){
               window.close();
               return;
 
-            } else PacomeAfficheMsgIdMsgId("PacomeMdpErreurSrvTitre", "PacomeMdpNonValide");
-
-          } else if (-1==code){
-
+            }
+            else
+            {
+              //#7754: Prise en compte du cas d'authentification Cerbere depuis un compte Mél sans auth Cerbere activée
+              if(SsoPassword)
+                PacomeAfficheMsgIdMsgId("PacomeMdpErreurSrvTitre", "PacomeSsoDesactive");
+              else
+                PacomeAfficheMsgIdMsgId("PacomeMdpErreurSrvTitre", "PacomeMdpNonValide");
+            }
+          }
+          else if (-1==code)
+          {
             let msgerr=PacomeMessageFromId("PacomeMdpErreurSrvLib");
 
             let res=PacomeMsgConfirmBt(PacomeMessageFromId("PacomeMdpErreurSrvTitre"), msgerr, "Continuer", "Hors ligne");
