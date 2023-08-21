@@ -599,7 +599,7 @@ function PacomeMAJSilence(docparam){
         if ("maj"==action){
           PacomeTrace("PacomeMAJSilence mise à jour application");
           PacomeEcritLog(PACOME_LOGS_MAJAUTO, "Parametrage application");
-          ParamAppli(docparam.documentElement);
+          ParamAppli(gPacomeAssitVars.docpacomesrv);
 
         } else {
           PacomeTrace("PacomeMAJSilence erreur d'action pour application");
