@@ -369,8 +369,9 @@ function PacomeEcritLog(source, description, donnees){
 *
 */
 function passerHorsLigne(){
-  /*Services.io.manageOfflineStatus=false;
-  Services.io.offline=true;*/
+
+  Services.io.manageOfflineStatus=false;
+  Services.io.offline=true;
 }
 
 
