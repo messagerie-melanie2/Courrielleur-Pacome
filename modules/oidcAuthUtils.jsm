@@ -38,11 +38,11 @@ const EXPORTED_SYMBOLS = ["TbbbbConfig","TbbbbUtils"];
 
 /**
  * config.js
- * 
+ *
  * This file is part of the Thunderbird BigBlueButton extension
- * 
+ *
  * @author Thomas Payen <thomas.payen@apitech.fr>
- * 
+ *
  * @licence EUPL (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
  */
 var TbbbbConfig = {
@@ -68,11 +68,11 @@ var TbbbbConfig = {
 
 /**
  * utils.js
- * 
+ *
  * This file is part of the Thunderbird BigBlueButton extension
- * 
+ *
  * @author Thomas Payen <thomas.payen@apitech.fr>
- * 
+ *
  * @licence EUPL (https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12)
  */
 var TbbbbUtils = {
@@ -90,15 +90,16 @@ var TbbbbUtils = {
 
     /**
      * Send user authentication to SSO and retrieve credentials cookie
-     * 
+     *
      * @param {boolean} force Force the prompt password and don't use saved password
-     * @returns 
+     * @returns
      */
     userAuthService(force = false, callback)
     {
         TbbbbConfig.DEBUG && console.debug("[userAuthService] Déclenchement");
 
-        if(TbbbbUtils._token)
+        // #7754 - Rev, prise en charge de l'expiration
+        if(false)//TbbbbUtils._token)
         {
             // Job already done
             TbbbbConfig.DEBUG && console.debug("[userAuthService] Pas besoin de lancer l'authentification SSO (Jeton déjà présent).");
