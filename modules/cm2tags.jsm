@@ -195,7 +195,13 @@ function ConfigCm2Tags(){
 function MajConfigCm2Tags(strConfigService){
 
   //conversion strConfigService
-  let configService=JSON.parse(strConfigService);
+  let configService=null;
+  try {
+    configService=JSON.parse(strConfigService);
+  } catch (e) {
+    console.log(e);
+  }
+
   if (null==configService){
     cm2DebugMsg("MajConfigCm2Tags erreur conversion strConfigService");
     return -1;
