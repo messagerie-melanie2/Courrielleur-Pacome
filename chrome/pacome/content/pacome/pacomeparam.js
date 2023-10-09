@@ -998,6 +998,22 @@ function PacomeSupprimeBoite(uid, confid){
 */
 function ParamAppli(docparam){
 
+  // DGGN: migration anciens profils : on supprime d'anciens annuaires
+  ['Amde', 'Maia'].forEach( (annuaire) => {
+    const supp = pacomeGetAnnuaire(annuaire);
+    if (supp) {
+      console.log('>>>>>>>>> Annuaire à supprimer: '+annuaire)
+      try {
+        MailServices.ab.deleteAddressBook(supp.URI);
+      } catch (e) {
+        console.log('ne peut supprimer annuaire: '+annuaire + ' ' + e)
+      }
+    }
+    else {
+      console.log(">>>>>>>>> Pas d'annuaire à supprimer: "+annuaire);
+    }
+  });
+
   //parametrage annuaires
   //a faire avant application
   PacomeTrace("ParamAppli parametrage annuaires");
