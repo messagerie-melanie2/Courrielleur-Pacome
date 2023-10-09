@@ -1015,6 +1015,7 @@ function ParamAppli(docparam){
 
   //parametrage application
   PacomeTrace("ParamAppli parametrage application");
+  PacomeTrace(new XMLSerializer().serializeToString(docparam));
   let elemappli=PacomeElementAppli(docparam);
   if (null!=elemappli){
     PacomeTrace("ParamAppli traitement preferences");
@@ -1215,10 +1216,16 @@ function PacomeEtatCompteBoite(uid, confid){
 /* retourne element 'preferences' pour le parametrage d'application d'un document de paramétrage */
 function PacomeElementAppli(docparam){
 
-  const nbc=docparam.childNodes.length;
+  // ajout DGGN : dans le doc reçu <preferences> est contenu dans une balise <pacome>
+  // on fait en sorte que ça fonctionne, que la balise <pacome> englobante soit présente ou non
+  let nbc=docparam.childNodes.length;
+  if (nbc===1 && docparam.childNodes[0].tagName === "pacome") {
+    docparam = docparam.childNodes[0];
+    nbc=docparam.childNodes.length;
+  }
 
   for (var i=0;i<nbc;i++){
-
+    PacomeTrace("tagname "+docparam.childNodes[i].tagName);
     if ("preferences"==docparam.childNodes[i].tagName){
       return docparam.childNodes[i];
     }
