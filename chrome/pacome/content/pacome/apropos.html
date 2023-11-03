@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Include CSS stylesheets -->
+  <link rel="stylesheet" type="text/css" href="chrome://global/skin/">
+  <link rel="stylesheet" type="text/css" href="chrome://pacome/content/pacome.css">
+</head>
+<body>
+  <!-- Main XUL overlay -->
+  <xul-overlay href="chrome://courrielleur/content/ministeresOverlay.xul"></xul-overlay>
+
+  <!-- Main window definition -->
+  <div title="&pacome.apropos.titre;" class="pacome-apropos" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+    <!-- Include JavaScript script -->
+    <script type="application/javascript" src="chrome://pacome/content/pacomeutils.js"></script>
+
+    <!-- Keyset for keyboard shortcuts -->
+    <keyset id="keys">
+      <key keycode="VK_ESCAPE" oncommand="window.close();"/>
+    </keyset>
+
+    <!-- Header (bandeau) -->
+    <div id="bandeau" class="bandeau">
+      <description id="bandeau-titre" class="bandeau-titre">&pacome.apropos.text1;</description>
+    </div>
+
+    <div id="apropos-cadre" flex="1">
+      <div id="apropos-collogo" style="width: 32px;"></div>
+      <div id="apropos-cadredesc" flex="1">
+        <p class="aproposdesc">&pacome.apropos.text2;</p>
+        <p class="aproposdesc">&pacome.apropos.text3;</p>
+        <div id="infosapropos"></div>
+      </div>
+    </div>
+
+    <div align="right">
+      <button label="Fermer" onclick="close();"></button>
+    </div>
+  </div>
+  
+  <script>
+		// Load translations from translations.json file
+		fetch(chrome.extension.getURL('chrome/fr/locale/fr/pacome/pacome.json'))
+			.then(response => response.json())
+			.then(translations => {
+				// Update the UI with the translated strings
+				/*document.title = translations['pacomemdp.titre'];
+				document.getElementById('bandeau-titre').textContent = translations['pacomechgmdp-titre'];
+				document.getElementById('pacomechgmdp.texte1').textContent = translations['pacomemdp.mdp'];*/
+				// TODO end this for the file
+			})
+			.catch(error => console.error('Error loading translations:', error));
+	</script>
+  
+</body>
+</html>
