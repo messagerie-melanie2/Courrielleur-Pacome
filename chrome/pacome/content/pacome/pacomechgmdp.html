@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="chrome://global/skin/" />
+    <link rel="stylesheet" type="text/css" href="chrome://pacome/content/pacome.css" />
+    <script type="application/javascript" src="chrome://pacome/content/pacomeutils.js"></script>
+    <script type="application/javascript" src="chrome://pacome/content/pacomemdp.js"></script>        
+</head>
+<body>
+    <div id="pacomechgmdp" title="Your Title">
+        <div id="bandeau" class="bandeau">
+            <description id="bandeau-titre" class="bandeau-titre">Replace with Translation</description>
+        </div>
+
+        <!-- Central space -->
+        <div id="pacome_zone" class="pacome_zone">
+            <!-- Text elements -->
+            <description id="pacomechgmdp.texte1" class="pacometexte">Replace with Translation</description>
+
+            <!-- Input area -->
+            <form>
+                <label for="uid">Replace with Translation</label>
+                <input type="text" id="uid" name="uid" readonly="true" value=""/>
+
+                <label for="ancien">Replace with Translation</label>
+                <input type="password" id="ancien" name="ancien" value=""/>
+
+                <label for="nouveau">Replace with Translation</label>
+                <input type="password" id="nouveau" name="nouveau" value=""/>
+
+                <label for="confirm">Replace with Translation</label>
+                <input type="password" id="confirm" name="confirm" value=""/>
+            </form>
+        </div>
+
+        <div>
+            <div>
+                <label>Replace with Translation: </label>
+                <label>Replace with Translation</label>
+            </div>
+        </div>
+
+        <!-- Button area -->
+        <hr>
+        <div align="right">
+            <button id="btValider" oncommand="ValiderChgMdp();">Replace with Translation</button>
+            <button id="btQuitter" oncommand="window.close();">Replace with Translation</button>
+        </div>
+    </div>
+	
+	<script>
+        // Load translations from translations.json file
+        fetch(chrome.extension.getURL('chrome/fr/locale/fr/pacome/pacome.json'))
+            .then(response => response.json())
+            .then(translations => {
+                // Update the UI with the translated strings
+                document.title = translations['pacomemdp.titre'];
+                document.getElementById('bandeau-titre').textContent = translations['pacomechgmdp-titre'];
+                document.getElementById('pacomechgmdp.texte1').textContent = translations['pacomemdp.mdp'];
+				// TODO end this for the file
+            })
+            .catch(error => console.error('Error loading translations:', error));
+    </script>
+	
+</body>
+</html>
+
