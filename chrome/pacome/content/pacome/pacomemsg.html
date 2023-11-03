@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Include CSS stylesheets -->
+  <link rel="stylesheet" type="text/css" href="chrome://global/skin/">
+  <link rel="stylesheet" type="text/css" href="chrome://pacome/content/pacome.css">
+</head>
+<body>
+  <!-- Main window definition -->
+  <div class="pacomemsg" title="&pacomemsg.titre;" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" onload="InitPacomeMsg();">
+    
+    <!-- Include JavaScript scripts -->
+    <script type="application/javascript" src="chrome://pacome/content/pacomemsg.js"></script>
+    <script type="application/javascript" src="chrome://pacome/content/pacomeassist.js"></script>
+    <script type="application/javascript" src="chrome://pacome/content/pacomeutils.js"></script>
+    
+    <!-- Keyset for keyboard shortcuts -->
+    <keyset id="keys">
+      <key keycode="VK_ESCAPE" oncommand="Annuler();"/>
+      <key keycode="VK_RETURN" oncommand="Valider();"/>
+    </keyset>
+    
+    <!-- Header (bandeau) -->
+    <div id="bandeau" class="bandeau">
+      <description id="bandeau-titre" class="bandeau-titre"> </description>
+    </div>
+    
+    <!-- Message text section -->
+    <div class="pacomemsg-texte">
+      <description id="pacomemsg.texte"> </description>
+      <description id="pacomemsg.texte2"> </description>
+    </div>
+    
+    <!-- Button area -->
+    <div pack="center">
+      <button id="btOUI" label="&pacome.btOUI;" onclick="Valider();"></button>
+      <button id="btNON" label="&pacome.btNON;" onclick="Annuler();"></button>
+      <button id="btOk" label="&pacome.btOk;" onclick="Valider();" accesskey="&pacome.btOk.key;"></button>
+    </div>
+  </div>
+  
+  <script>
+		// Load translations from translations.json file
+		fetch(chrome.extension.getURL('chrome/fr/locale/fr/pacome/pacome.json'))
+			.then(response => response.json())
+			.then(translations => {
+				// Update the UI with the translated strings
+				/*document.title = translations['pacomemdp.titre'];
+				document.getElementById('bandeau-titre').textContent = translations['pacomechgmdp-titre'];
+				document.getElementById('pacomechgmdp.texte1').textContent = translations['pacomemdp.mdp'];*/
+				// TODO end this for the file
+			})
+			.catch(error => console.error('Error loading translations:', error));
+	</script>
+  
+</body>
+</html>

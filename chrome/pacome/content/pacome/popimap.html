@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" type="text/css" href="chrome://global/skin/">
+  <link rel="stylesheet" type="text/css" href="chrome://pacome/content/pacome.css">
+</head>
+<body>
+  <div id="popimap" onload="Init();" style="width: 300px; height: 200px;">
+    <script type="text/javascript" src="chrome://pacome/content/pacomeutils.js"></script>
+    <script type="text/javascript" src="chrome://pacome/content/popimap.js"></script>
+    <div style="flex: 1;">
+      <div id="pacomebandeau" class="bandeau">
+        <p id="pacome_bandeau_titre" class="bandeau-titre">&popimap-titre;</p>
+      </div>
+      <!-- espace central -->
+      <div style="flex: 1;">
+        <input type="text" readonly="true" style="flex: 1;">
+        <progress style="height: 20px;"></progress>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+		// Load translations from translations.json file
+		fetch(chrome.extension.getURL('chrome/fr/locale/fr/pacome/pacome.json'))
+			.then(response => response.json())
+			.then(translations => {
+				// Update the UI with the translated strings
+				/*document.title = translations['pacomemdp.titre'];
+				document.getElementById('bandeau-titre').textContent = translations['pacomechgmdp-titre'];
+				document.getElementById('pacomechgmdp.texte1').textContent = translations['pacomemdp.mdp'];*/
+				// TODO end this for the file
+			})
+			.catch(error => console.error('Error loading translations:', error));
+	</script>
+  
+</body>
+</html>
