@@ -1,0 +1,129 @@
+{
+  "pacomemsg.titre": "Pacome",
+
+  "pacome.titre": "Assistant de gestion des comptes de messagerie Mél",
+  "pacome.libnom": "Identifiant(s) de l'utilisateur",
+
+  "pacome.resume": "Résumé des paramétrages à modifier",
+
+  "pacome.btRetour": "&lt; Retour",
+  "pacome.btSuivant": "Continuer &gt;",
+  "pacome.btQuitter": "Quitter",
+
+  "pacome.libconfiguration": "Configuration:",
+
+  "pacome.btOk": "Fermer",
+  "pacome.btOk.key": "F",
+
+  "pacome.btOUI": "Oui",
+  "pacome.btNON": "Non",
+
+  "pacome.btValider": "Valider",
+  "pacome.btValider.cle": "V",
+  "pacome.btAnnuler": "Annuler",
+  "pacome.btAnnuler.cle": "A",
+  "pacomemdp.btCerbere": "Connexion avec Cerbère",
+  "pacomemdp.btCerbere.cle": "C",
+
+  "pacome.texteAide": "Pour obtenir des informations sur le paramétrage Pacome, cliquer sur le lien :",
+  "pacome.AideLigne": "Aide en ligne",
+
+  "pacome.apropos.titre": "À propos de Pacome",
+  "pacome.apropos.text1": "PAramétrage des COmptes de MEssagerie",
+  "pacome.apropos.text2": "Version : &pacome.numver;",
+  "pacome.apropos.text3": "Publié le : &pacome.datever;",
+  "pacome.numver": "8.5",
+  "pacome.datever": "17/1/2020",
+
+  "pacome.btcomptes": "Gérer les comptes...",
+  "pacome.btcomptestip": "Gérer les comptes Mél avec Pacome",
+  "pacome.btcomptes.racc": "G",
+
+  "pacome.ovelay.btmotdepasse": "Changer le mot de passe...",
+  "pacome.ovelay.btmotdepassetip": "Changer le mot de passe du compte principal",
+  "pacome.ovelay.btrazmdp": "Effacer le mot de passe...",
+  "pacome.ovelay.btrazmdptip": "Effacer le mot de passe du compte sélectionné dans la liste",
+
+  "pacome.btdossier": "Nouveau dossier local...",
+  "pacome.btdossiertip": "Ajouter un nouveau dossier local",
+  "pacome.btdossier.racc": "d",
+
+  "pacomechgmdp.titre": "Pacome",
+  "pacomemdp-titre": "Mot de passe de boîte à lettres",
+  "pacomechgmdp-titre": "Modification de mot de passe",
+  "pacomechgmdp.texte1": "Cette fenêtre permet le changement du mot de passe d'authentification réseau et d'accès aux applications du Ministère. Vous devez redémarrer votre session Windows afin de conserver votre accès aux partages réseau et aux applications Cerbérisées",
+  "pacomechgmdp.uid": "Identifiant:",
+  "pacomechgmdp.ancien": "Ancien mot de passe:",
+  "pacomechgmdp.nouveau": "Nouveau mot de passe:",
+  "pacomechgmdp.confirm": "Confirmation:",
+  "pacomechgmdp.memomdp": "Mémoriser le mot de passe dans l'application",
+  "pacomechgmdp.majsrv": "Changer le mot de passe sur le serveur",
+
+  "pacomechgmdp.btValider": "Valider",
+  "pacomechgmdp.btValider.cle": "Valider",
+  "pacomechgmdp.btQuitter": "Quitter",
+  "pacomechgmdp.btQuitter.cle": "Quitter",
+
+  "pacomechgmdp.libcont": "Contrôle de qualité du nouveau mot de passe",
+  "pacomechgmdp.desccont": "Le mot de passe doit comporter au moins 10 caractères avec au moins 1 caractère de chaque type: majuscule, minuscule, chiffre et caractère spécial",
+  "pacomechgmdp.libpolitiquemdp": "Aide en ligne",
+
+  "pacome.comptes.libboites": "Boîtes à lettres",
+  "pacome.comptes.col1": "Nom d'affichage",
+  "pacome.comptes.col2": "Active",
+  "pacome.comptes.col3": "Configuration",
+  "pacome.fin.col2": "État",
+
+  "pacome.flux.libflux": "Flux d'informations",
+  "pacome.flux.col1": "Nom d'affichage",
+  "pacome.flux.col2": "Actif",
+
+  "pacomemdp.titre": "Entrez votre mot de passe",
+  "pacomemdp.uid": "Identifiant:",
+  "pacomemdp.mdp": "Mot de passe:",
+  "pacomemdp.btValider": "Valider",
+  "pacomemdp.btValider.cle": "V",
+  "pacomemdp.btAnnuler": "Annuler",
+  "pacomemdp.btAnnuler.cle": "A",
+
+  "pacomemaj.titre": "Mise à jour du paramétrage",
+  "pacomemaj.bandeau": "Mise à jour du paramétrage du courrielleur",
+  "pacomemaj.libmaj": "Pacome a détecté que le paramétrage n'est pas à jour. Cliquer sur le bouton &#91;Mettre à jour&#93; pour effectuer automatiquement la mise à jour du paramétrage",
+
+  "pacome.proxy.libconf": "Configurer avec les paramètres:",
+  "pacome.proxy.syslib": "Système",
+  "pacome.proxy.syskey": "y",
+  "pacome.proxy.pacomelib": "Pacome",
+  "pacome.proxy.pacomekey": "P",
+
+  "dossierlocal.titre": "Création d'un dossier local",
+  "dossierlocal.btValider": "Valider",
+  "dossierlocal.btQuitter": "Quitter",
+  "dossierlocal_bandeau_titre": "Paramétrage du nouveau dossier local",
+  "dossierlocallibnom": "Nom:",
+  "dossierlocallibchemin": "Emplacement:",
+  "dossierlocalchemin.btlib": "Sélectionner...",
+  "dossierlocalchemin.btlibcle": "S",
+  "dossierlocalchemin.browsertitle": "Sélectionner un dossier",
+
+  "pacome.paramfin": "Paramétrage terminé",
+  "pacome.redemarre": "Pour terminer l'opération, le courrielleur va redémarrer.",
+  "pacome.parbals": "Résultat des paramétrages des boîtes à lettres",
+  "pacome.parautres": "Résultat des autres paramétrages",
+  "pacome.results": "Résultat du paramétrage",
+
+  "pacome.cal.libcals": "Agendas",
+  "pacomeaddcal-titre": "Ajouter un agenda",
+  "pacomeaddcal-bandeau": "Sélectionner l'agenda à ajouter dans la liste ci-dessous",
+
+  "pacome.menudossier": "Dossier local...",
+
+  "partageTagButton.label": "Partager",
+  "partageTagButton.accesskey": "p",
+  "synchroTagButton.label": "Synchroniser",
+  "synchroTagButton.accesskey": "y",
+
+  "popimap.titre": "Migration pop vers imap",
+  "popimap-titre": "Opération en cours...",
+  "pacome.touchevernum": "Touche Verr. Maj. active"
+}
