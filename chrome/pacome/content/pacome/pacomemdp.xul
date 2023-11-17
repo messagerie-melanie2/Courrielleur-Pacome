@@ -64,7 +64,7 @@
 
     <!-- zone des boutons -->
     <menuseparator/>
-    <hbox align="right">
+    <hbox style="min-height:3.5em;" align="right">
       <button id="pacomemdp.btCerbere" label="&pacomemdp.btCerbere;" oncommand="triggerSSO();" accesskey="&pacomemdp.btCerbere.cle;"/>
       <spacer flex="8" />
       <button id="pacomemdp.btValider" label="&pacomemdp.btValider;" oncommand="ValiderMdp();" accesskey="&pacomemdp.btValider.cle;"/>
