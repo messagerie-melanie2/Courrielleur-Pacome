@@ -1538,6 +1538,20 @@ function SortiePageFin(){
         console.log('ON POSITIONNE LE SERVEUR PAR DEFAULT A ',cp.key);
         Services.prefs.setCharPref("mail.accountmanager.defaultaccount", cp.key);
         MailServices.accounts.defaultAccount = cp;
+        // modification de l'ordre des comptes : cp en premier
+        let ordre=Services.prefs.getCharPref("mail.accountmanager.accounts");
+        console.log('mail.accountmanager.accounts original:'+ordre);
+        let tab=ordre.split(",");
+		if (tab.length && tab[0]!=cp.key){
+			console.log('ON MODIFIE L\'ORDRE DES COMPTES');
+			ordre=cp.key;
+			for (let c=0;c<tab.length;c++){
+				if (tab[c]==cp.key) continue;
+				ordre+=','+tab[c];
+			}
+			console.log('mail.accountmanager.accounts modifié:'+ordre);
+			Services.prefs.setCharPref("mail.accountmanager.accounts", ordre);
+		}
         console.log('============================================================');
       }
     }
