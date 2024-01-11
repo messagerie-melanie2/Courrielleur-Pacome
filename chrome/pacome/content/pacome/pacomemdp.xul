@@ -64,6 +64,7 @@
 
     <!-- zone des boutons -->
     <menuseparator/>
+    <!-- #8016 ajout taille min pour mise à l'echelle 150 -->
     <hbox style="min-height:3.5em;" align="right">
       <button id="pacomemdp.btCerbere" label="&pacomemdp.btCerbere;" oncommand="triggerSSO();" accesskey="&pacomemdp.btCerbere.cle;"/>
       <spacer flex="8" />
