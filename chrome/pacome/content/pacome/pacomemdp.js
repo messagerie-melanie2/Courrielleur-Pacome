@@ -42,6 +42,28 @@ function triggerSSO()
   TbbbbUtils.launchSSO(authMethodCallbackSSO);
 }
 
+function autoSSO()
+{
+  // #8119 - Sauvegarde de l'état de la checkbox de sauvegarde d'authentification SSO
+  var autoSSO = document.getElementById("pacomemdp.cbCerbere").checked;
+  console.log("in autoSSO - Utiliser automatiquement l'authentification SSO: "+autoSSO);
+  Services.prefs.setCharPref("pacome.autosso", autoSSO);
+}
+
+function initAutoSSO()
+{
+  // #8119 - On positionne la checkbox au lancement, et on lance l'authentification si elle est cochée
+  console.log("in initAutoSSO - Positionnement de la checkbox autoSSO.");
+  var checkboxSSO = document.getElementById("pacomemdp.cbCerbere");
+  checkboxSSO.checked = true;
+
+  if(checkboxSSO.checked)
+  {
+    console.log("in initAutoSSO - Lancement automatique de l'authentification SSO.");
+    triggerSSO();
+  }
+}
+
 function checkSSO()
 {
   try

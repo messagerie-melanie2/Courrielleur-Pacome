@@ -64,14 +64,21 @@
 
     <!-- zone des boutons -->
     <menuseparator/>
-    <!-- #8016 ajout taille min pour mise à l'echelle 150 -->
     <hbox style="min-height:3.5em;" align="right">
       <button id="pacomemdp.btCerbere" label="&pacomemdp.btCerbere;" oncommand="triggerSSO();" accesskey="&pacomemdp.btCerbere.cle;"/>
+      <!--#8119 - Permettre de mémoriser l'authentification SSO-->
+      <checkbox style="padding-top: 5px;" id="pacomemdp.cbCerbere" label="&pacomemdp.cbCerbere;" oncommand="autoSSO();" accesskey="&pacomemdp.cbCerbere.cle;"/>
       <spacer flex="8" />
       <button id="pacomemdp.btValider" label="&pacomemdp.btValider;" oncommand="ValiderMdp();" accesskey="&pacomemdp.btValider.cle;"/>
       <button id="pacomemdp.btAnnuler" label="&pacome.btAnnuler;" oncommand="AnnulerMdp();"/>
     </hbox>
 
-  </vbox>
+    <!--#8119 - 0 miliseconde après l'ouverture du formulaire, on initialise la checkbox -->
+    <script>
+        window.setTimeout(function() {
+          initAutoSSO();
+        }, 0);
+    </script>
 
+  </vbox>
 </window>
