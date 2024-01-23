@@ -67,7 +67,7 @@
     <hbox style="min-height:3.5em;" align="right">
       <button id="pacomemdp.btCerbere" label="&pacomemdp.btCerbere;" oncommand="triggerSSO();" accesskey="&pacomemdp.btCerbere.cle;"/>
       <!--#8119 - Permettre de mémoriser l'authentification SSO-->
-      <checkbox style="padding-top: 5px;" id="pacomemdp.cbCerbere" label="&pacomemdp.cbCerbere;" oncommand="autoSSO();" accesskey="&pacomemdp.cbCerbere.cle;"/>
+      <checkbox style="padding-top: 5px;" id="pacomemdp.cbCerbere" label="&pacomemdp.cbCerbere;" oncommand="autoSSO();" accesskey="&pacomemdp.cbCerbere.cle;" tooltiptext="Toujours se connecter avec Cerbère"/>
       <spacer flex="8" />
       <button id="pacomemdp.btValider" label="&pacomemdp.btValider;" oncommand="ValiderMdp();" accesskey="&pacomemdp.btValider.cle;"/>
       <button id="pacomemdp.btAnnuler" label="&pacome.btAnnuler;" oncommand="AnnulerMdp();"/>
