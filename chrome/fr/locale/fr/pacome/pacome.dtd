@@ -28,6 +28,8 @@
 <!ENTITY pacome.btAnnuler.cle "A">
 <!ENTITY pacomemdp.btCerbere "Connexion avec Cerbère">
 <!ENTITY pacomemdp.btCerbere.cle "C">
+<!ENTITY pacomemdp.cbCerbere "Se souvenir">
+<!ENTITY pacomemdp.cbCerbere.cle "S">
 
 <!ENTITY pacome.texteAide "Pour obtenir des informations sur le paramétrage Pacome, cliquer sur le lien :">
 <!ENTITY pacome.AideLigne "Aide en ligne">
