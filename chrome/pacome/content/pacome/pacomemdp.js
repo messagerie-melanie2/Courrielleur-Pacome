@@ -55,7 +55,7 @@ function initAutoSSO()
   // #8119 - On positionne la checkbox au lancement, et on lance l'authentification si elle est cochée
   console.log("in initAutoSSO - Positionnement de la checkbox autoSSO.");
   var checkboxSSO = document.getElementById("pacomemdp.cbCerbere");
-  checkboxSSO.checked = true;
+  checkboxSSO.checked = Services.prefs.getBoolPref("pacome.autosso");
 
   if(checkboxSSO.checked)
   {
