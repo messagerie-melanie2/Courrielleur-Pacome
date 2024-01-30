@@ -47,7 +47,7 @@ function autoSSO()
   // #8119 - Sauvegarde de l'état de la checkbox de sauvegarde d'authentification SSO
   var autoSSO = document.getElementById("pacomemdp.cbCerbere").checked;
   console.log("in autoSSO - Utiliser automatiquement l'authentification SSO: "+autoSSO);
-  Services.prefs.setCharPref("pacome.autosso", autoSSO);
+  Services.prefs.setBoolPref("pacome.autosso", autoSSO);
 }
 
 function initAutoSSO()
