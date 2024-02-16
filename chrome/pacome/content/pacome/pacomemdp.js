@@ -18,6 +18,10 @@ function authMethodCallbackSSO()
 {
   PacomeTrace("Pacomemdp authMethodCallbackSSO");
 
+  // #8175: Empêcher multi clic sur Connexion avec Cerbère
+  btSSO = document.getElementById("pacomemdp.btCerbere");
+  btSSO.setAttribute("disabled",false);
+
   if(TbbbbUtils._token)
   {
     PacomeTrace("Pacomemdp authMethodCallbackSSO avec Jeton OIDC");
@@ -38,6 +42,11 @@ function authMethodCallbackSSO()
 function triggerSSO()
 {
   PacomeTrace("Pacomemdp triggerSSO");
+
+  // #8175: Empêcher multi clic sur Connexion avec Cerbère
+  btSSO = document.getElementById("pacomemdp.btCerbere");
+  btSSO.setAttribute("disabled",true);
+  btSSO.focus();
 
   TbbbbUtils.launchSSO(authMethodCallbackSSO);
 }
