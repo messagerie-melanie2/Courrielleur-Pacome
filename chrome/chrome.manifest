@@ -149,4 +149,4 @@ override chrome://messagebody/skin/imip.css chrome://calendar/skin/imip.css
 
 content pacome pacome/content/
 locale pacome fr fr/locale/fr/pacome/
-override chrome://messenger/content/accountcreation/accountSetup.xhtml chrome://pacome/content/pacomecompte.xhtml
+override chrome://messenger/content/accountcreation/accountSetup.xhtml chrome://pacome/content/pacomeCompte.xhtml
