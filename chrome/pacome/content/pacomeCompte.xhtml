@@ -1,0 +1,237 @@
+<?xml version="1.0"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+
+<!-- version Pacome de accountSetup.xhtml -->
+
+<!DOCTYPE html>
+<html
+  id="pacome"
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  windowtype="pacome:assistant"
+>
+  <head>
+    <title data-l10n-id="pacome-compte-onglet-titre"></title>
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="chrome://messenger/skin/icons/new/compact/new-mail.svg"/>
+
+
+    <link rel="stylesheet" href="chrome://messenger/skin/messenger.css" />
+    <link rel="stylesheet" href="chrome://messenger/skin/menulist.css" />
+    <link rel="stylesheet" href="chrome://messenger/skin/inContentDialog.css" />
+    <link rel="stylesheet" href="chrome://messenger/skin/accountSetup.css" />
+
+    <link rel="localization" href="branding/brand.ftl" />
+    <link rel="localization" href="pacome/pacome.ftl"/>
+		<link rel="localization" href="messenger/accountcreation/accountSetup.ftl"/>
+
+		<link rel="stylesheet" href="chrome://pacome/content/pacome.css" />
+    <script src="chrome://pacome/content/pacomeCompte.js"></script>
+
+  </head>
+
+  <body>
+
+    <!-- Native HTML dialog used for setup cancel confirmation. -->
+    <dialog id="confirmExitDialog" class="account-setup-dialog">
+      <div class="dialog-container vertical">
+        <h2 class="dialog-title">
+          <img src="chrome://messenger/skin/icons/new/compact/info.svg"
+							alt="" class="dialog-header-image"/>
+          <span data-l10n-id="exit-dialog-title"></span>
+        </h2>
+
+        <div class="dialog-container">
+          <p data-l10n-id="exit-dialog-description" class="dialog-description indent"></p>
+        </div>
+
+        <label class="toggle-container-with-text indent">
+          <input id="useWithoutAccount" type="checkbox"
+								onchange="gAccountSetup.toggleExitDialogButton(event);"/>
+          <span data-l10n-id="account-setup-no-account-checkbox"
+								data-l10n-attrs="accesskey"></span>
+        </label>
+      </div>
+
+      <menu class="dialog-menu-container">
+        <button id="exitDialogConfirmButton"
+								data-l10n-id="exit-dialog-confirm-button"></button>
+        <button id="exitDialogCancelButton" data-l10n-id="exit-dialog-cancel-button" class="primary"></button>
+      </menu>
+    </dialog>
+
+		<header class="assistant-entete">
+      <h1 id="pacomeTitre" data-l10n-id="pacome-compte-titre"	class="title"></h1>
+      <p id="pacomeTexte1"></p>
+      <p id="pacomeTexte2"></p>
+      <p id="pacomeTexte3"></p>
+    </header>
+
+		<section class="main-container assistant-pages">
+      <aside id="setupView" class="assistant-contenu">
+        <form id="form" buttonpack="end">
+          <!-- Hidden submit field to enable the natural Enter keypress to
+          submit the form. We do this because we have the Continue and Done
+          button outside the form and we want to only handle the Enter to
+          submit on the primary fields inside the form. -->
+          <input type="submit" hidden="hidden" />
+          <label for="identifiant"
+								data-l10n-id="pacome-compte-identifiant-libelle"
+								data-l10n-attrs="accesskey">
+          </label>
+          <div class="input-control">
+            <input id="identifiant" type="text"
+									autocomplete="off"
+									class="input-field"
+									data-l10n-id="pacome-compte-identifiant"
+									required="required" maxlength="64"
+									oninput="PacomeAssistant.onInputUid();"/>
+          </div>
+				</form>
+			</aside>
+			
+			
+			<aside id="boites" class="assistant-contenu">
+
+				<template id="boiteUI">
+					<div class="elemUI">
+						<div>
+							<img src="chrome://pacome/content/img/"/>
+							<label value="uid">Boite</label>
+						</div>
+						<select style="grid-column:2;">
+							<!--<option confid=="" label="" action=""/>-->
+						</select>
+					</div>
+				</template>
+
+				<div id="liste-boites" class="assistant-listes">
+
+				</div>
+
+			</aside>
+			
+ 			<aside id="agendas" class="assistant-contenu">
+
+				<template id="agendaUI">
+					<div class="elemUI">
+						<div>
+							<img src="chrome://pacome/content/img/calendar.gif"/>
+							<label value="url"></label>
+						</div>
+						<select style="grid-column:2;">
+							<!--<option confid=="" label="" action=""/>-->
+						</select>
+					</div>
+				</template>
+
+				<div id="liste-agendas" class="assistant-listes">
+
+				</div>
+
+			</aside>
+
+
+			<aside id="autres" class="assistant-contenu">
+
+				<template id="fluxUI">
+					<div class="elemUI">
+						<div>
+							<img src="chrome://messenger/skin/icons/new/compact/rss.svg"/>
+							<label>Flux</label>
+						</div>
+						<select style="grid-column:2;">
+							<!--<option confid=="" label="" action=""/>-->
+						</select>
+					</div>
+				</template>
+
+				<template id="autreUI">
+					<div class="elemUI">
+						<div>
+							<label>Application</label>
+						</div>
+						<select style="grid-column:2;">
+							<!--<option confid=="" label="" action=""/>-->
+						</select>
+					</div>
+				</template>
+
+				<div id="liste-autres" class="assistant-listes">
+
+				</div>
+
+			</aside>
+			
+			<aside id="params" class="assistant-contenu">
+			
+				<template id="paramUI">
+					<div class="elemUI">
+						<div>
+							<img/>
+							<label id="libElem">Element</label>
+						</div>
+						<div style="grid-column:2;">
+							<label id="libAction">Action</label>
+						</div>
+					</div>
+				</template>
+			
+				<div id="liste-params" class="assistant-listes">
+
+				</div>
+				
+			</aside>
+			
+			
+    </section>
+
+    <section>
+			<aside class="assistant-boutons">
+				<menu>
+					<button id="btRetour" type="button"
+									data-l10n-id="pacome-compte-Retour"
+									data-l10n-attrs="accesskey"
+									onclick="PacomeAssistant.Retour();"
+									disabled="disabled"></button>
+					<button id="btContinuer" type="button"
+									data-l10n-id="pacome-compte-Continuer"
+									data-l10n-attrs="accesskey"
+									class="primary"
+									onclick="PacomeAssistant.Continuer();"
+									disabled="disabled"></button>
+					<button id="btQuitter" type="button"
+									data-l10n-id="pacome-compte-Quitter"
+									data-l10n-attrs="accesskey"
+									onclick="PacomeAssistant.Quitter();"></button>
+				</menu>
+			</aside>
+			
+    </section>
+
+		<!-- boite de dialogue de messages utilisateur
+					Utiliser PacomeAssistant.AfficheMsg() -->
+		<dialog id="msgPacome" class="account-setup-dialog">
+      <div class="dialog-container vertical">
+        <h2 class="dialog-title">
+          <img src="chrome://messenger/skin/icons/new/compact/info.svg"
+							 alt="" class="dialog-header-image"/>
+          <span id="msgTitre"></span>
+        </h2>
+
+        <div class="dialog-container vertical">
+          <p id="msgTitre-msg" class="dialog-description indent"></p>
+					<p id="msgTitre-msg2" class="dialog-description indent"></p>
+        </div>
+
+      </div>
+
+      <menu class="dialog-menu-container">
+        <button id="boutonOk" data-l10n-id="bouton-ok"></button>
+      </menu>
+    </dialog>
+
+  </body>
+</html>

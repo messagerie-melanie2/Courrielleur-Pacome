@@ -1,0 +1,152 @@
+content messenger-newsblog newsblog/content/messenger-newsblog/
+content extensions toolkit/content/extensions/
+content gfxsanity toolkit/content/gfxsanity/
+content global toolkit/content/global/ contentaccessible=yes
+content mozapps toolkit/content/mozapps/
+content passwordmgr toolkit/content/passwordmgr/
+skin global classic/1.0 toolkit/skin/classic/global/
+skin help classic/1.0 toolkit/skin/classic/help/
+skin mozapps classic/1.0 toolkit/skin/classic/mozapps/
+content communicator comm/content/communicator/
+content browser browser/content/
+content branding messenger/content/branding/
+content messagebody messenger/content/messagebody/ contentaccessible=yes
+content messenger messenger/content/messenger/ contentaccessible=yes
+content messenger-smime messenger/content/messenger-smime/
+skin messenger-emoticons classic/1.0 messenger/skin/classic/messenger/smileys/
+skin messenger-messagestyles classic/1.0 messenger/skin/classic/messenger/messages/
+content gloda gloda/content/
+content chat chat/content/chat/
+skin chat classic/1.0 chat/skin/classic/chat/
+skin prpl-facebook classic/1.0 chat/skin/classic/prpl/facebook/
+skin prpl-gtalk classic/1.0 chat/skin/classic/prpl/gtalk/
+skin prpl-irc classic/1.0 chat/skin/classic/prpl/irc/
+skin prpl-jabber classic/1.0 chat/skin/classic/prpl/xmpp/
+skin prpl-matrix classic/1.0 chat/skin/classic/prpl/matrix/
+skin prpl-odnoklassniki classic/1.0 chat/skin/classic/prpl/odnoklassniki/
+skin prpl-twitter classic/1.0 chat/skin/classic/prpl/twitter/
+skin prpl-yahoo classic/1.0 chat/skin/classic/prpl/yahoo/
+skin editor classic/1.0 classic/skin/classic/editor/
+skin messenger classic/1.0 classic/skin/classic/messenger/
+skin messenger-newsblog classic/1.0 classic/skin/classic/messenger-newsblog/
+content devtools-startup devtools-startup/content/
+content devtools devtools/content/
+content devtools-jsonview-styles devtools/modules/devtools/client/jsonview/css/ contentaccessible=yes
+skin devtools classic/1.0 devtools/skin/
+content openpgp openpgp/content/openpgp/
+content calendar calendar/content/
+skin calendar classic/1.0 calendar/skin/classic/calendar/ os=WINNT
+content remote remote/content/
+content pippki pippki/content/pippki/
+locale alerts fr fr/locale/fr/alerts/
+locale autoconfig fr fr/locale/fr/autoconfig/
+locale branding fr fr/locale/branding/
+locale calendar fr fr/locale/fr/calendar/
+locale chat fr fr/locale/fr/chat/
+locale communicator fr fr/locale/fr/communicator/
+locale devtools fr fr/locale/fr/devtools/client/
+locale devtools-shared fr fr/locale/fr/devtools/shared/
+locale global fr fr/locale/fr/global/
+locale global-platform fr fr/locale/fr/global-platform/mac/ os=Darwin
+locale global-platform fr fr/locale/fr/global-platform/unix/ os=LikeUnix os=Android
+locale global-platform fr fr/locale/fr/global-platform/win/ os=WINNT
+locale lightning fr fr/locale/fr/lightning/
+locale messenger fr fr/locale/fr/messenger/
+locale messenger-mapi fr fr/locale/fr/messenger-mapi/
+locale messenger-newsblog fr fr/locale/fr/messenger-newsblog/
+locale messenger-region fr fr/locale/fr/messenger-region/
+locale messenger-smime fr fr/locale/fr/messenger-smime/
+locale mozapps fr fr/locale/fr/mozapps/
+locale mozldap fr fr/locale/fr/mozldap/
+locale necko fr fr/locale/fr/necko/
+locale passwordmgr fr fr/locale/fr/passwordmgr/
+locale pdf.js fr fr/locale/pdfviewer/
+locale pipnss fr fr/locale/fr/pipnss/
+locale pippki fr fr/locale/fr/pippki/
+locale places fr fr/locale/fr/places/
+override chrome://mozapps/skin/extensions/category-dictionaries.svg chrome://mozapps/skin/extensions/dictionaryGeneric.svg
+override chrome://mozapps/skin/extensions/category-languages.svg chrome://mozapps/skin/extensions/localeGeneric.svg
+override chrome://mozapps/skin/extensions/category-themes.svg chrome://mozapps/skin/extensions/themeGeneric.svg
+override chrome://mozapps/skin/extensions/localeGeneric.svg chrome://mozapps/skin/extensions/dictionaryGeneric.svg
+override chrome://mozapps/skin/xpinstall/xpinstallItemGeneric.png chrome://mozapps/skin/extensions/extensionGeneric.svg
+resource autofill toolkit/res/autofill/
+resource content-accessible resource://gre/contentaccessible/ contentaccessible=yes
+resource default-theme toolkit/content/mozapps/extensions/default-theme/
+resource featuregates toolkit/featuregates/
+resource gre-resources toolkit/res/
+resource nimbus toolkit/res/nimbus/
+override chrome://browser/content/utilityOverlay.js chrome://communicator/content/utilityOverlay.js
+override chrome://extensions/content/parent/ext-theme.js chrome://messenger/content/parent/ext-theme.js
+override chrome://extensions/content/schemas/theme.json chrome://messenger/content/schemas/theme.json
+override chrome://global/content/aboutSupport.xhtml chrome://messenger/content/about-support/aboutSupport.xhtml
+override chrome://global/content/buildconfig.html chrome://messenger/content/buildconfig.html
+override chrome://global/content/commonDialog.xhtml chrome://messenger/content/commonDialog.xhtml
+override chrome://global/content/license.html chrome://messenger/content/license.html
+override chrome://messagebody/skin/abPrint.css chrome://messenger/skin/shared/abPrint.css
+override chrome://messagebody/skin/messageBody.css chrome://messenger/skin/messageBody.css
+override chrome://mozapps/content/profile/profileDowngrade.js chrome://messenger/content/profileDowngrade.js
+override chrome://mozapps/content/profile/profileDowngrade.xhtml chrome://messenger/content/profileDowngrade.xhtml
+resource builtin-themes messenger/content/builtin-themes/
+resource search-extensions messenger/search-extensions/ contentaccessible=yes
+resource search-plugins messenger/searchplugins/ contentaccessible=yes
+resource pdf.js pdfjs/content/
+override chrome://browser/skin/developer.svg chrome://messenger/skin/icons/developer.svg
+override chrome://devtools/skin/images/aboutdebugging-firefox-beta.svg chrome://branding/content/about-logo.svg
+override chrome://devtools/skin/images/aboutdebugging-firefox-logo.svg chrome://messenger/skin/icons/aboutdebugging-logo.svg
+override chrome://devtools/skin/images/aboutdebugging-firefox-nightly.svg chrome://branding/content/about-logo.svg
+override chrome://devtools/skin/images/aboutdebugging-firefox-release.svg chrome://branding/content/about-logo.svg
+override chrome://global/content/elements/message-bar.css chrome://messenger/skin/message-bar.css
+override chrome://global/skin/icons/add.svg chrome://messenger/skin/overrides/add.svg
+override chrome://global/skin/icons/arrow-down-12.svg chrome://messenger/skin/icons/new/nav-down-sm.svg
+override chrome://global/skin/icons/arrow-down.svg chrome://messenger/skin/icons/new/compact/nav-down.svg
+override chrome://global/skin/icons/arrow-left-12.svg chrome://messenger/skin/icons/new/nav-left-sm.svg
+override chrome://global/skin/icons/arrow-left.svg chrome://messenger/skin/icons/new/compact/nav-left.svg
+override chrome://global/skin/icons/arrow-right-12.svg chrome://messenger/skin/icons/new/nav-right-sm.svg
+override chrome://global/skin/icons/arrow-right.svg chrome://messenger/skin/icons/new/compact/nav-right.svg
+override chrome://global/skin/icons/arrow-up-12.svg chrome://messenger/skin/icons/new/nav-up-sm.svg
+override chrome://global/skin/icons/arrow-up.svg chrome://messenger/skin/icons/new/compact/nav-up.svg
+override chrome://global/skin/icons/blocked.svg chrome://messenger/skin/overrides/blocked.svg
+override chrome://global/skin/icons/check.svg chrome://messenger/skin/icons/new/compact/check.svg
+override chrome://global/skin/icons/chevron.svg chrome://messenger/skin/overrides/chevron.svg
+override chrome://global/skin/icons/close.svg chrome://messenger/skin/overrides/close.svg
+override chrome://global/skin/icons/defaultFavicon.svg chrome://messenger/skin/overrides/defaultFavicon.svg
+override chrome://global/skin/icons/delete.svg chrome://messenger/skin/overrides/delete.svg
+override chrome://global/skin/icons/error.svg chrome://messenger/skin/overrides/error.svg
+override chrome://global/skin/icons/find-next-arrow.svg chrome://messenger/skin/overrides/find-next-arrow.svg
+override chrome://global/skin/icons/find-previous-arrow.svg chrome://messenger/skin/overrides/find-previous-arrow.svg
+override chrome://global/skin/icons/folder.svg chrome://messenger/skin/overrides/folder.svg
+override chrome://global/skin/icons/help.svg chrome://messenger/skin/overrides/help.svg
+override chrome://global/skin/icons/info-filled.svg chrome://messenger/skin/overrides/info-filled.svg
+override chrome://global/skin/icons/info.svg chrome://messenger/skin/overrides/info.svg
+override chrome://global/skin/icons/menu-check.svg chrome://messenger/skin/overrides/check.svg
+override chrome://global/skin/icons/more.svg chrome://messenger/skin/overrides/more.svg
+override chrome://global/skin/icons/open-in-new.svg chrome://messenger/skin/overrides/open-in-new.svg
+override chrome://global/skin/icons/plugin-blocked.svg chrome://messenger/skin/overrides/plugin-blocked.svg
+override chrome://global/skin/icons/plugin.svg chrome://messenger/skin/overrides/plugin.svg
+override chrome://global/skin/icons/print.svg chrome://messenger/skin/overrides/print.svg
+override chrome://global/skin/icons/search-glass.svg chrome://messenger/skin/icons/new/compact/search.svg
+override chrome://global/skin/icons/security-broken.svg chrome://messenger/skin/overrides/security-broken.svg
+override chrome://global/skin/icons/security-warning.svg chrome://messenger/skin/overrides/security-warning.svg
+override chrome://global/skin/icons/security.svg chrome://messenger/skin/overrides/security.svg
+override chrome://global/skin/icons/settings.svg chrome://messenger/skin/icons/new/compact/settings.svg
+override chrome://global/skin/icons/update-icon.svg chrome://messenger/skin/overrides/update-icon.svg
+override chrome://global/skin/icons/warning.svg chrome://messenger/skin/overrides/warning.svg
+override chrome://global/skin/in-content/common.css chrome://messenger/skin/common.css
+override chrome://global/skin/wizard.css chrome://messenger/skin/wizard.css
+override chrome://mozapps/skin/extensions/category-available.svg chrome://messenger/skin/overrides/category-available.svg
+override chrome://mozapps/skin/extensions/category-discover.svg chrome://messenger/skin/overrides/category-discover.svg
+override chrome://mozapps/skin/extensions/category-extensions.svg chrome://messenger/skin/overrides/category-extensions.svg
+override chrome://mozapps/skin/extensions/category-recent.svg chrome://messenger/skin/overrides/category-recent.svg
+override chrome://mozapps/skin/extensions/category-themes.svg chrome://messenger/skin/overrides/category-themes.svg
+override chrome://mozapps/skin/extensions/extension.svg chrome://messenger/skin/icons/new/compact/extension.svg
+override chrome://mozapps/skin/extensions/extensionGeneric.svg chrome://messenger/skin/overrides/category-extensions.svg
+resource devtools devtools/modules/devtools/
+resource devtools-client-jsonview resource://devtools/client/jsonview/ contentaccessible=yes
+resource devtools-client-shared resource://devtools/client/shared/ contentaccessible=yes
+override chrome://messagebody/skin/calendar-attendees.css chrome://calendar/skin/shared/calendar-attendees.css
+override chrome://messagebody/skin/calendar-event-dialog-attendees.png chrome://calendar/skin/shared/calendar-event-dialog-attendees.png
+override chrome://messagebody/skin/imip.css chrome://calendar/skin/imip.css
+
+content pacome pacome/content/
+locale pacome fr fr/locale/fr/pacome/
+override chrome://messenger/content/accountcreation/accountSetup.xhtml chrome://pacome/content/pacomecompte.xhtml
