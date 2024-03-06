@@ -84,3 +84,36 @@
 
 
 
+.pacomeauth{
+	width:400px;
+	height:300px;
+}
+
+.pacomeauth-lib{
+		
+	display:grid;
+	grid-template-columns:30% 70%;
+}
+
+.pacomeauth-lib > label{
+	
+	/*width:100px;*/
+}
+
+.pacomeauth-lib > input{
+	grid-column:2;
+}
+
+.pacomeauth-boutons{
+	
+	margin:10px 5px;
+	padding:0;
+}
+
+#pacome-auth-mdp{
+	padding-top:10px;
+}
+
+
+
+

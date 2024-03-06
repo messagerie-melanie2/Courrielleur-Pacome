@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!-- Pacome : boite d'authentification -->
+
+<!DOCTYPE html>
+<html
+  id="pacome"
+  xmlns="http://www.w3.org/1999/xhtml"
+  windowtype="pacome:pacomeauth">
+  <head>
+    <title data-l10n-id="pacomeauth-titre"></title>
+		<!--
+    <meta name="color-scheme" content="light dark" />
+-->
+    <link rel="stylesheet" href="chrome://messenger/skin/messenger.css" />
+    <link rel="stylesheet" href="chrome://messenger/skin/menulist.css" />
+    <link rel="stylesheet" href="chrome://messenger/skin/inContentDialog.css" />
+	<!--
+    <link rel="localization" href="branding/brand.ftl" />
+		-->
+    <link rel="localization" href="pacome/pacome.ftl"/>
+
+		<link rel="stylesheet" href="chrome://pacome/content/pacome.css" />
+    <script src="chrome://pacome/content/pacomeauth.js"></script>
+
+  </head>
+
+  <body>
+
+    <dialog id="pacomeauth" class="pacomeauth">
+			
+				<div class="dialog-container vertical">
+					<h2 class="dialog-title">
+						<img src="chrome://messenger/skin/icons/new/compact/question.svg"
+								 alt="" class="dialog-header-image"/>
+						<span data-l10n-id="pacome-auth-titre"/>
+					</h2>
+				</div>
+				
+				<div class="pacomeauth-lib">
+					<label data-l10n-id="pacome-auth-identifiant"/>
+					<input type="text" id="uid" dir="ltr" disabled="true"/>
+				</div>
+				
+				<div id="pacome-auth-mdp" class="pacomeauth-lib">
+					<label data-l10n-id="pacome-auth-mdp"/>
+					<input type="password" id="mdp" dir="ltr" oninput="saisieMdp();"/>
+				</div>
+
+				<menu class="dialog-menu-container pacomeauth-boutons">
+					<button id="boutonValider" data-l10n-id="bouton-valider" onclick="ValiderAuth();"/>
+					<button id="boutonAnnuler" data-l10n-id="bouton-annuler" onclick="Annuler();"/>
+				</menu>
+			
+		</dialog>
+				
+	</body>
+</html>

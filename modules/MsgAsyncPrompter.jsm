@@ -8,6 +8,20 @@ var { XPCOMUtils } = ChromeUtils.importESModule(
   "resource://gre/modules/XPCOMUtils.sys.mjs"
 );
 
+var { Services } = ChromeUtils.import(
+	"resource:///modules/Services.jsm"
+);
+
+var { PacomeAuthUtils } = ChromeUtils.import("resource:///modules/pacome/PacomeAuthUtils.jsm");
+
+//pas un serveur melanie2
+const NON_MELANIE2=0;
+//serveur de messagerie melanie2
+const MSG_MELANIE2=1;
+//serveur d'application melanie2
+const APP_MELANIE2=2;
+
+
 const LoginInfo = Components.Constructor(
   "@mozilla.org/login-manager/loginInfo;1",
   "nsILoginInfo",
@@ -129,6 +143,7 @@ MsgAsyncPrompter.prototype = {
   _log: null,
 
   queueAsyncAuthPrompt(aKey, aJumpQueue, aCaller) {
+		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm queueAsyncAuthPrompt aKey:"+aKey);
     if (aKey in this._pendingPrompts) {
       this._log.debug(
         "Prompt bound to an existing one in the queue, key: " + aKey
@@ -157,6 +172,7 @@ MsgAsyncPrompter.prototype = {
   },
 
   _doAsyncAuthPrompt() {
+
     if (this._asyncPromptInProgress > 0) {
       this._log.debug(
         "_doAsyncAuthPrompt bypassed - prompt already in progress"
@@ -287,6 +303,7 @@ class MsgAuthPrompt {
     let checkBox = { value: false };
     let checkBoxLabel = null;
     let [origin, realm] = this._getRealmInfo(aPasswordRealm);
+		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptUsernameAndPassword origin:"+origin);
 
     // If origin is null, we can't save this login.
     if (origin) {
@@ -351,6 +368,7 @@ class MsgAuthPrompt {
     aSavePassword,
     aPassword
   ) {
+
     if (aSavePassword == Ci.nsIAuthPrompt.SAVE_PASSWORD_FOR_SESSION) {
       throw new Components.Exception(
         "promptUsernameAndPassword doesn't support SAVE_PASSWORD_FOR_SESSION",
@@ -361,8 +379,40 @@ class MsgAuthPrompt {
     let checkBox = { value: false };
     let checkBoxLabel = null;
     let [origin, realm, username] = this._getRealmInfo(aPasswordRealm);
+		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword aPasswordRealm:"+aPasswordRealm);
+		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword origin:"+origin);
 
     username = decodeURIComponent(username);
+		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword username:"+username);
+
+		// cas authentification pacome
+		if (origin && PacomeAuthUtils.TestServeurMelanie2(origin)!=NON_MELANIE2) {
+			Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword cas authentification pacome");
+
+			// rechercher login existant
+			let loging2=PacomeAuthUtils.findLogins(origin, null, realm);
+			if (loging2.length){
+				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm login pacome present");
+				aPassword.value=loging2[0].password;
+        return true;
+			}
+
+			// demande mdp
+			let outmdp={};
+			let ok=PacomeAuthUtils.PromptPacomeMdp(null, username, outmdp);
+
+			// retour infos
+			if (ok) {
+				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm utilisation login pacome");
+				// mettre à jour tous les comptes
+				PacomeAuthUtils.modifyMdpPacome(username, outmdp.value);
+
+				aPassword.value=outmdp.value;
+        return true;
+			}
+			
+			return false;
+		}
 
     // If origin is null, we can't save this login.
     if (origin) {
@@ -431,6 +481,7 @@ class MsgAuthPrompt {
    * @returns {boolean} true for OK, false for Cancel.
    */
   promptPassword2(dialogTitle, text, password, checkMsg, checkValue) {
+		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword2 text:"+text);
     return nsIPrompt_promptPassword(
       dialogTitle,
       text,
@@ -470,6 +521,66 @@ class MsgAuthPrompt {
 
     let username = { value: authInfo.username || "" };
     let password = { value: authInfo.password || "" };
+
+		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth username:"+username);
+		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth channel.URI.spec:"+channel.URI.spec);
+
+		// cas authentification pacome
+		// authentification proxy AMANDE? ou authentification melanie2
+    if (null!=channel && null!=channel.URI &&
+				(PacomeAuthUtils.isAuthProxyAmande(channel, authInfo) ||
+        APP_MELANIE2==PacomeAuthUtils.TestServeurMelanie2(channel.URI.host)) ) {
+      Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth authentification melanie2");
+
+			// rechercher login existant
+			let loging=PacomeAuthUtils.findLogins(null, channel.URI.host, null);
+			if (loging.length){
+				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth login pacome present");
+				authInfo.username = loging[0].username;
+				authInfo.password = loging[0].password;
+				checkValue.value=false;
+        return true;
+			}
+
+			let mdp=new Object();
+
+			// cas agenda : rechercher uid
+			let uid=PacomeAuthUtils.GetUidAgenda(channel.URI.spec);
+
+			if (null==uid || ""==uid) {
+
+				//authentification pacome avec le compte principal
+				let compte=PacomeAuthUtils.GetComptePrincipal();
+				if (null!=compte) {
+					uid=PacomeAuthUtils.GetUidReduit(compte.incomingServer.username);
+				}
+				else {
+					// le compte principal devrait exister
+					Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth authentification "+channel.URI.host+" - pas de compte principal!");
+					return false;
+				}
+			}
+			else Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth GetUidAgenda uid:"+uid);
+
+			//demande mot de passe
+			Services.console.logStringMessage("*** MsgAsyncPrompter.jsm authentification "+channel.URI.host+" - demande mot de passe");
+			let res=PacomeAuthUtils.PromptPacomeMdp(this._window, uid, mdp);
+
+			if (res!=1) {
+				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm echec authentification pacome ou annulation");
+				return false;
+			}
+
+			// mettre à jour tous les comptes
+			PacomeAuthUtils.modifyMdpPacome(uid, mdp.value);
+
+			authInfo.username=uid;
+			authInfo.password=mdp.value;
+			checkValue.value=false;
+
+			return true;
+    }
+
 
     let ok = nsIPrompt_promptUsernameAndPassword(
       title,

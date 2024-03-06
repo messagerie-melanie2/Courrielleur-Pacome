@@ -1,11 +1,12 @@
 /* fonctions utilitaires pacome pour thunderbird 115 */
 
+
+var EXPORTED_SYMBOLS = ["PacomeUtils"];
+
+
 var { FileUtils } = ChromeUtils.importESModule(
   "resource://gre/modules/FileUtils.sys.mjs"
 );
-
-
-var EXPORTED_SYMBOLS = ["PacomeUtils"];
 
 
 // si true active les traces debug dans la console (mode developpement)
@@ -75,6 +76,11 @@ var PacomeUtils={
 			gPacomeBundle=Services.strings.createBundle("chrome://pacome/locale/pacome.properties");
 			this._init=true;
 		}
+	},
+	
+	get version() {
+		
+		return VERSION_PACOME;
 	},
 
 	// retourne la chaine correspondante dans pacome.properties
@@ -275,7 +281,12 @@ var PacomeUtils={
 		fichier.append(PACOME_FICHIER_LOG);
 		fichier.moveTo(null, PACOME_FICHIER_LOG1);
 	},
+	
+	passerHorsLigne(){
 
+		Services.io.manageOfflineStatus=false;
+		Services.io.offline=true;
+	}
 };
 
 PacomeUtils.InitUtils();

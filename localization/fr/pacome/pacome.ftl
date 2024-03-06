@@ -19,3 +19,9 @@ pacome-compte-identifiant =
 
 bouton-ok = OK
 
+bouton-valider=Valider
+bouton-annuler=Annuler
+
+pacome-auth-titre=Authentification Pacome
+pacome-auth-identifiant=Identifiant :
+pacome-auth-mdp=Mot de passe :
