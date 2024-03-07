@@ -1475,14 +1475,15 @@ function SortiePageFin(){
 
   //operations de parametrage des boites
   let bredemarre=false;
+  let comptePrincipal;
 
   let elems=GetPageListItems(pagecompteid);
   if (null!=elems){
 
     // DGGN on va ajouter des comptes. Mais a-t-on deja un bon compte Pacome par defaut ? Sinon faudra le setter
-    let cp=PacomeAuthUtils.GetComptePrincipal();
+    comptePrincipal=PacomeAuthUtils.GetComptePrincipal();
     console.log('=============================================================');
-    console.log(cp ? 'ON A UN COMPTE':'ON N A PAS DE COMPTE', cp ? cp.key : null);
+    console.log(comptePrincipal ? 'ON A UN COMPTE':'ON N A PAS DE COMPTE', comptePrincipal ? comptePrincipal.key : null);
     console.log('=============================================================');
 
     for (var i=0;i<elems.length;i++){
@@ -1527,35 +1528,7 @@ function SortiePageFin(){
           tbl_results.push(results);
         }
       }
-      }
-
-    // peut-etre que nous venons de creer le premier compte pacome
-    // si nous avions des comptes existants, il faut le passer en compte par default
-    if (!cp) {
-      cp=PacomeAuthUtils.GetComptePrincipal();
-      if (cp && cp.key) {
-        console.log('=============================================================');
-        console.log('ON POSITIONNE LE SERVEUR PAR DEFAULT A ',cp.key);
-        Services.prefs.setCharPref("mail.accountmanager.defaultaccount", cp.key);
-        MailServices.accounts.defaultAccount = cp;
-        // modification de l'ordre des comptes : cp en premier
-        let ordre=Services.prefs.getCharPref("mail.accountmanager.accounts");
-        console.log('mail.accountmanager.accounts original:'+ordre);
-        let tab=ordre.split(",");
-		if (tab.length && tab[0]!=cp.key){
-			console.log('ON MODIFIE L\'ORDRE DES COMPTES');
-			ordre=cp.key;
-			for (let c=0;c<tab.length;c++){
-				if (tab[c]==cp.key) continue;
-				ordre+=','+tab[c];
-			}
-			console.log('mail.accountmanager.accounts modifié:'+ordre);
-			Services.prefs.setCharPref("mail.accountmanager.accounts", ordre);
-		}
-        console.log('============================================================');
-      }
-    }
-
+     }
   }
 
   //operations de parametrage des agendas
@@ -1678,6 +1651,38 @@ function SortiePageFin(){
 
   //v3.3 - traiter les categories horde
   pacomeCatsTraiteDoc(gPacomeAssitVars.docpacomesrv);
+  
+  
+	// compte par défaut
+	// peut-etre que nous venons de creer le premier compte pacome
+	// si nous avions des comptes existants, il faut le passer en compte par default
+	if (!comptePrincipal) {
+	  comptePrincipal=PacomeAuthUtils.GetComptePrincipal();
+	  if (comptePrincipal && comptePrincipal.key) {
+		console.log('=============================================================');
+		console.log('ON POSITIONNE LE SERVEUR PAR DEFAULT A ',comptePrincipal.key);
+		Services.prefs.setCharPref("mail.accountmanager.defaultaccount", comptePrincipal.key);
+		MailServices.accounts.defaultAccount = comptePrincipal;
+		// modification de l'ordre des comptes : comptePrincipal en premier
+		let ordre=Services.prefs.getCharPref("mail.accountmanager.accounts");
+		console.log('mail.accountmanager.accounts original:'+ordre);
+		let tab=ordre.split(",");
+		if (tab.length && tab[0]!=comptePrincipal.key){
+			console.log('ON MODIFIE L\'ORDRE DES COMPTES');
+			ordre=comptePrincipal.key;
+			for (let c=0;c<tab.length;c++){
+				if (tab[c]==comptePrincipal.key) continue;
+				ordre+=','+tab[c];
+			}
+			console.log('mail.accountmanager.accounts modifié:'+ordre);
+			Services.prefs.setCharPref("mail.accountmanager.accounts", ordre);
+			
+			// redémarrage forcé pour mise à jour
+			bredemarre=true;
+		}
+		console.log('============================================================');
+	  }
+	}
 
   window.setCursor("auto");
 
