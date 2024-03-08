@@ -2,8 +2,8 @@
 	certaines parties sont reprises/adaptées depuis chrome\messenger\content\messenger\accountcreation\accountSetup.js */
 
 
-var { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/PacomeUtils.jsm");
-var { PacomeParam } = ChromeUtils.import("resource:///modules/pacome/PacomeParam.jsm");
+var { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeUtils.jsm");
+var { PacomeParam } = ChromeUtils.import("resource:///modules/pacome/pacomeParam.jsm");
 
 
 /* constantes des actions de parametrage */

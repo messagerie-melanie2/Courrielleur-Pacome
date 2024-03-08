@@ -1,8 +1,8 @@
 /* Authentification Pacome */
 
 
-var { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/PacomeUtils.jsm");
-var { PacomeAuthUtils } = ChromeUtils.import("resource:///modules/pacome/PacomeAuthUtils.jsm");
+var { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeUtils.jsm");
+var { PacomeAuthUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeAuthUtils.jsm");
 var { MailServices } = ChromeUtils.import("resource:///modules/MailServices.jsm");
 
 //préférence serveur pacomemdp2 de vérification de mot de passe

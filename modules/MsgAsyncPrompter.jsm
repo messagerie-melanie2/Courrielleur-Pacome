@@ -12,7 +12,7 @@ var { Services } = ChromeUtils.import(
 	"resource:///modules/Services.jsm"
 );
 
-var { PacomeAuthUtils } = ChromeUtils.import("resource:///modules/pacome/PacomeAuthUtils.jsm");
+var { PacomeAuthUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeAuthUtils.jsm");
 
 //pas un serveur melanie2
 const NON_MELANIE2=0;
@@ -410,7 +410,7 @@ class MsgAuthPrompt {
 				aPassword.value=outmdp.value;
         return true;
 			}
-			
+
 			return false;
 		}
 
