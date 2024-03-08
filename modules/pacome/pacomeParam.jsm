@@ -7,7 +7,7 @@ var EXPORTED_SYMBOLS = ["PacomeParam"];
 
 var { Services } = ChromeUtils.import("resource:///modules/Services.jsm");
 var { MailServices } = ChromeUtils.import("resource:///modules/MailServices.jsm");
-var { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/PacomeUtils.jsm");
+var { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeUtils.jsm");
 var { cal } = ChromeUtils.import("resource:///modules/calendar/calUtils.jsm");
 var { Feed } = ChromeUtils.import("resource:///modules/Feed.jsm");
 var { FeedUtils } = ChromeUtils.import("resource:///modules/FeedUtils.jsm");
@@ -568,7 +568,7 @@ var PacomeParam={
 	// suppression d'une boite si existe
 	SupprimeBoite(uid, confid){
 
-		//suppression du parametrage	
+		//suppression du parametrage
 		for (let compte of MailServices.accounts.accounts) {
 			if (null==compte || null==compte.incomingServer) continue;
 			let nom=compte.incomingServer.username;

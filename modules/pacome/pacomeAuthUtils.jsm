@@ -7,7 +7,7 @@ var EXPORTED_SYMBOLS = [ "PacomeAuthUtils"];
 
 var { Services } = ChromeUtils.import("resource:///modules/Services.jsm");
 var { MailServices } = ChromeUtils.import("resource:///modules/MailServices.jsm");
-var { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/PacomeUtils.jsm");
+var { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeUtils.jsm");
 var { cal } = ChromeUtils.import("resource:///modules/calendar/calUtils.jsm");
 
 
