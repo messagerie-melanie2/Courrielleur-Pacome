@@ -602,7 +602,7 @@ var PacomeAssistant = {
 			if ("true"==boite.getAttribute("visible")){
 				this.logMsgDebug("InitPageParam boite:"+boite.getAttribute("libelle"));
 				let choix=this.GetChoixDefaut(boite);
-				nbparam+=this.InsertParamUI(boite.getAttribute("libelle"), "chrome://pacome/content/img/"+boite.getAttribute("image"), choix.getAttribute("libelle"));
+				nbparam+=this.InsertParamUI(boite.getAttribute("libelle"), "chrome://pacome/content/img/"+boite.getAttribute("image").replace("gif","png"), choix.getAttribute("libelle"));
 			}
 		}
 
