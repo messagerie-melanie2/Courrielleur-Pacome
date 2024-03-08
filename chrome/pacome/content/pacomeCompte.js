@@ -381,9 +381,9 @@ var PacomeAssistant = {
 		let fichierimg=boite.getAttribute("image");
 		let img=clone.querySelector("img");
 		if (fichierimg && fichierimg!="")
-			img.src+=fichierimg;
+			img.src+=fichierimg.replace("gif","png");
 		else
-			img.src+="bali.gif";
+			img.src+="bali.png";
 		PacomeAssistant.logMsgDebug("InsertBoiteUI img src:"+img.src);
 
 		this.InsertChoixUI(clone.querySelector("select"), boite.querySelectorAll("choix"));
@@ -613,7 +613,7 @@ var PacomeAssistant = {
 			if ("true"==agenda.getAttribute("visible")){
 				this.logMsgDebug("InitPageParam agenda:"+agenda.getAttribute("libelle"));
 				let choix=this.GetChoixDefaut(agenda);
-				nbparam+=this.InsertParamUI(agenda.getAttribute("libelle"), "chrome://pacome/content/img/calendar.gif", choix.getAttribute("libelle"));
+				nbparam+=this.InsertParamUI(agenda.getAttribute("libelle"), "chrome://pacome/content/img/calendar.png", choix.getAttribute("libelle"));
 			}
 		}
 
