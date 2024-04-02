@@ -393,9 +393,9 @@ function pacomeLogStartTime(){
     return;
   }
 
-  let startTime=Services.prefs.getCharPref("courrielleur.startTime");
+  let startTime=Services.prefs.getCharPref("courrielleur.startTime", "0");
   startTime=new Date(new Number(startTime));
-  let totalTime=Services.prefs.getIntPref("courrielleur.totalTime");
+  let totalTime=Services.prefs.getIntPref("courrielleur.totalTime", 0);
 
   let strdh="["+startTime.getDate()+"/"+(startTime.getMonth()+1)+"/"+startTime.getFullYear()+" "+startTime.getHours()+":"+startTime.getMinutes()+":"+startTime.getSeconds()+"]";
 

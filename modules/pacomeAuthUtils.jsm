@@ -270,8 +270,9 @@ var PacomeAuthUtils= {
   // username : identifiant
   // outmdp : objet pour retour mdp
 	// outmemomdp : objet pour retour mémorisation mdp (true/false)
+	// outresmdp : si non null retourne les arguments de retour de pacomemdp (res/offline/mdpforce)
   // retourn true si OK, sinon false
-  PromptMdp: function(aParent, username, outmdp, outmemomdp){
+  PromptMdp: function(aParent, username, outmdp, outmemomdp, outresmdp=null){
 
     if (Services.io.offline)
       return false;
@@ -283,6 +284,8 @@ var PacomeAuthUtils= {
     args.uid=this.GetUidReduit(username);
 
     aParent.openDialog("chrome://pacome/content/pacomemdp.xul", "_blank", "chrome,modal,centerscreen,titlebar", args);
+
+		Services.console.logStringMessage("[PACOME] PromptMdp retour:"+args.res );
 
     // 0005099: Action en cas de non-saisie de mot de passe au démarrage
     if (0==args.res && ""==args.mdp){
@@ -297,6 +300,12 @@ var PacomeAuthUtils= {
 
 		if (args.memomdp)
 			this.MemoriseMdp(username, args.mdp);
+
+		if (outresmdp){
+			outresmdp.offline=args.offline;
+			outresmdp.mdpforce=args.mdpforce;
+			outresmdp.res=args.res;
+		}
 
     if (1==args.res)
       return true;

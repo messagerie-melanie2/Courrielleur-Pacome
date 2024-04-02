@@ -394,27 +394,36 @@ function SortiePageSaisieUid(){
 	// authentification requise (MI ticket 27)
 	let uidp, mdp;
 	let compte=PacomeAuthUtils.GetComptePrincipal();
+
 	if (null!=compte){
 		uidp=compte.incomingServer.username;
 		mdp=compte.incomingServer.password;
+
 	} else {
+
 		// authentification pacome
-		let outmdp={}, outmemomdp={};
+		let outmdp={}, outmemomdp={}, outresmdp={};
 		uidp=uid.split("@")[0];
 		PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - authentification", uidp);
 
-		let res=PacomeAuthUtils.PromptMdp(window, uidp, outmdp, outmemomdp);
+		let res=AuthPacome(uidp, outmdp, outmemomdp);
+
 		if (res){
+
 			mdp=outmdp.value;
 			gPacomeAssitVars.nouveauMdp=mdp;
 			gPacomeAssitVars.memoMdp=outmemomdp.value;
+
 		} else{
+
+			window.close();
 			return false;
 		}
 	}
 
   //envoyer la requete
 	PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - envoie de la requete", cfg);
+
   let ret=RequeteParametrage(cfg, ReceptionParametrage, false, uidp, mdp);
 
 
@@ -428,6 +437,46 @@ function SortiePageSaisieUid(){
   return false;
 }
 
+// nouveau profil : authentification lors du paramétrage
+// uid : identifiant ou courriel
+// outmdp : mot passe validé
+// outmemomdp (optionnel) : true si le mot de passe doit être mémorisé
+// retour true si authentification valide, sinon false
+function AuthPacome(uid, outmdp, outmemomdp){
+
+	PacomeTrace("AuthPacome uid:"+uid);
+
+	let outresmdp={};
+
+	while (true){
+		let res=PacomeAuthUtils.PromptMdp(window, uid, outmdp, outmemomdp, outresmdp);
+		// outresmdp.res
+		//   1 -> mot de passe valide ou bouton continuer (mot de passe non vérifié)
+		//  -1 => passage en mode deconnecte
+		if (res){
+			PacomeTrace("AuthPacome PromptMdp true outresmdp.mdpforce:"+outresmdp.mdpforce);
+
+			if (outresmdp.mdpforce){
+				// mot de passe forcé => auth non valide
+				//return false;
+				// cas erreur de saisie => afficher à nouveau
+				continue;
+			}
+
+			// auth ok
+			mdp=outmdp.value;
+			gPacomeAssitVars.nouveauMdp=mdp;
+			gPacomeAssitVars.memoMdp=outmemomdp.value;
+
+			return true;
+
+		} else{
+
+			PacomeTrace("AuthPacome PromptMdp false => offline");
+			return false;
+		}
+	}
+}
 
 /* initialisation page identifiants */
 function InitPageIdents(){
@@ -486,21 +535,28 @@ function SortiePageIdents(){
 	// authentification requise (MI ticket 27)
 	let uidp, mdp;
 	let compte=PacomeAuthUtils.GetComptePrincipal();
+
 	if (null!=compte){
 		uidp=compte.incomingServer.username;
 		mdp=compte.incomingServer.password;
+
 	} else {
 		// authentification pacome
 		let outmdp={}, outmemomdp={};
 		uidp=uids[0].split("@")[0];
 		PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - authentification", uidp);
 
-		let res=PacomeAuthUtils.PromptMdp(window, uidp, outmdp, outmemomdp);
+		let res=AuthPacome(uidp, outmdp, outmemomdp);
+
 		if (res){
+
 			mdp=outmdp.value;
 			gPacomeAssitVars.nouveauMdp=mdp;
 			gPacomeAssitVars.memoMdp=outmemomdp.value;
+
 		} else{
+
+			window.close();
 			return false;
 		}
 	}

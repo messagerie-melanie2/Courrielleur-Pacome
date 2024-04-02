@@ -121,6 +121,9 @@ function PacomeSetOpenHours(reponse)
 *
 * *  v1.2 valeur du paramètre appver: url de mise à jour
 *
+*	 window.arguments[0].res :
+*  1 -> mot de passe valide ou bouton continuer (mot de passe non vérifié)
+*  -1 => passage en mode deconnecte
 */
 function ValiderMdp(){
 
@@ -235,6 +238,7 @@ function ValiderMdp(){
           window.arguments[0].res=-1;
           window.arguments[0].mdp="";
 					window.arguments[0].memomdp=false;
+					window.arguments[0].offline=true;
 
         }  else{
 
@@ -243,6 +247,7 @@ function ValiderMdp(){
           window.arguments[0].res=1;
           window.arguments[0].mdp=mdp;
 					window.arguments[0].memomdp=false;// pas de memorisation si erreur de verification par le serveur
+					window.arguments[0].mdpforce=true;
         }
 
         window.close();
@@ -365,6 +370,7 @@ function ValiderMdp(){
               //annulation
               window.arguments[0].res=-1;
               window.arguments[0].mdp="";
+							window.arguments[0].offline=true;
 
             }  else{
 
@@ -372,6 +378,7 @@ function ValiderMdp(){
 
               window.arguments[0].res=1;
               window.arguments[0].mdp=mdp;
+							window.arguments[0].mdpforce=true;
             }
 
             window.close();
