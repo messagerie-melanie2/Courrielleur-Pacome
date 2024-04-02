@@ -3,6 +3,7 @@ ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/MailUtils.js");
 ChromeUtils.import("resource:///modules/mailServices.js");
 
+ChromeUtils.import("resource://gre/modules/PacomeAuthUtils.jsm");
 
 /* constantes des actions de parametrage */
 const PACOME_ACTION_PARAM      ="param";
@@ -383,10 +384,31 @@ function SortiePageSaisieUid(){
   //reinitialiser document parametrage
   gPacomeAssitVars.docpacomesrv=null;
 
-  PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - envoie de la requete", cfg);
+
+	// authentification requise (MI ticket 27)
+	let uidp, mdp;
+	let compte=PacomeAuthUtils.GetComptePrincipal();
+	if (null!=compte){
+		uidp=cp.incomingServer.username;
+		mdp=cp.incomingServer.password;
+	} else {
+		// authentification pacome
+		let outmdp={}, outmemomdp={};
+		uidp=uid.split("@")[0];
+		PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - authentification", uidp);
+
+		let res=PacomeAuthUtils.PromptMdp(window, uidp, outmdp, outmemomdp);
+		if (res){
+			mdp=outmdp.value;
+		} else{
+			return false;
+		}
+	}
 
   //envoyer la requete
-  let ret=RequeteParametrage(cfg, ReceptionParametrage, false);
+	PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - envoie de la requete", cfg);
+  let ret=RequeteParametrage(cfg, ReceptionParametrage, false, uidp, mdp);
+
 
   if (false==ret){
     PacomeAfficheMsgIdGlobalErr("PacomeErreurInitListeUid");
@@ -453,13 +475,33 @@ function SortiePageIdents(){
   let pos=config.indexOf("<comptes>");
   let cfg="<pacome>"+idents+config.substr(pos);
 
+	// authentification requise (MI ticket 27)
+	let uidp, mdp;
+	let compte=PacomeAuthUtils.GetComptePrincipal();
+	if (null!=compte){
+		uidp=cp.incomingServer.username;
+		mdp=cp.incomingServer.password;
+	} else {
+		// authentification pacome
+		let outmdp={}, outmemomdp={};
+		uidp=uids[0].split("@")[0];
+		PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - authentification", uidp);
+
+		let res=PacomeAuthUtils.PromptMdp(window, uidp, outmdp, outmemomdp);
+		if (res){
+			mdp=outmdp.value;
+		} else{
+			return false;
+		}
+	}
+
   //reinitialiser document parametrage
   gPacomeAssitVars.docpacomesrv=null;
 
   PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page des identifiants - envoie de la requete", cfg);
 
   //envoyer la requete
-  let ret=RequeteParametrage(cfg, ReceptionParametrage, false);
+  let ret=RequeteParametrage(cfg, ReceptionParametrage, false, uidp, mdp);
 
   if (false==ret){
     PacomeAfficheMsgIdGlobalErr("PacomeErreurInitListeUid");
@@ -2065,11 +2107,11 @@ function ExecParametrages(){
 				}
 			}
 		}
-		
+
 		// créer dossiers locaux si 1ere utilisation
 		if (gPacomeAssitVars.nouveauProfil){
 			CreeDossiersLocaux();
-		}		
+		}
 
 		//operations de parametrage des agendas
 		elems=GetPageListItems(pagecalsid);

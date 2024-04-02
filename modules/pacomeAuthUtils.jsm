@@ -326,11 +326,11 @@ var PacomeAuthUtils= {
       count.value=0;
       return [];
     }
-		
+
 		let logins=[];
     let srvname=this.extraitServeur(hostname);
     let uidreduit=this.GetUidReduit(username);
-		
+
 		if (null==uidreduit || ""==uidreduit){
 			// cas serveur géré par pacome et uid non fournit => on prend uid compte principal
 			uidreduit=this.GetUidComptePrincipal();
@@ -339,10 +339,10 @@ var PacomeAuthUtils= {
 		// cas fonctionnalité mot de passe enregistré activée
 		if (Services.prefs.getBoolPref("pacome.memomdp")){
 
-			try {				
+			try {
 				let signons = Services.logins.getAllLogins();
 				const nb=signons.length;
-			
+
 				for (let i=0;i<nb;i++){
 					let login=signons[i];
 					if (uidreduit==login.username){
@@ -614,6 +614,19 @@ var PacomeAuthUtils= {
 			// recherche serveur pour uid
 			let serveur=this.GetServeurUid(uid2);
 
+			if (null==serveur){
+				let urlmdp=Services.prefs.getCharPref("pacome.urlmdp", "");
+				if (urlmdp!=""){
+					let compos=urlmdp.split("/");
+					serveur=compos[2];
+					Services.console.logStringMessage("mémorisation mot de passe avec serveur pacome :"+serveur);
+				}
+				else{
+					Services.console.logStringMessage("mémorisation mot de passe pas possible : pas de serveur"+uid2);
+					return;
+				}
+			}
+
 			let login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Components.interfaces.nsILoginInfo);
 			if (MSG_MELANIE2==this.TestServeurMelanie2(serveur))
 				login.init("imap://"+serveur, null, "imap://"+serveur, uid2, mdp, "", "");
@@ -651,6 +664,8 @@ var PacomeAuthUtils= {
 			if (this.TestServeurMelanie2(caluri))
 				return this.extraitServeur(caluri);
 		}
+
+		return null;
 	},
 
 	// recherche login dans la gestionnaire pour uid

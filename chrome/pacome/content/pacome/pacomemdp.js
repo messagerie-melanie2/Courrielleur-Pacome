@@ -47,7 +47,10 @@ function InitPacomeMdp(){
 	// afficher le courriel à la place de l'identifiant
 	let courriel=GetCourrielUid(uid);
 	PacomeTrace("Pacomemdp InitPacomeMdp courriel:"+courriel);
-  document.getElementById("pacomemdp.uid").value=courriel;
+	if (""!=courriel)
+		document.getElementById("pacomemdp.uid").value=courriel;
+	else
+		document.getElementById("pacomemdp.uid").value=uid;
 
 	let memo=Services.prefs.getBoolPref("pacome.memomdp");
 	if (memo)
@@ -231,7 +234,7 @@ function ValiderMdp(){
           //annulation
           window.arguments[0].res=-1;
           window.arguments[0].mdp="";
-		  window.arguments[0].memomdp=false;
+					window.arguments[0].memomdp=false;
 
         }  else{
 

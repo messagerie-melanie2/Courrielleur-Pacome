@@ -22,8 +22,10 @@ const PACOMESRV_PARAM_VER="extver";
 *  config : element (xml) de configuration
 *  fncrappel : fonction de rappel
 *  bmaj : si true requete de mise à jour
+*  uid : optionnel identifiant utilisateur
+*  mdp : optionnel mot de passe utilisateur
 */
-function RequeteParametrage(config, fncrappel, bmaj){
+function RequeteParametrage(config, fncrappel, bmaj, uid=null, mdp=null){
 
   try {
 
@@ -41,9 +43,9 @@ function RequeteParametrage(config, fncrappel, bmaj){
 
     //parametres
     let param=null;
-    if (bmaj) 
+    if (bmaj)
       param="op="+PACOMESRV_OP_MAJ;
-    else 
+    else
       param="op="+PACOMESRV_OP_PARAM;
 
     param+="&"+PACOMESRV_PARAM_CONFIG+"="+encodeURIComponent(config);
@@ -52,6 +54,12 @@ function RequeteParametrage(config, fncrappel, bmaj){
     httpRequest.open("POST", url, true);
 
     httpRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded; charset=UTF-8");
+
+		// cas authentification
+		if (uid!=null && mdp!=null){
+			//"Authorization: Basic "+btoa(uid+":"+mdp)+"\r\n\r\n";
+			httpRequest.setRequestHeader("Authorization", "Basic "+btoa(uid+":"+mdp));
+		}
 
     httpRequest.onreadystatechange=function(){
 
@@ -79,6 +87,7 @@ function RequeteParametrage(config, fncrappel, bmaj){
             PacomeSetErreurGlobale(-1, PacomeMessageFromId("PacomeErreurAccesSrv"));
           }
           else{
+
             try{
               //v1.11
               PacomeSetErreurGlobale(statut, PacomeMessageFromId("pacomesrverr-"+statut));
