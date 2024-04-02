@@ -23,6 +23,12 @@ const PREF_MIGRATION_PABLO="courrielleur.migrationPablo";
 // Initialisation de l'assistant de migration
 function InitPabloMCE(){
 
+		//gestion du mode offline
+		if (Services.io.offline){
+			PacomeAfficheMsgId("PacomeClientDeconnecte");
+			window.close();
+		}
+
 	// déterminer s'il y a migration Pablo
 	if (mceMigrationMCE.FichierMigrationPresent() &&
 			!Services.prefs.prefHasUserValue(PREF_MIGRATION_PABLO)){

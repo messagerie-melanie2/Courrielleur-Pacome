@@ -169,6 +169,12 @@ function InitAssistant(){
 
     PacomeTrace("InitAssistant");
 
+		//gestion du mode offline
+		if (Services.io.offline){
+			PacomeAfficheMsgId("PacomeClientDeconnecte");
+			window.close();
+		}
+
     gPacomeAssitVars.fncrappel=null;
     if (window.arguments && window.arguments[0].okCallback)
       gPacomeAssitVars.fncrappel=window.arguments[0].okCallback;
