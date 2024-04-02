@@ -3,7 +3,7 @@ ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/MailUtils.js");
 ChromeUtils.import("resource:///modules/mailServices.js");
 
-ChromeUtils.import("resource://gre/modules/PacomeAuthUtils.jsm");
+ChromeUtils.import("resource://gre/modules/pacomeAuthUtils.jsm");
 
 /* constantes des actions de parametrage */
 const PACOME_ACTION_PARAM      ="param";
