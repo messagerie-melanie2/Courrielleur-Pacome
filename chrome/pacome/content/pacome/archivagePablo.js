@@ -475,15 +475,14 @@ var archiveBoitesDossiers={
 						itemDest.create(Ci.nsIFile.DIRECTORY_TYPE, FileUtils.PERMS_DIRECTORY);
 					}
 
-					// vérifier que le fichier de messages (sans extensino) source existe
-					// sinon créer un fichier destination vide
-					if (isBoite)
-						this.VerifieFichierMsg(itemSrc, repDest);
-
 					let res=this.CopieRepertoire(itemSrc, itemDest, isBoite);
 					if (!res)
 						return res;
 				}
+
+				// vérifier que le fichier de messages (sans extensino) source existe
+				// sinon créer un fichier destination vide
+				this.VerifieFichierMsg(itemSrc, repDest);
 			}
 
 			return !this._erreurCopie;
@@ -509,9 +508,15 @@ var archiveBoitesDossiers={
 	// repDest: répertoire destination (nsIFile)
 	VerifieFichierMsg: function(itemSrc, repDest){
 
-		//if (!itemSrc.leafName.endsWith(".msf")) return;
-		if (!itemSrc.leafName.endsWith(".sbd")) return;
-		let nom=itemSrc.leafName.split(".")[0];
+		let nom="";
+		let leafName=itemSrc.leafName;
+
+		if (leafName.startsWith("INBOX-")) return;
+		else if (leafName.endsWith(".msf"))
+			nom=leafName.split(".msf")[0];
+		else if (!leafName.endsWith(".sbd"))
+			nom=leafName.split(".sbd")[0];
+		else return;
 
 		let ficSrc=itemSrc.parent.clone();
 		ficSrc.append(nom);
@@ -520,8 +525,11 @@ var archiveBoitesDossiers={
 			let ficDest=repDest.clone();
 			nom=this.utf7ToUnicode(nom);
 			ficDest.append(nom);
-			this.logDebug("*** VerifieFichierMsg creation du fichier vide:"+ficDest.path);
-			ficDest.create(Ci.nsIFile.NORMAL_FILE_TYPE, FileUtils.PERMS_FILE);
+			if (!ficDest.exists()){
+				this.logDebug("*** VerifieFichierMsg creation du fichier vide:"+ficDest.path);
+				ficDest.create(Ci.nsIFile.NORMAL_FILE_TYPE, FileUtils.PERMS_FILE);
+			}
+			else this.logDebug("*** VerifieFichierMsg fichier vide existe:"+ficDest.path);
 		}
 	},
 
