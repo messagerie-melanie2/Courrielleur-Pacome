@@ -40,6 +40,7 @@ function initBoutonsCompte(menupopup){
       bSupport=true;
   }
 
+	/*
   //etat des boutons
   //changement de mot de passe
   let elem=document.getElementById("pacome.btmotdepasse");
@@ -47,6 +48,7 @@ function initBoutonsCompte(menupopup){
     elem.setAttribute("disabled",true);
   else
     elem.removeAttribute("disabled");
+	*/
 
   //effacement de compte
   if (!bSupport && account){
