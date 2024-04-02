@@ -84,9 +84,16 @@ function InitPabloMCE(){
 
     //afficher 1ere page
     if (null!=gPacomeAssitVars.pagesinit[0]){
-      //mceMigrationMCE.logMsg("InitPabloMCE initialisation 1ere page");
-      let fnc=gPacomeAssitVars.pagesinit[0];
-      eval(fnc);
+
+			// chargement des domaines obsolètes pour nettoyage des carnets repris
+			if (0!=mceMigrationMCE._infosPablo.carnets.length){
+				window.setCursor("wait");
+				mceMigrationMCE.ChargeFichierDomaines(fncRappelFichierDomaines);
+			}
+			else {
+				let fnc=gPacomeAssitVars.pagesinit[0];
+				eval(fnc);
+			}
     }
 	}
 	else{
@@ -100,6 +107,22 @@ function InitPabloMCE(){
 		InitAssistant();
 	}
 }
+
+// fonction de rappel pour ChargeFichierDomaines
+function fncRappelFichierDomaines(code){
+	window.setCursor("auto");
+
+	if (code!=200){
+		let ok=PacomeMsgConfirm("Erreur", "La liste des domaines ne peut pas être obtenue. Continuer quand même ?");
+		if (0==ok){
+			Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
+		}
+	}
+
+	let fnc=gPacomeAssitVars.pagesinit[0];
+	eval(fnc);
+}
+
 
 // Ferme l'assistant de migration
 function FermePabloMCE(){

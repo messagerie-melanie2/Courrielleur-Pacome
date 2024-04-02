@@ -403,7 +403,7 @@ var mceMigrationMCE={
 
 		// identifiants des carnets OBM
 		let carnetsOBM=Services.prefs.getCharPref("extensions.obm.addressbooks", "").split(",");
-		
+
 		// tous les carnets locaux
 		let prefBranch=Services.prefs.getBranch("ldap_2.servers.");
 		let nb={};
@@ -414,12 +414,13 @@ var mceMigrationMCE={
 					2==prefBranch.getIntPref(pref)){
 				let val=pref.split(".");
 				let prefid=val[0];
+
 				// ignorer les carnet OBM (migrés côté serveur)
 				if (carnetsOBM.includes(prefid)){
 					Services.console.logStringMessage("***_extraitCarnetsPablo carnet OBM non migré prefid:"+prefid+
 													" - libellé:"+this.getCharPref("ldap_2.servers."+prefid+".description", ""));
 					continue;
-				}			
+				}
 				Services.console.logStringMessage("***_extraitCarnetsPablo carnet prefid:"+prefid);
 				let carnet=Object.create(this._carnet);
 				carnet.carnetId=prefid;
@@ -591,7 +592,10 @@ var mceMigrationMCE={
 		// étiquettes des messages
 		res=res && this.AjoutEtiquettes();
 		// ajout des carnets Pablo
-		res=res && this.AjoutCarnetsPablo();
+		// fait dans choix-profil.js (ParametrageCarnets)
+		//res=res && this.AjoutCarnetsPablo();
+		// nettoyage des carnets
+		res=res && this.NettoieCarnets();
 		// paramètres d'impression
 		res=res && this.ParamImpression();
 		// paramétrage des flux
@@ -926,32 +930,66 @@ var mceMigrationMCE={
 
 			this.logMsg("Ajout des carnets Pablo");
 
+			let adrProps=Services.strings.createBundle("chrome://messenger/locale/addressbook/addressBook.properties");
+			let nom;
+			let prefId;
+			let fichierMab;
+			let book;
+
 			for (let c=0;c<this._infosPablo.carnets.length;c++){
 				let carnet=this._infosPablo.carnets[c];
 				Services.console.logStringMessage("*** AjoutCarnetsPablo carnet.carnetId:"+carnet.carnetId);
-				
-				if (carnet.carnetId=="pab" && carnet.position==0){
-					// carnet non affiché dans Pablo
-					Services.prefs.setCharPref("ldap_2.servers.pab.filename", "abook.mab");
-					Services.prefs.setIntPref("ldap_2.servers.pab.dirType", 2);
-					Services.prefs.setIntPref("ldap_2.servers.pab.position", 0);
-					this.logMsg("Le carnet 'pab' n'est pas affiche dans Pablo", "masqué dans le nouveau profil");
+
+				if (carnet.carnetId=="pab"){
+					// créé automatiquement par tb
+					if (carnet.position==0){
+						// carnet non affiché dans Pablo
+						Services.prefs.setIntPref("ldap_2.servers.pab.position", 0);
+						this.logMsg("Le carnet 'pab' n'est pas affiche dans Pablo", "masqué dans le nouveau profil");
+					}
+					nom=adrProps.GetStringFromName("ldap_2.servers.pab.description");
+					prefId="ldap_2.servers.pab";
+					fichierMab="abook.mab";
+					book=MailServices.ab.getDirectoryFromId(prefId);
+				}
+				else if ("history"==carnet.carnetId){
+					// créé automatiquement par tb
+					nom=adrProps.GetStringFromName("ldap_2.servers.history.description");
+					prefId="ldap_2.servers.history";
+					fichierMab="history.mab";
+					book=MailServices.ab.getDirectoryFromId(prefId);
 					continue;
 				}
+				else {
+					// autre carnet utilisateur
+					nom=carnet.description;
+					fichierMab="";
+					this.logMsg("Ajout du carnet", nom);
+					this.logMsg("Ajout du carnet.carnetId", carnet.carnetId);
+					prefId=MailServices.ab.newAddressBook(carnet.description, null, 2, "ldap_2.servers."+carnet.carnetId);
+					Services.console.logStringMessage("*** newAddressBook prefId:"+prefId);
+
+					book=MailServices.ab.getDirectoryFromId(prefId);
+					fichierMab=book.fileName;
+				}
+
+				if (carnet.carnetId=="pab" && carnet.position==0) continue;
+
+				let profilCourant=Services.dirsvc.get("ProfD", Components.interfaces.nsIFile);
+				let cheminMAB=profilCourant.clone();
+				cheminMAB.append(fichierMab);
+				Services.console.logStringMessage("*** cheminMAB:"+cheminMAB.path);
+				let adMBDir=book.QueryInterface(Components.interfaces.nsIAbMDBDirectory);
+				adMBDir.database.forceClosed();
 
 				// copier le fichier du profil Pablo dans le profil courant
-				let profilCourant=Services.dirsvc.get("ProfD", Components.interfaces.nsIFile);
-
 				let pabloMab=new FileUtils.File(this._infosPablo.cheminPablo);
 				pabloMab.append(carnet.filename);
 				this.logMsg("Copie du fichier du carnet dans le nouveau profil", pabloMab.path);
-				pabloMab.copyTo(profilCourant, pabloMab.leafName);
+				this.logMsg("Nouveau nom de fichier du carnet", fichierMab);
+				pabloMab.copyTo(profilCourant, fichierMab);
 
-				this.logMsg("Ajout du carnet", pabloMab.leafName+" ("+carnet.description+")");
-
-				Services.prefs.setCharPref("ldap_2.servers."+carnet.carnetId+".filename", pabloMab.leafName);
-				Services.prefs.setIntPref("ldap_2.servers."+carnet.carnetId+".dirType", 2);
-				Services.prefs.setStringPref("ldap_2.servers."+carnet.carnetId+".description", carnet.description);
+				adMBDir.database.openMDB(cheminMAB, false);
 			}
 
 			this.logMsg("Fin d'ajout des carnets Pablo", "SUCCES");
@@ -965,7 +1003,76 @@ var mceMigrationMCE={
 		this.Erreur="Echec d'ajout des carnets Pablo (10)";
 		return false;
 	},
-	
+
+	// Paramétrage des carnets
+	// Positionne les préférences et copier les fichiers mab pablo.
+	// pour appel depuis choix-profil-pablo.js
+	ParametrageCarnets: function(){
+
+		try{
+
+			this.logMsg("Paramétrage des carnets Pablo");
+
+			let adrProps=Services.strings.createBundle("chrome://messenger/locale/addressbook/addressBook.properties");
+			let prefId;
+			let nom;
+			let fichierMab;
+
+			for (let c=0;c<this._infosPablo.carnets.length;c++){
+
+				let carnet=this._infosPablo.carnets[c];
+				prefId="ldap_2.servers."+carnet.carnetId;
+				Services.console.logStringMessage("*** ParametrageCarnets prefId:"+prefId);
+
+				if (carnet.carnetId=="pab"){
+					// créé automatiquement par tb
+					if (carnet.position==0){
+						// carnet non affiché dans Pablo
+						Services.prefs.setIntPref("ldap_2.servers.pab.position", 0);
+						this.logMsg("Le carnet 'pab' n'est pas affiche dans Pablo", "masqué dans le nouveau profil");
+					}
+					fichierMab=Services.prefs.getCharPref(prefId+".filename", "abook.mab");
+				}
+				else if ("history"==carnet.carnetId){
+					// créé automatiquement par tb
+					nom=adrProps.GetStringFromName(prefId+".description");
+					fichierMab=Services.prefs.getCharPref(prefId+".filename", "history.mab");
+				}
+				else {
+					// autre carnet utilisateur
+					Services.prefs.setCharPref(prefId+".filename", carnet.filename);
+					Services.prefs.setIntPref(prefId+".dirType", 2);
+					nom=carnet.description;
+					Services.prefs.setStringPref(prefId+".description", nom);
+					fichierMab=carnet.filename;
+				}
+
+				this.logMsg("Paramétrage du carnet", nom);
+
+				// copier le fichier du profil Pablo dans le profil courant
+				let pabloMab=new FileUtils.File(this._infosPablo.cheminPablo);
+				pabloMab.append(carnet.filename);
+				this.logMsg("Copie du fichier du carnet dans le nouveau profil", pabloMab.path);
+				let profilCourant=Services.dirsvc.get("ProfD", Components.interfaces.nsIFile);
+				pabloMab.copyTo(profilCourant, fichierMab);
+
+			}
+
+			this.logMsg("Fin de paramétrage des carnets Pablo", "SUCCES");
+
+			Services.prefs.savePrefFile(null);
+
+			return true;
+
+		} catch(ex){
+			this.logMsg("ParametrageCarnets exception", ex);
+		}
+
+		this.logMsg("Fin de paramétrage des carnets Pablo", "ERREUR");
+		this.Erreur="Echec de paramétrage des carnets Pablo (10)";
+		return false;
+	},
+
 	// paramétrer l'impression
 	ParamImpression: function(){
 
@@ -1138,6 +1245,112 @@ var mceMigrationMCE={
 		}
 
 		return null;
+	},
+
+	/* nettoyage des carnets locaux (suppression des adresses obsolètes) */
+	// la liste doit etre chargée au préalable (fait dans choix-profil-pablo.js)
+	NettoieCarnets: function(){
+
+		if (0==this._infosPablo.carnets.length){
+			this.logMsg("Aucun carnet à nettoyer (suppression des adresses obsolètes)");
+			return false;
+		}
+
+		try{
+
+			let addressBooks=MailServices.ab.directories;
+			while (addressBooks.hasMoreElements()) {
+				var adrBook=addressBooks.getNext();
+				if (adrBook instanceof Components.interfaces.nsIAbDirectory && adrBook.dirType==2) {
+					Services.console.logStringMessage("*** NettoieCarnets adrBook.dirPrefId:"+adrBook.dirPrefId);
+
+					let res=this.NettoieCarnet(adrBook);
+					if (!res) break;
+				}
+			}
+
+			return true;
+
+		} catch(ex){
+			this.logMsg("NettoieCarnetsTous exception", ex);
+		}
+
+		return false;
+	},
+
+	NettoieCarnet: function(adressBook){
+
+		this.logMsg("Nettoyage du carnet", adressBook.dirPrefId);
+
+		let allCards=adressBook.childCards;
+    while (allCards.hasMoreElements()) {
+      let card=allCards.getNext().QueryInterface(Components.interfaces.nsIAbCard);
+      let bModif=false;
+			if (this.CourrielObsolete(card.primaryEmail)){
+				Services.console.logStringMessage("*** NettoieCarnet suppression:"+card.primaryEmail);
+				card.primaryEmail="";
+				bModif=true;
+			}
+			if (this.CourrielObsolete(card.getProperty("SecondEmail", ""))){
+				Services.console.logStringMessage("*** NettoieCarnet suppression:"+card.getProperty("SecondEmail", ""));
+				card.setProperty("SecondEmail", "");
+				bModif=true;
+			}
+			if (bModif){
+				Services.console.logStringMessage("*** NettoieCarnet mise à jour de:"+card.displayName);
+				adressBook.modifyCard(card);
+			}
+		}
+
+		return true;
+	},
+
+	// retourne true si adresse courriel obsolète
+	CourrielObsolete: function(courriel){
+		if (courriel==undefined || courriel=="") return false;
+		if (-1==courriel.indexOf("@")) return false;
+		return this._ListeDomainesOld.includes(courriel.split("@")[1]);
+	},
+
+	// Nettoyage des contacts : chargement du fichier des domaines obsolètes
+	// chargement asynchrone
+	_ListeDomainesOld:[], // tableau des domaines obsolètes
+	// fncRappel : fonction de rappel argument status
+	ChargeFichierDomaines: function(fncRappel=null){
+
+		try{
+
+			const req=new XMLHttpRequest();
+
+			let _this=this;
+
+			req.onload=(e)=>{
+
+				if (req.status!=200){
+					// erreur de Lecture
+					mceMigrationMCE.logMsg("Erreur de lecture du fichier des domaines obsolètes", "Code erreur:"+req.status);
+				}
+				else {
+					let re=/\r\n|\n/;
+					mceMigrationMCE._ListeDomainesOld=req.responseText.split(re);
+					mceMigrationMCE.logMsg("Succes de lecture du fichier des domaines obsolètes", "Nombre de lignes:"+mceMigrationMCE._ListeDomainesOld.length);
+				}
+
+				if (fncRappel) fncRappel(req.status);
+			};
+
+			let url=Services.prefs.getCharPref("pacome.urlparam");
+			let pos=url.lastIndexOf("/");
+			url=url.substr(0, pos);
+			url+="/params/domaine-old.txt";
+			mceMigrationMCE.logMsg("Lecture du fichier des domaines obsolètes", "url:"+url);
+
+			req.open("GET", url);
+			req.send();
+
+		} catch(ex){
+			mceMigrationMCE.logMsg("ChargeFichierDomaines exception", ex);
+		}
 	},
 
 

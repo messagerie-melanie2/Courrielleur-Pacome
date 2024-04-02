@@ -271,7 +271,7 @@ var gRapport={
 
 				if (carnet.carnetId=="pab" && carnet.position==0) continue;//masqué
 				if (!b){
-					this._lignes.push("Reprise des carnets d'adresses locaux Pablo suivants :");
+					this._lignes.push("Reprise et nettoyage des carnets d'adresses locaux Pablo suivants :");
 					b=true;
 				}
 				this.logDebug("Carnets ajout:"+carnet.description);

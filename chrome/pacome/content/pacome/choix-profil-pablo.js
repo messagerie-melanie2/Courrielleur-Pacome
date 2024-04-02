@@ -51,6 +51,7 @@ function mceValideProfil(){
 		return;
 	}
 
+	// lecture de infos Pablo et construction fichier infosPablo.json
 	Services.console.logStringMessage("*** mceValideProfil profil:'"+profil+"'");
 	let res=mceMigrationMCE.CreeInfosPablo(profil);
 
@@ -60,8 +61,22 @@ function mceValideProfil(){
 		return;
 	}
 
+	// Paramétrage des carnets
+	// fait ici pour des raison de chargement des carnets
+	res=mceMigrationMCE.ParametrageCarnets();
+
+	if (!res){
+		PacomeMsgNotif("Migration Pablo - Erreur", "Le courrielleur n'a pas pu paramétrer les carnets d'adresse. Le profil ne peut pas être migré.");
+		// remet les prefs user à 0
+		Services.prefs.resetPrefs();
+		Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
+		return;
+	}
+
 	close();
 }
+
+
 
 // lorsque l'utilisateur clique sur Ignorer
 function mceIgnorerProfil(){
