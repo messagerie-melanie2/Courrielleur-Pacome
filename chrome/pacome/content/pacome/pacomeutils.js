@@ -287,6 +287,7 @@ const PACOME_LOGS_MDP="VERIF_MDP";
 const PACOME_LOGS_CHGMDP="CHANGE_MDP";
 const PACOME_LOGS_AG="AGENDAS";
 const PACOME_LOGS_REQ="Requete serveur";
+const PACOME_LOGS_MIGRE="MIGRATION";
 
 //v2.6 - taille maxi du fichier de logs avant rotation
 const PACOME_LOGS_MAX=1000000;

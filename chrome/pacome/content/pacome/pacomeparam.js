@@ -1322,6 +1322,8 @@ function pacomeMajPrinter(elem) {
   }
 }
 
+
+
 // creer le compte "Dossier Locaux" (cas 1ere utilisation)
 function CreeDossiersLocaux(){
 

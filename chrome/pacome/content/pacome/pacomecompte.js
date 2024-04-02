@@ -56,8 +56,14 @@ var gPacomeAssitVars={
   docpacomesrv:null,
 
   //fonction de rappel
-  fncrappel:null
+  fncrappel:null,
 
+	// si false n'affiche pas de message si identifiant n'existe pas
+	showErrUid : true,
+
+	//tableau des resultats [libelle]=PACOME_PARAM_SUCCESS|PACOME_PARAM_ERREUR
+  tbl_results:null,
+  tbl_results_p:null
 }
 
 
@@ -536,7 +542,7 @@ function ValideUidBoiteDoc(doc){
   if (null==comptes){
     if (0!=gPacomeCodeErreur)
       PacomeAfficheMsgIdGlobalErr("PacomeErreurPacomeUIBoite");
-    else{
+    else {
       msg=PacomeMessageFromId("PacomeErreurPacomeUIErruid").replace("%S", " '"+uidmail+"' ");
       PacomeAfficheMsgId2("PacomeErreurPacomeUIBoite", msg);
     }
@@ -546,7 +552,7 @@ function ValideUidBoiteDoc(doc){
   if (null==comptes || 0==comptes.lenght){
     if (0!=gPacomeCodeErreur)
       PacomeAfficheMsgIdGlobalErr("PacomeErreurPacomeUIBoite");
-    else{
+    else {
       msg=PacomeMessageFromId("PacomeErreurPacomeUIErruid").replace("%S", " '"+uidmail+"' ");
       PacomeAfficheMsgId2("PacomeErreurPacomeUIBoite", msg);
     }
@@ -588,7 +594,7 @@ function ValideUidBoiteDoc(doc){
 
   if (0!=gPacomeCodeErreur)
     PacomeAfficheMsgIdGlobalErr("PacomeErreurPacomeUIBoite");
-  else{
+  else {
     msg=PacomeMessageFromId("PacomeErreurPacomeUIErruid").replace("%S", " '"+uidmail+"' ");
     PacomeAfficheMsgId2("PacomeErreurPacomeUIBoite", msg);
   }
@@ -610,7 +616,9 @@ function ValideListeUidBoiteDoc(doc){
   if (null==items || 0==items.length){
     return true;
   }
-  for (var i=0;i<items.length;i++){
+
+	const nbItems=items.length;
+  for (var i=0;i<nbItems;i++){
     let uid=items[i].getAttribute("label");
     let c=0;
     for (;c<nb;c++){
@@ -629,7 +637,7 @@ function ValideListeUidBoiteDoc(doc){
   if (null==comptes){
     if (0!=gPacomeCodeErreur)
       PacomeAfficheMsgIdGlobalErr("PacomeErreurPacomeUIBoite");
-    else
+    else if (gPacomeAssitVars.showErrUid)
       PacomeAfficheMsgIdMsgId("PacomeErreurPacomeUIBoite","PacomeErreurPacomeUIErruids");
     return false;
   }
@@ -637,7 +645,7 @@ function ValideListeUidBoiteDoc(doc){
   if (null==comptes || 0==comptes.lenght){
     if (0!=gPacomeCodeErreur)
       PacomeAfficheMsgIdGlobalErr("PacomeErreurPacomeUIBoite");
-    else
+    else if (gPacomeAssitVars.showErrUid)
       PacomeAfficheMsgIdMsgId("PacomeErreurPacomeUIBoite","PacomeErreurPacomeUIErruids");
     return false;
   }
@@ -681,8 +689,10 @@ function ValideListeUidBoiteDoc(doc){
     }
     if (c==nbc){
       erreurs=true;
-      let msg=PacomeMessageFromId("PacomeErreurPacomeUIErruid").replace("%S", " '"+uidmail+"' ");
-      PacomeAfficheMsgId2("PacomeErreurPacomeUIBoite", msg);
+			if (gPacomeAssitVars.showErrUid){
+				let msg=PacomeMessageFromId("PacomeErreurPacomeUIErruid").replace("%S", " '"+uidmail+"' ");
+				PacomeAfficheMsgId2("PacomeErreurPacomeUIBoite", msg);
+			}
       //supprimer de la liste
       for (var l=0;l<items.length;l++){
         let uidui=items[l].getAttribute("label").toLowerCase();
@@ -726,14 +736,21 @@ function ReceptionParametrage(responseXML){
   if ("PageUid"==gPacomeAssitVars.pagesids[gPacomeAssitVars.pagecourante]){
 
     res=ValideUidBoiteDoc(responseXML);
-    if (!res)
+    if (!res && gPacomeAssitVars.showErrUid)
       return false;
 
   } else if ("PageIdents"==gPacomeAssitVars.pagesids[gPacomeAssitVars.pagecourante]){
 
     res=ValideListeUidBoiteDoc(responseXML);
-    if (!res)
+    if (!res && gPacomeAssitVars.showErrUid)
       return false;
+
+		let listeui=document.getElementById("pacomeuids");
+		let items=listeui.getElementsByTagName("listitem");
+		if (null==items || 0==items.length){
+			PacomeAfficheMsgId("PacomeErreur0Ident");
+			return false;
+		}
   }
 
   gPacomeAssitVars.docpacomesrv=responseXML.documentElement;
@@ -1235,306 +1252,28 @@ function InsertInfosPageFin(liste, libelle, image, action){
 /* sortie page de fin -> parametrages */
 function SortiePageFin(){
 
-  //v3.1T4
-  window.setCursor("wait");
   gPacomeAssitVars.btretour.setAttribute("disabled",true);
-  gPacomeAssitVars.btsuivant.setAttribute("disabled",true);
 
-  //tableau des resultats [libelle]=PACOME_PARAM_SUCCESS|PACOME_PARAM_ERREUR
-  let tbl_results=new Array();
-  let tbl_results_p=new Array();
+	let bredemarre=false;
 
-  //identifiants des pages (fonction commune assistant parametrage/mise à jour)
-  let pagecompteid="";
-  let pageautresid="";
-  let pagecalsid="";
-  if ("PageMajComptes"==gPacomeAssitVars.pagesids[0] ||
-      "PageMajAutres"==gPacomeAssitVars.pagesids[0] ||
-      "PageMajCals"==gPacomeAssitVars.pagesids[0]){
-    pagecompteid="PageMajComptes";
-    pageautresid="PageMajAutres";
-    pagecalsid="PageMajCals";
-  } else{
-    pagecompteid="PageComptes";
-    pageautresid="PageAutres";
-    pagecalsid="PageCals";
-  }
+	// Paramétrage des comptes
+	window.setCursor("wait");
+	ExecParametrages();
+	window.setCursor("auto");
 
-  //operations de parametrage application et proxy
-  let elemsautres=GetPageListItems(pageautresid);
-  if (null!=elemsautres){
-
-    for (var i=0;i<elemsautres.length;i++){
-
-      let res=0;
-      let elem=elemsautres[i];
-      let infos=GetInfosElemList(elem);
-      if (null==infos) {
-        PacomeTrace("SortiePageFin autres parametrages erreur d'infos pour:"+elem.value);
-        continue;
-      }
-
-      //application
-      if ("app"==infos["confid"] &&
-          (PACOME_ACTION_PARAM==infos["action"]||
-          PACOME_ACTION_MAJ==infos["action"])) {
-
-        PacomeEcritLog(PACOME_LOGS_ASSISTANT, "parametrage du courrielleur", "");
-
-        let res=ParamAppli(gPacomeAssitVars.docpacomesrv);
-
-        PacomeEcritLog(PACOME_LOGS_ASSISTANT, "resultat parametrage du courrielleur 1=succes, -1=erreur, 0 pas de traitement", res);
-
-        if (-1==res){
-
-          let results=new Object();
-          results.libelle=infos["libelle"];
-          results.image=infos["image"];
-          results.action=infos["action"];
-          results.statut=PACOME_PARAM_ERREUR;
-          tbl_results_p.push(results);
-
-          //PacomeErreurParamApp
-          if (0!=gPacomeCodeErreur)
-            PacomeAfficheMsgIdGlobalErr("PacomeErreurParamApp");
-          else
-            PacomeAfficheMsgId("PacomeErreurParamApp");
-
-        } else{
-
-          let results=new Object();
-          results.libelle=infos["libelle"];
-          results.image=infos["image"];
-          results.action=infos["action"];
-          results.statut=PACOME_PARAM_SUCCESS;
-          tbl_results_p.push(results);
-        }
-      }
-      //v6 : parametrage proxy
-      else if ("prx"==infos["confid"]) {
-
-        if (PACOME_ACTION_PARAM==infos["action"] ||
-                PACOME_ACTION_MAJ==infos["action"]) {
-
-          PacomeEcritLog(PACOME_LOGS_ASSISTANT, "parametrage du proxy", "");
-
-          let res=ParamProxy(gPacomeAssitVars.docpacomesrv);
-
-          PacomeEcritLog(PACOME_LOGS_ASSISTANT, "resultat parametrage du proxy 1=succes, -1=erreur, 0 pas de traitement", res);
-
-          if (-1==res){
-
-            let results=new Object();
-            results.libelle=infos["libelle"];
-            results.image=infos["image"];
-            results.action=infos["action"];
-            results.statut=PACOME_PARAM_ERREUR;
-            tbl_results_p.push(results);
-
-            if (0!=gPacomeCodeErreur)
-              PacomeAfficheMsgIdGlobalErr("PacomeErreurParamPrx");
-            else
-              PacomeAfficheMsgId("PacomeErreurParamPrx");
-
-          } else{
-
-            let results=new Object();
-            results.libelle=infos["libelle"];
-            results.image=infos["image"];
-            results.action=infos["action"];
-            results.statut=PACOME_PARAM_SUCCESS;
-            tbl_results_p.push(results);
-          }
-        } else if (PACOME_ACTION_PRESERVE==infos["action"]) {
-          //mettre à jour numéro de version sans parametrer
-          PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Mise a jour du numero de version du proxy sans parametrage", "");
-          MajVersionProxy(gPacomeAssitVars.docpacomesrv);
-        }
-      }
-    }
-    //sauvegarde préférence
-    Services.prefs.savePrefFile(null);
-  }
-
-  //operations de parametrage des boites
-  let bredemarre=false;
-
-  let elems=GetPageListItems(pagecompteid);
-  if (null!=elems){
-    for (var i=0;i<elems.length;i++){
-
-      let res=0;
-      let elem=elems[i];
-      let infos=GetInfosElemList(elem);
-      if (null==infos) {
-        PacomeTrace("SortiePageFin parametrage des boites erreur d'infos pour:"+elem.value);
-        continue;
-      }
-
-      PacomeTrace("SortiePageFin Traitement du compte uid:"+infos["uid"]+" - confid:"+infos["confid"]+" - action:"+infos["action"]);
-
-      PacomeEcritLog(PACOME_LOGS_ASSISTANT, "parametrage d'une boite", "uid:'"+infos["uid"]+
-                    "' - confid:'"+infos["confid"]+"' - action:'"+infos["action"]+"'");
-
-      res=TraiteElementCompte(infos["uid"], infos["confid"], infos["action"], false);
-
-      PacomeEcritLog(PACOME_LOGS_ASSISTANT, "resultat parametrage d'une boite 1=succes, -1=erreur, 0 pas de traitement", res);
-
-      if (null!=infos["libelle"] && ""!=infos["libelle"]){//element visible
-
-        if (-1==res){
-
-          let results=new Object();
-          results.libelle=infos["libelle"];
-          results.image=infos["image"];
-          results.action=infos["action"];
-          results.statut=PACOME_PARAM_ERREUR;
-          tbl_results.push(results);
-
-        } else if (1==res){
-
-          let results=new Object();
-          results.libelle=infos["libelle"];
-          results.image=infos["image"];
-          results.statut=PACOME_PARAM_SUCCESS;
-          results.action=infos["action"];
-          results.uid=infos["uid"];
-          results.confid=infos["confid"];
-          tbl_results.push(results);
-        }
-      }
-    }
-
-		// créer dossiers locaux si 1ere utilisation
-		if (gPacomeAssitVars.nouveauProfil){
-			CreeDossiersLocaux();
-		}
-  }
-
-  //operations de parametrage des agendas
-  elems=GetPageListItems(pagecalsid);
-  let bAffAg=true;
-  if (null!=elems){
-    for (var i=0;i<elems.length;i++){
-
-      let res=0;
-      let elem=elems[i];
-      let infos=GetInfosElemList(elem);
-      if (null==infos) {
-        PacomeTrace("SortiePageFin parametrage des agendas erreur d'infos pour:"+elem.value);
-        continue;
-      }
-
-      PacomeTrace("SortiePageFin Traitement de l'agenda url:"+infos["uid"]+" - action:"+infos["action"]);
-
-      PacomeEcritLog(PACOME_LOGS_ASSISTANT, "parametrage d'un agenda", "url:'"+infos["uid"]+"' - action:'"+infos["action"]+"'");
-
-      if (bAffAg && PACOME_ACTION_PARAM==infos["action"]){
-        PacomeAffAg();
-        bAffAg=false;
-      }
-
-      //infos["uid"] contient l'url de l'agenda
-      res=TraiteElementAgenda(infos["uid"], infos["action"], false);
-
-      PacomeEcritLog(PACOME_LOGS_ASSISTANT, "resultat parametrage d'un agenda 1=succes, -1=erreur, 0 pas de traitement", res);
-
-      if (null!=infos["libelle"] && ""!=infos["libelle"]){//element visible
-
-        if (-1==res){
-
-          let results=new Object();
-          results.libelle=infos["libelle"];
-          results.image=infos["image"];
-          results.action=infos["action"];
-          results.statut=PACOME_PARAM_ERREUR;
-          tbl_results.push(results);
-
-        } else if (1==res){
-
-          let results=new Object();
-          results.libelle=infos["libelle"];
-          results.image=infos["image"];
-          results.action=infos["action"];
-          results.statut=PACOME_PARAM_SUCCESS;
-          tbl_results.push(results);
-        }
-      }
-    }
-  }
-
-  //operations de parametrage des flux
-  if (null!=elemsautres){
-
-    for (var i=0;i<elemsautres.length;i++){
-
-      let res=0;
-      let elem=elemsautres[i];
-      let infos=GetInfosElemList(elem);
-      if (null==infos) {
-        PacomeTrace("SortiePageFin autres parametrages erreur d'infos pour:"+elem.value);
-        continue;
-      }
-
-      if ("flux"==infos["confid"]){
-
-        PacomeEcritLog(PACOME_LOGS_ASSISTANT, "parametrage d'un flux", "libelle:'"+infos["libelle"]+
-                    "' - confid:'"+infos["confid"]+"' - action:'"+infos["action"]+"'");
-
-        let res=TraiteElementFlux(infos["libelle"], infos["confid"], infos["action"], false);
-
-        PacomeEcritLog(PACOME_LOGS_ASSISTANT, "resultat parametrage d'un flux 1=succes, -1=erreur, 0 pas de traitement", res);
-
-        if (null!=infos["libelle"] && ""!=infos["libelle"]){//element visible
-
-          if (-1==res){
-
-            let results=new Object();
-            results.libelle=infos["libelle"];
-            results.image=infos["image"];
-            results.action=infos["action"];
-            results.statut=PACOME_PARAM_ERREUR;
-            tbl_results.push(results);
-
-          } else if (1==res){
-
-            let results=new Object();
-            results.libelle=infos["libelle"];
-            results.image=infos["image"];
-            results.action=infos["action"];
-            results.statut=PACOME_PARAM_SUCCESS;
-            tbl_results.push(results);
-          }
-        }
-      }
-    }
-  }
-
-  //traitement des elements non visibles
-  PacomeMAJSilence(gPacomeAssitVars.docpacomesrv);
-
-  //v3.3 - traiter les categories horde
-  pacomeCatsTraiteDoc(gPacomeAssitVars.docpacomesrv);
-
-  window.setCursor("auto");
-
-  //sauvegarde préférence
-  Services.prefs.savePrefFile(null);
 
   // detection migration pop => imap
-  if (detectMigrePopImap(tbl_results)){
+  if (detectMigrePopImap(gPacomeAssitVars.tbl_results)){
     PacomeTrace("SortiePageFin detection migration pop => imap");
     // completer la migration
-    let uids=cm2UidPopImap(tbl_results);
+    let uids=cm2UidPopImap(gPacomeAssitVars.tbl_results);
     let migreok=cm2MigrePopImap(uids);
     if (0<migreok)
       bredemarre=true;
   }
 
-  //v6 - pas de redemarrage
-  //bredemarre=false;
   //affichage resultats
-  PacomeAfficheResultats(tbl_results.concat(tbl_results_p), bredemarre);
+	PacomeAfficheResultats(gPacomeAssitVars.tbl_results.concat(gPacomeAssitVars.tbl_results_p), bredemarre);
 
   if (bredemarre)
     PacomeRedemarreTB();
@@ -2155,4 +1894,295 @@ function cm2MigrePopImap(uids){
       migreok++;
   }
   return migreok;
+}
+
+
+// réalise des opérations de paramétrage enfin d'assistant
+function ExecParametrages(){
+
+	try {
+
+		//identifiants des pages (fonction commune assistant parametrage/mise à jour)
+		let pagecompteid="";
+		let pageautresid="";
+		let pagecalsid="";
+		if ("PageMajComptes"==gPacomeAssitVars.pagesids[0] ||
+				"PageMajAutres"==gPacomeAssitVars.pagesids[0] ||
+				"PageMajCals"==gPacomeAssitVars.pagesids[0]){
+			pagecompteid="PageMajComptes";
+			pageautresid="PageMajAutres";
+			pagecalsid="PageMajCals";
+		} else{
+			pagecompteid="PageComptes";
+			pageautresid="PageAutres";
+			pagecalsid="PageCals";
+		}
+
+		//tableau des resultats [libelle]=PACOME_PARAM_SUCCESS|PACOME_PARAM_ERREUR
+		gPacomeAssitVars.tbl_results=new Array();
+		gPacomeAssitVars.tbl_results_p=new Array();
+
+		//operations de parametrage application et proxy
+		let elemsautres=GetPageListItems(pageautresid);
+		if (null!=elemsautres){
+
+			for (var i=0;i<elemsautres.length;i++){
+
+				let res=0;
+				let elem=elemsautres[i];
+				let infos=GetInfosElemList(elem);
+				if (null==infos) {
+					PacomeTrace("SortiePageFin autres parametrages erreur d'infos pour:"+elem.value);
+					continue;
+				}
+
+				//application
+				if ("app"==infos["confid"] &&
+						(PACOME_ACTION_PARAM==infos["action"]||
+						PACOME_ACTION_MAJ==infos["action"])) {
+
+					PacomeEcritLog(PACOME_LOGS_ASSISTANT, "parametrage du courrielleur", "");
+
+					let res=ParamAppli(gPacomeAssitVars.docpacomesrv);
+
+					PacomeEcritLog(PACOME_LOGS_ASSISTANT, "resultat parametrage du courrielleur 1=succes, -1=erreur, 0 pas de traitement", res);
+
+					if (-1==res){
+
+						let results=new Object();
+						results.libelle=infos["libelle"];
+						results.image=infos["image"];
+						results.action=infos["action"];
+						results.statut=PACOME_PARAM_ERREUR;
+						gPacomeAssitVars.tbl_results_p.push(results);
+
+						//PacomeErreurParamApp
+						if (0!=gPacomeCodeErreur)
+							PacomeAfficheMsgIdGlobalErr("PacomeErreurParamApp");
+						else
+							PacomeAfficheMsgId("PacomeErreurParamApp");
+
+					} else{
+
+						let results=new Object();
+						results.libelle=infos["libelle"];
+						results.image=infos["image"];
+						results.action=infos["action"];
+						results.statut=PACOME_PARAM_SUCCESS;
+						gPacomeAssitVars.tbl_results_p.push(results);
+					}
+				}
+				//v6 : parametrage proxy
+				else if ("prx"==infos["confid"]) {
+
+					if (PACOME_ACTION_PARAM==infos["action"] ||
+									PACOME_ACTION_MAJ==infos["action"]) {
+
+						PacomeEcritLog(PACOME_LOGS_ASSISTANT, "parametrage du proxy", "");
+
+						let res=ParamProxy(gPacomeAssitVars.docpacomesrv);
+
+						PacomeEcritLog(PACOME_LOGS_ASSISTANT, "resultat parametrage du proxy 1=succes, -1=erreur, 0 pas de traitement", res);
+
+						if (-1==res){
+
+							let results=new Object();
+							results.libelle=infos["libelle"];
+							results.image=infos["image"];
+							results.action=infos["action"];
+							results.statut=PACOME_PARAM_ERREUR;
+							gPacomeAssitVars.tbl_results_p.push(results);
+
+							if (0!=gPacomeCodeErreur)
+								PacomeAfficheMsgIdGlobalErr("PacomeErreurParamPrx");
+							else
+								PacomeAfficheMsgId("PacomeErreurParamPrx");
+
+						} else{
+
+							let results=new Object();
+							results.libelle=infos["libelle"];
+							results.image=infos["image"];
+							results.action=infos["action"];
+							results.statut=PACOME_PARAM_SUCCESS;
+							gPacomeAssitVars.tbl_results_p.push(results);
+						}
+					} else if (PACOME_ACTION_PRESERVE==infos["action"]) {
+						//mettre à jour numéro de version sans parametrer
+						PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Mise a jour du numero de version du proxy sans parametrage", "");
+						MajVersionProxy(gPacomeAssitVars.docpacomesrv);
+					}
+				}
+			}
+			//sauvegarde préférence
+			Services.prefs.savePrefFile(null);
+		}
+
+		//operations de parametrage des boites
+		let elems=GetPageListItems(pagecompteid);
+		if (null!=elems){
+			for (var i=0;i<elems.length;i++){
+
+				let res=0;
+				let elem=elems[i];
+				let infos=GetInfosElemList(elem);
+				if (null==infos) {
+					PacomeTrace("SortiePageFin parametrage des boites erreur d'infos pour:"+elem.value);
+					continue;
+				}
+
+				PacomeTrace("SortiePageFin Traitement du compte uid:"+infos["uid"]+" - confid:"+infos["confid"]+" - action:"+infos["action"]);
+
+				PacomeEcritLog(PACOME_LOGS_ASSISTANT, "parametrage d'une boite", "uid:'"+infos["uid"]+
+											"' - confid:'"+infos["confid"]+"' - action:'"+infos["action"]+"'");
+
+				res=TraiteElementCompte(infos["uid"], infos["confid"], infos["action"], false);
+
+				PacomeEcritLog(PACOME_LOGS_ASSISTANT, "resultat parametrage d'une boite 1=succes, -1=erreur, 0 pas de traitement", res);
+
+				if (null!=infos["libelle"] && ""!=infos["libelle"]){//element visible
+
+					if (-1==res){
+
+						let results=new Object();
+						results.libelle=infos["libelle"];
+						results.image=infos["image"];
+						results.action=infos["action"];
+						results.statut=PACOME_PARAM_ERREUR;
+						gPacomeAssitVars.tbl_results.push(results);
+
+					} else if (1==res){
+
+						let results=new Object();
+						results.libelle=infos["libelle"];
+						results.image=infos["image"];
+						results.statut=PACOME_PARAM_SUCCESS;
+						results.action=infos["action"];
+						results.uid=infos["uid"];
+						results.confid=infos["confid"];
+						gPacomeAssitVars.tbl_results.push(results);
+					}
+				}
+			}
+		}
+		
+		// créer dossiers locaux si 1ere utilisation
+		if (gPacomeAssitVars.nouveauProfil){
+			CreeDossiersLocaux();
+		}		
+
+		//operations de parametrage des agendas
+		elems=GetPageListItems(pagecalsid);
+		let bAffAg=true;
+		if (null!=elems){
+			for (var i=0;i<elems.length;i++){
+
+				let res=0;
+				let elem=elems[i];
+				let infos=GetInfosElemList(elem);
+				if (null==infos) {
+					PacomeTrace("SortiePageFin parametrage des agendas erreur d'infos pour:"+elem.value);
+					continue;
+				}
+
+				PacomeTrace("SortiePageFin Traitement de l'agenda url:"+infos["uid"]+" - action:"+infos["action"]);
+
+				PacomeEcritLog(PACOME_LOGS_ASSISTANT, "parametrage d'un agenda", "url:'"+infos["uid"]+"' - action:'"+infos["action"]+"'");
+
+				if (bAffAg && PACOME_ACTION_PARAM==infos["action"]){
+					PacomeAffAg();
+					bAffAg=false;
+				}
+
+				//infos["uid"] contient l'url de l'agenda
+				res=TraiteElementAgenda(infos["uid"], infos["action"], false);
+
+				PacomeEcritLog(PACOME_LOGS_ASSISTANT, "resultat parametrage d'un agenda 1=succes, -1=erreur, 0 pas de traitement", res);
+
+				if (null!=infos["libelle"] && ""!=infos["libelle"]){//element visible
+
+					if (-1==res){
+
+						let results=new Object();
+						results.libelle=infos["libelle"];
+						results.image=infos["image"];
+						results.action=infos["action"];
+						results.statut=PACOME_PARAM_ERREUR;
+						gPacomeAssitVars.tbl_results.push(results);
+
+					} else if (1==res){
+
+						let results=new Object();
+						results.libelle=infos["libelle"];
+						results.image=infos["image"];
+						results.action=infos["action"];
+						results.statut=PACOME_PARAM_SUCCESS;
+						gPacomeAssitVars.tbl_results.push(results);
+					}
+				}
+			}
+		}
+
+		//operations de parametrage des flux
+		if (null!=elemsautres){
+
+			for (var i=0;i<elemsautres.length;i++){
+
+				let res=0;
+				let elem=elemsautres[i];
+				let infos=GetInfosElemList(elem);
+				if (null==infos) {
+					PacomeTrace("SortiePageFin autres parametrages erreur d'infos pour:"+elem.value);
+					continue;
+				}
+
+				if ("flux"==infos["confid"]){
+
+					PacomeEcritLog(PACOME_LOGS_ASSISTANT, "parametrage d'un flux", "libelle:'"+infos["libelle"]+
+											"' - confid:'"+infos["confid"]+"' - action:'"+infos["action"]+"'");
+
+					let res=TraiteElementFlux(infos["libelle"], infos["confid"], infos["action"], false);
+
+					PacomeEcritLog(PACOME_LOGS_ASSISTANT, "resultat parametrage d'un flux 1=succes, -1=erreur, 0 pas de traitement", res);
+
+					if (null!=infos["libelle"] && ""!=infos["libelle"]){//element visible
+
+						if (-1==res){
+
+							let results=new Object();
+							results.libelle=infos["libelle"];
+							results.image=infos["image"];
+							results.action=infos["action"];
+							results.statut=PACOME_PARAM_ERREUR;
+							gPacomeAssitVars.tbl_results.push(results);
+
+						} else if (1==res){
+
+							let results=new Object();
+							results.libelle=infos["libelle"];
+							results.image=infos["image"];
+							results.action=infos["action"];
+							results.statut=PACOME_PARAM_SUCCESS;
+							gPacomeAssitVars.tbl_results.push(results);
+						}
+					}
+				}
+			}
+		}
+
+		//traitement des elements non visibles
+		PacomeMAJSilence(gPacomeAssitVars.docpacomesrv);
+
+		//v3.3 - traiter les categories horde
+		pacomeCatsTraiteDoc(gPacomeAssitVars.docpacomesrv);
+
+		//sauvegarde préférence
+		Services.prefs.savePrefFile(null);
+
+		return true;
+
+	} catch(ex){
+		PacomeTrace("ExecParametrages exception:"+ex);
+	}
+	return false;
 }

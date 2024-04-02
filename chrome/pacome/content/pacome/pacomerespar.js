@@ -7,10 +7,19 @@ const PACOME_ACTION_PRESERVE  ="preserve";
 function InitPacomeRes(){
 
   //resultats
-  if (null!=window.arguments[0]){
+  if (window.arguments && null!=window.arguments[0]){
 
     let tblresults=window.arguments[0].resultats;
     let bredemarre=window.arguments[0].bredemarre;
+		let strMigration=window.arguments[0].strMigration;
+		
+		if (strMigration!=""){
+			let migration=document.getElementById("migration");
+			if (strMigration=="SUCCES") migration.value=PacomeMessageFromId("MigrationSUCCES");
+			else migration.value=PacomeMessageFromId("MigrationECHEC");
+			// titre de la fenêtre 
+			document.title=PacomeMessageFromId("MigrePabloTitre");
+		}
 
     let elem=document.getElementById("bredemarre");
     if (!bredemarre) elem.hidden=true;

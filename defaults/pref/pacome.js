@@ -32,5 +32,10 @@ pref("courrielleur.etiquettes.majauto", true);
 // synchronisation des etiquettes : generation d'un rapport de tests
 pref("courrielleur.etiquettes.rapportdetest", false);
 
+
 // si true affiche la case Enregistrer le mot de passe dans le courrielleur (true pour Min.Int)
-pref("pacome.memomdp", true);
+pref("pacome.memomdp", true);
+
+
+// si false, l'outil de migration Pablo vers MCE est désactivé
+pref("pacome.migrationPablo.enabled", true);

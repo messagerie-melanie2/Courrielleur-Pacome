@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE overlay SYSTEM "chrome://pacome/locale/pacome.dtd">
+
+<overlay xmlns:nc="http://home.netscape.com/NC-rdf#"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+
+<window id="pacome"
+				titre="&migrationPablo-Titre;"
+        onload="InitPabloMCE();"
+        onunload="FermePabloMCE()">
+
+	<script type="application/x-javascript" src="chrome://pacome/content/pacomePabloMCE.js"/>
+	<script type="application/x-javascript" src="chrome://pacome/content/archivagePablo.js"/>
+
+	<vbox id="pacome_zone">
+		<!-- page migration Pablo -->
+		<vbox id="PageMigre" hidden="true" flex="1">
+			<!-- liste des comptes pablo -->
+			<groupbox flex="1">
+				<caption label="Comptes Pablo"/>
+				<richlistbox id="comptes" rows="8" flex="3"/>
+			</groupbox>
+		</vbox>
+
+		<!-- page archivage -->
+		<vbox id="PageArchive" hidden="true" flex="1">
+			<vbox flex="2"/>
+			<description id="message" class="pacometexte"> </description>
+
+			<groupbox id="cadreVu">
+				<caption id="libetat" label="&archivagePablo.libetat;" class="archivagePablo_caption"/>
+				<vbox id="infos">
+					<hbox class="slider1">
+						<hbox class="line1"></hbox>
+						<hbox class="subline1 inc1"></hbox>
+					</hbox>
+				</vbox>
+			</groupbox>
+			<vbox flex="3"/>
+		</vbox>
+
+	</vbox>
+
+</window>
+
+</overlay>

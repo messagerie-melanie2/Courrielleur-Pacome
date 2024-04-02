@@ -36,8 +36,8 @@
 <!ENTITY pacome.apropos.text1 "PAramétrage des COmptes de MEssagerie">
 <!ENTITY pacome.apropos.text2 "Version : &pacome.numver;">
 <!ENTITY pacome.apropos.text3 "Publié le : &pacome.datever;">
-<!ENTITY pacome.numver "8.5">
-<!ENTITY pacome.datever "17/1/2020">
+<!ENTITY pacome.numver "8.6">
+<!ENTITY pacome.datever "27/10/2023">
 
 
 <!-- accountmanager-overlay.xul -->
@@ -161,4 +161,23 @@ Cliquer sur le bouton &#91;Mettre à jour&#93; pour effectuer automatiquement la
 
 <!ENTITY pacome.touchevernum "Touche Verr. Maj. active">
 
+
 <!ENTITY pacome-memomdp "Enregistrer le mot de passe dans le courrielleur">
+
+
+<!-- migration pablo -->
+<!ENTITY archivagePablo.text1 "Archivage des messages Pablo">
+<!ENTITY archivagePablo.colbal "Boites / Dossiers Locaux">
+<!ENTITY archivagePablo.etat "Etat">
+<!ENTITY archivagePablo.libetat "Archivage en cours - veuillez patienter">
+
+<!ENTITY migrationPablo-bandeau "Choix du profil à migrer">
+<!ENTITY migrationPablo.choixProfil.texte1 "L'assistant de paramétrage du courrielleur a détecté un ou plusieurs profils Pablo sur votre poste de travail.
+Le courrielleur peut migrer automatiquement les données d'un profil Pablo à la fois vers un nouveau profil MCE.
+Pour migrer le ou les autres profils, vous devrez relancer cette assistant de migration et le choisir.">
+<!ENTITY migrationPablo.choixProfil.texte2 "Choisir le profil Pablo à migrer, puis cliquer sur Valider. 
+			Pour ne pas migrer de profil, cliquer sur Ignorer. Le premier profil de la liste est le dernier utilisé.">
+
+<!ENTITY migrationPablo-Titre "Migration Pablo vers MCE">
+
+<!ENTITY mceMigreRapport.titre "Migration réussie">

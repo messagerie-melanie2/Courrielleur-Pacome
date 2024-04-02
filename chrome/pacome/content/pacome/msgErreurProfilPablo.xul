@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+
+<?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://pacome/content/pacome.css" type="text/css"?>
+
+
+<!DOCTYPE window SYSTEM "chrome://pacome/locale/pacome.dtd">
+
+<window class="pacomemsg"
+        title="&migrationPablo-Titre;"
+        xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <vbox id="bandeau" class="bandeau">
+    <description id="bandeau-titre" class="bandeau-titre"> </description>
+  </vbox>
+
+  <vbox class="pacomemsg-texte">
+    <description id="pacomemsg.texte">Ce profil n'est pas compatible avec le courrielleur MCE.</description>
+    <description id="pacomemsg.texte2">Utiliser un autre profil.</description>
+  </vbox>
+
+  <!-- zone des boutons -->
+  <hbox  pack="center">
+    <button id="btOk" label="&pacome.btOk;" oncommand="close();" accesskey="&pacome.btOk.key;"/>
+  </hbox>
+
+</window>

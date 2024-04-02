@@ -22,22 +22,22 @@
     <description id="bandeau-titre" class="bandeau-titre">&pacome.paramfin;</description>
   </vbox>
 
-  <vbox flex="1">
+  <vbox class="pacome_zone" flex="1">
 
-    <vbox id="pacomepar-results" flex="3">
-      <description class="pacomepar-lib">&pacome.results;</description>
-      <richlistbox id="pacomepar-liste" disableKeyNavigation="true"/>
-    </vbox>
+		<description id="migration" class="pacomepar-lib"></description>
+    <description class="pacomepar-lib">&pacome.results;</description>
+
+    <richlistbox id="pacomepar-liste" rows="10" flex="1"/>
 
     <hbox pack="center">
       <description id="bredemarre">&pacome.redemarre;</description>
     </hbox>
 
-    <hbox class="pacome_zone">
-      <vbox id="infosapropos"/>
-    </hbox>
-
   </vbox>
+
+	<hbox class="pacome_zone">
+		<vbox id="infosapropos"/>
+	</hbox>
 
   <menuseparator/>
 

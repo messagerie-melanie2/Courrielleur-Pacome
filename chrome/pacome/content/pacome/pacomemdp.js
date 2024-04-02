@@ -708,15 +708,13 @@ function MajMdpClient(uid,mdp){
 
 function GetOrgForUid(uid){
 
-  let idents=MailServices.accounts.allIdentities;
-  for (var i=0;i<idents.length;i++){
-    let ident=idents.queryElementAt(i, Components.interfaces.nsIMsgIdentity);
-    let pref="mail.identity."+ident.key+".identityName";
-    let uid_pref=Services.prefs.getCharPref(pref);
-    if (uid_pref==uid) {
-      return ident.organization;
-    }
-  }
+	const nb=MailServices.accounts.accounts.length;
+	for (var  i=0;i<nb;i++){
+		let compte=MailServices.accounts.accounts.queryElementAt(i,Components.interfaces.nsIMsgAccount);
+		if (compte.defaultIdentity && compte.defaultIdentity.identityName==uid) 
+			return compte.defaultIdentity.organization;
+	}
+
   return "";
 }
 

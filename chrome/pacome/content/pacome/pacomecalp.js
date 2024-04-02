@@ -417,7 +417,7 @@ function pacomeCalIdentiteFromUid(uid) {
     let ident=idents.queryElementAt(i,Components.interfaces.nsIMsgIdentity);
 
     let pref="mail.identity."+ident.key+".identityName";
-    let uid_pref=Services.prefs.getCharPref(pref);
+    let uid_pref=Services.prefs.getCharPref(pref, "");
 
     PacomeTrace("pacomeCalIdentiteFromUid uid_pref="+uid_pref);
     if (uid_pref==uid) {

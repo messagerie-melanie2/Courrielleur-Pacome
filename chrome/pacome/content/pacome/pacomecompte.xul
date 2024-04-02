@@ -70,7 +70,7 @@
     <groupbox id="PageIdents" hidden="true" flex="1">
       <caption label="&pacome.libnom;"/>
       <hbox>
-        <listbox id="pacomeuids" rows="2" flex="1" onselect="SelectionIdents();"/>
+        <listbox id="pacomeuids" rows="6" flex="1" onselect="SelectionIdents();"/>
         <vbox>
           <hbox flex="1"/>
           <button label="Ajouter" oncommand="btAjoutIdent();"/>
@@ -117,7 +117,7 @@
   </hbox>
 
   <hbox class="pacome_zone">
-    <vbox id="infosapropos"/>
+    <vbox id="infosapropos" flex="1"/>
   </hbox>
 
   <menuseparator/>

@@ -73,13 +73,16 @@ function PacomeAfficheDglMaj(docmaj){
 
 }
 
-/* affichage des resultats de parametrage */
-function PacomeAfficheResultats(tblresultats, bredemarre){
+// affichage des resultats de parametrage 
+// strMigration : si vide pas de migration 
+// si 'ECHEC' => échec de la migration
+// si 'SUCCES' => Succès de la migration
+function PacomeAfficheResultats(tblresultats, bredemarre, strMigration=""){
 
   let args=new Object();
   args["resultats"]=tblresultats;
   args["bredemarre"]=bredemarre;
+	args["strMigration"]=strMigration;
 
   window.openDialog(PACOME_DLG_RESULTATS,"","chrome,modal,centerscreen,titlebar,resizable=no",args);
-
 }
