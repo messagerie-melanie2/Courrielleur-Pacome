@@ -15,7 +15,7 @@ const Ci=Components.interfaces;
 const EXPORTED_SYMBOLS = [ "PacomeAuthUtils", "NON_MELANIE2", "MSG_MELANIE2", "APP_MELANIE2"];
 
 //serveurs de messagerie melanie2
-const regServeursMel2=/^[smtp|pop|imap].mce.interieur.rie.gouv.fr$/;
+const regServeursMel2=/^.*.[smtp|pop|imap].mce.interieur.rie.gouv.fr$/;
 
 //serveurs melanie2 dont l'authentification est basée sur le compte principal
 const regServeursAppM2=/^.*.mce.interieur.rie.gouv.fr$/;
