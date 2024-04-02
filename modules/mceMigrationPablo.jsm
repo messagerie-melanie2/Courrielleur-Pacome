@@ -401,6 +401,9 @@ var mceMigrationMCE={
 
 		this.logMsg("Extraction des informations des carnets");
 
+		// identifiants des carnets OBM
+		let carnetsOBM=Services.prefs.getCharPref("extensions.obm.addressbooks", "").split(",");
+		
 		// tous les carnets locaux
 		let prefBranch=Services.prefs.getBranch("ldap_2.servers.");
 		let nb={};
@@ -411,6 +414,12 @@ var mceMigrationMCE={
 					2==prefBranch.getIntPref(pref)){
 				let val=pref.split(".");
 				let prefid=val[0];
+				// ignorer les carnet OBM (migrés côté serveur)
+				if (carnetsOBM.includes(prefid)){
+					Services.console.logStringMessage("***_extraitCarnetsPablo carnet OBM non migré prefid:"+prefid+
+													" - libellé:"+this.getCharPref("ldap_2.servers."+prefid+".description", ""));
+					continue;
+				}			
 				Services.console.logStringMessage("***_extraitCarnetsPablo carnet prefid:"+prefid);
 				let carnet=Object.create(this._carnet);
 				carnet.carnetId=prefid;
@@ -920,7 +929,7 @@ var mceMigrationMCE={
 			for (let c=0;c<this._infosPablo.carnets.length;c++){
 				let carnet=this._infosPablo.carnets[c];
 				Services.console.logStringMessage("*** AjoutCarnetsPablo carnet.carnetId:"+carnet.carnetId);
-
+				
 				if (carnet.carnetId=="pab" && carnet.position==0){
 					// carnet non affiché dans Pablo
 					Services.prefs.setCharPref("ldap_2.servers.pab.filename", "abook.mab");
@@ -956,7 +965,7 @@ var mceMigrationMCE={
 		this.Erreur="Echec d'ajout des carnets Pablo (10)";
 		return false;
 	},
-
+	
 	// paramétrer l'impression
 	ParamImpression: function(){
 
