@@ -615,16 +615,8 @@ var PacomeAuthUtils= {
 			let serveur=this.GetServeurUid(uid2);
 
 			if (null==serveur){
-				let urlmdp=Services.prefs.getCharPref("pacome.urlmdp", "");
-				if (urlmdp!=""){
-					let compos=urlmdp.split("/");
-					serveur=compos[2];
-					Services.console.logStringMessage("mémorisation mot de passe avec serveur pacome :"+serveur);
-				}
-				else{
-					Services.console.logStringMessage("mémorisation mot de passe pas possible : pas de serveur"+uid2);
-					return;
-				}
+				Services.console.logStringMessage("mémorisation mot de passe pas possible : pas de serveur pour :"+uid2);
+				return;
 			}
 
 			let login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Components.interfaces.nsILoginInfo);

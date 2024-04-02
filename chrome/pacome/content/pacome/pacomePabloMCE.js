@@ -52,7 +52,7 @@ function InitPabloMCE(){
     gPacomeAssitVars.ctrlSaisieUid=document.getElementById("pacomeuid");
 
 		PacomeEcritLog(PACOME_LOGS_ASSISTANT, "initialiation en mode migration Pablo", "");
-		
+
 		gPacomeAssitVars.nouveauProfil=true;
 
 		gPacomeAssitVars.pagesids=PACOME_PAGES_MIGRE_IDS;
@@ -292,6 +292,10 @@ function SortiePageFinMigre(){
 	window.setCursor("wait");
 	ExecParametrages();
 	window.setCursor("auto");
+
+
+	// nouveau profil avec authentification pacome : mémoriser uid/mdp
+	ParamMemoMdp();
 
 	return true;
 }

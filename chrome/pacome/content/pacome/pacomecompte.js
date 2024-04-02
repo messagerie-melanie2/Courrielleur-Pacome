@@ -64,7 +64,13 @@ var gPacomeAssitVars={
 
 	//tableau des resultats [libelle]=PACOME_PARAM_SUCCESS|PACOME_PARAM_ERREUR
   tbl_results:null,
-  tbl_results_p:null
+  tbl_results_p:null,
+
+	// nouveau profil avec authentification pacome : mémoriser uid/mdp
+	// si non null, à la fin du paramétrage mémoriser pour le compte principal
+	nouveauMdp: null,
+	// si true, mémorise le mot de passe
+	memoMdp: false
 }
 
 
@@ -389,8 +395,8 @@ function SortiePageSaisieUid(){
 	let uidp, mdp;
 	let compte=PacomeAuthUtils.GetComptePrincipal();
 	if (null!=compte){
-		uidp=cp.incomingServer.username;
-		mdp=cp.incomingServer.password;
+		uidp=compte.incomingServer.username;
+		mdp=compte.incomingServer.password;
 	} else {
 		// authentification pacome
 		let outmdp={}, outmemomdp={};
@@ -400,6 +406,8 @@ function SortiePageSaisieUid(){
 		let res=PacomeAuthUtils.PromptMdp(window, uidp, outmdp, outmemomdp);
 		if (res){
 			mdp=outmdp.value;
+			gPacomeAssitVars.nouveauMdp=mdp;
+			gPacomeAssitVars.memoMdp=outmemomdp.value;
 		} else{
 			return false;
 		}
@@ -479,8 +487,8 @@ function SortiePageIdents(){
 	let uidp, mdp;
 	let compte=PacomeAuthUtils.GetComptePrincipal();
 	if (null!=compte){
-		uidp=cp.incomingServer.username;
-		mdp=cp.incomingServer.password;
+		uidp=compte.incomingServer.username;
+		mdp=compte.incomingServer.password;
 	} else {
 		// authentification pacome
 		let outmdp={}, outmemomdp={};
@@ -490,6 +498,8 @@ function SortiePageIdents(){
 		let res=PacomeAuthUtils.PromptMdp(window, uidp, outmdp, outmemomdp);
 		if (res){
 			mdp=outmdp.value;
+			gPacomeAssitVars.nouveauMdp=mdp;
+			gPacomeAssitVars.memoMdp=outmemomdp.value;
 		} else{
 			return false;
 		}
@@ -1314,6 +1324,9 @@ function SortiePageFin(){
       bredemarre=true;
   }
 
+	// nouveau profil avec authentification pacome : mémoriser uid/mdp
+	ParamMemoMdp();
+
   //affichage resultats
 	PacomeAfficheResultats(gPacomeAssitVars.tbl_results.concat(gPacomeAssitVars.tbl_results_p), bredemarre);
 
@@ -1326,6 +1339,25 @@ function SortiePageFin(){
   window.close();
 }
 
+
+// nouveau profil avec authentification pacome : mémoriser uid/mdp
+function ParamMemoMdp(){
+
+	if (gPacomeAssitVars.nouveauMdp!=null && gPacomeAssitVars.nouveauMdp!=""){
+
+		let compte=PacomeAuthUtils.GetComptePrincipal();
+		if (compte){
+			let uid=compte.incomingServer.username;
+			PacomeTrace("SortiePageFinMigre modifyMdpPacome uid:'"+uid+"'");
+			PacomeAuthUtils.modifyMdpPacome(uid, gPacomeAssitVars.nouveauMdp);
+
+			if (gPacomeAssitVars.memoMdp){
+				PacomeTrace("SortiePageFinMigre MemoriseMdp uid:'"+uid+"'");
+				PacomeAuthUtils.MemoriseMdp(uid, gPacomeAssitVars.nouveauMdp);
+			}
+		}
+	}
+}
 
 
 function GetLibelleRichListItem(richlistitem){
