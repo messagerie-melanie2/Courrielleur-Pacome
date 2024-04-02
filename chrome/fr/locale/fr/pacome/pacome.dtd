@@ -96,8 +96,9 @@
 <!-- boite de demande de mot de passe -->
 <!ENTITY pacomemdp.titre "Entrez votre mot de passe">
 <!--<!ENTITY pacomemdp.uid "Utilisateur:">-->
-<!ENTITY pacomemdp.uid "Identifiant:">
-<!ENTITY pacomemdp.mdp "Mot de passe:">
+<!ENTITY pacomemdp.uid "Identifiant :">
+<!ENTITY pacomemdp.courriel "Courriel :">
+<!ENTITY pacomemdp.mdp "Mot de passe :">
 <!ENTITY pacomemdp.btValider "Valider">
 <!ENTITY pacomemdp.btValider.cle "V">
 <!ENTITY pacomemdp.btAnnuler "Annuler">

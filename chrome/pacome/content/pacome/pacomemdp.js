@@ -29,8 +29,6 @@ var g_msgReq="";
 */
 function InitPacomeMdp(){
 
-  PacomeTrace("Pacomemdp InitPacomeMdp");
-
   //annulation par défaut
   window.arguments[0].res=0;
   window.arguments[0].mdp="";
@@ -44,9 +42,13 @@ function InitPacomeMdp(){
   }
 
   let uid=window.arguments[0].uid;
+	PacomeTrace("Pacomemdp InitPacomeMdp uid:"+uid);
 
-  document.getElementById("pacomemdp.uid").value=uid;
-	
+	// afficher le courriel à la place de l'identifiant
+	let courriel=GetCourrielUid(uid);
+	PacomeTrace("Pacomemdp InitPacomeMdp courriel:"+courriel);
+  document.getElementById("pacomemdp.uid").value=courriel;
+
 	let memo=Services.prefs.getBoolPref("pacome.memomdp");
 	if (memo)
 		document.getElementById("memomdp").removeAttribute("hidden");
@@ -87,7 +89,7 @@ function setBoutonAnnuler(etat){
   bt.disabled=!etat;
 }
 
-//reponse='code=0;message=;versionsconfigs=std1:2-2+std2:2-2+par1:2-2;openhours=7:30-20:30-Mon/Tue/Wed;comptesflux=Informations Mélanie2:4-4;'   
+//reponse='code=0;message=;versionsconfigs=std1:2-2+std2:2-2+par1:2-2;openhours=7:30-20:30-Mon/Tue/Wed;comptesflux=Informations Mélanie2:4-4;'
 function PacomeSetOpenHours(reponse)
 {
   Services.prefs.setCharPref("mail.identity.openhours","none");
@@ -121,7 +123,8 @@ function ValiderMdp(){
 
   //mot de passe saisi
   let mdp=document.getElementById("pacomemdp.mdp").value;
-  let uid=document.getElementById("pacomemdp.uid").value;
+  //let uid=document.getElementById("pacomemdp.uid").value;
+	let uid=window.arguments[0].uid;// courriel affiché
 
   PacomeEcritLog(PACOME_LOGS_MDP, "Verification du mot de passe pour l'identifiant:", uid);
 
@@ -308,9 +311,9 @@ function ValiderMdp(){
 
           window.arguments[0].res=1;
           window.arguments[0].mdp=mdp;
-          
+
           if ("true"==document.getElementById("memomdp").getAttribute("checked"))
-				window.arguments[0].memomdp=true;
+						window.arguments[0].memomdp=true;
 
           window.close();
 
@@ -711,8 +714,9 @@ function GetOrgForUid(uid){
 	const nb=MailServices.accounts.accounts.length;
 	for (var  i=0;i<nb;i++){
 		let compte=MailServices.accounts.accounts.queryElementAt(i,Components.interfaces.nsIMsgAccount);
-		if (compte.defaultIdentity && compte.defaultIdentity.identityName==uid) 
-			return compte.defaultIdentity.organization;
+		if (null==compte.defaultIdentity) continue;
+		let idname=PacomeGetCharPref("mail.identity."+compte.defaultIdentity.key+".identityName");
+		if (idname==uid) return compte.defaultIdentity.organization;
 	}
 
   return "";
@@ -810,4 +814,19 @@ function blurMDP(){
 
 function focusMDP(){
 
+}
+
+
+function GetCourrielUid(uid){
+
+	const nb=MailServices.accounts.accounts.length;
+	for (var  i=0;i<nb;i++){
+		let compte=MailServices.accounts.accounts.queryElementAt(i,Components.interfaces.nsIMsgAccount);
+		if (null==compte.defaultIdentity) continue;
+		let idname=PacomeGetCharPref("mail.identity."+compte.defaultIdentity.key+".identityName");
+		//PacomeTrace("*** GetCourrielUid identityName:"+idname);
+		if (idname==uid) return compte.defaultIdentity.email;
+	}
+
+  return "";
 }

@@ -41,7 +41,7 @@
         </columns>
         <rows>
           <row>
-            <label value="&pacomemdp.uid;" control="pacomemdp.uid"/>
+            <label value="&pacomemdp.courriel;" control="pacomemdp.uid"/>
             <textbox id="pacomemdp.uid" readonly="true" value="" flex="1"/>
           </row>
           <row>
