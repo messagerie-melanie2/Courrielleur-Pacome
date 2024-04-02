@@ -35,7 +35,7 @@ function InitChoixProfil(){
 function AjouteProfil(liste, index){
 	let tps=mceMigrationMCE.pablo_datesprefs[index];
 	let dt=new Date(tps);
-	let libelle=mceMigrationMCE.pablo_comptes[index]+" ("+dt.toLocaleDateString()+")";
+	let libelle=mceMigrationMCE.pablo_comptes[index]+" ("+dt.toLocaleDateString("fr-FR")+")";
 	return liste.appendItem(libelle, mceMigrationMCE.pablo_noms[index]);
 }
 
