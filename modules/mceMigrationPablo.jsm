@@ -760,7 +760,7 @@ var mceMigrationMCE={
 									Services.prefs.setCharPref(pref+".sig_file", sig_file);
 								}
 								if (identPablo.htmlSigText!="") this.logMsg("Ajout de la signature texte");
-								Services.prefs.setCharPref(pref+".htmlSigText", identPablo.htmlSigText);
+								Services.prefs.setStringPref(pref+".htmlSigText", identPablo.htmlSigText);
 								Services.prefs.setBoolPref(pref+".htmlSigFormat", identPablo.htmlSigFormat);
 								Services.prefs.setBoolPref(pref+".sig_bottom", identPablo.sig_bottom);
 								Services.prefs.setBoolPref(pref+".attach_vcard", identPablo.attach_vcard);
@@ -803,7 +803,10 @@ var mceMigrationMCE={
 					cats.push(cat);
 				}
 			}
-			Services.prefs.setCharPref("calendar.categories.names", cats.join(","));
+
+			let allCats=cats.join(",");
+			this.logMsg("Ajout des catégories", allCats);
+			Services.prefs.setStringPref("calendar.categories.names", allCats);
 
 			this.logMsg("Ajout des catégories", "SUCCES");
 			return true;
@@ -939,7 +942,7 @@ var mceMigrationMCE={
 
 				Services.prefs.setCharPref("ldap_2.servers."+carnet.carnetId+".filename", pabloMab.leafName);
 				Services.prefs.setIntPref("ldap_2.servers."+carnet.carnetId+".dirType", 2);
-				Services.prefs.setCharPref("ldap_2.servers."+carnet.carnetId+".description", carnet.description);
+				Services.prefs.setStringPref("ldap_2.servers."+carnet.carnetId+".description", carnet.description);
 			}
 
 			this.logMsg("Fin d'ajout des carnets Pablo", "SUCCES");
