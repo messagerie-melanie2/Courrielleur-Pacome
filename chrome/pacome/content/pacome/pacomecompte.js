@@ -19,6 +19,9 @@ const PACOME_PARAM_ERREUR="Erreur";
 /* variables globales */
 var gPacomeAssitVars={
 
+	// si true nouveau profil
+	nouveauProfil: false,
+
   //controle saisie identifiant dans l'assistant
   ctrlSaisieUid:null,
 
@@ -162,9 +165,12 @@ function InitAssistant(){
     //déterminer mode d'exécution
     let uids=PacomeListeUid();
     if (0==uids.length){
+
       //1ere utilisation de pacome
       PacomeTrace("InitAssistant mode 1ere utilisation");
       PacomeEcritLog(PACOME_LOGS_ASSISTANT, "initialiation en mode 1ere utilisation", "");
+
+			gPacomeAssitVars.nouveauProfil=true;
 
       gPacomeAssitVars.pagesids=PACOME_PAGES_NOUVEAU_IDS;
       gPacomeAssitVars.pagesinit=PACOME_PAGES_NOUVEAU_INIT;
@@ -1398,6 +1404,11 @@ function SortiePageFin(){
         }
       }
     }
+
+		// créer dossiers locaux si 1ere utilisation
+		if (gPacomeAssitVars.nouveauProfil){
+			CreeDossiersLocaux();
+		}
   }
 
   //operations de parametrage des agendas

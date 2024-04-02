@@ -936,13 +936,6 @@ function ParamComptePacome(elemcompte){
       }
     }
 
-    //creer dossier local si necessaire
-    let spamLevel=Services.prefs.getIntPref("mail.server."+srventrant.key+".spamLevel");
-    let bRes=CreeLocalFolders(spamLevel);
-    if (!bRes){
-      return -1;
-    }
-
     MailServices.accounts.saveAccountInfo();
 
     Services.prefs.savePrefFile(null);
@@ -1327,4 +1320,26 @@ function pacomeMajPrinter(elem) {
       Services.prefs.setStringPref("print."+nompref, valeur);
     }
   }
+}
+
+// creer le compte "Dossier Locaux" (cas 1ere utilisation)
+function CreeDossiersLocaux(){
+
+	try{
+
+		let compte=MailServices.accounts.defaultAccount;
+		let spamlevel=100;
+		if (compte){
+			spamLevel=Services.prefs.getIntPref("mail.server."+compte.incomingServer.key+".spamLevel");
+		}
+
+		let res=CreeLocalFolders(spamLevel);
+
+		if (res) MailServices.accounts.saveAccountInfo();
+
+		return res;
+
+	} catch(ex){
+	}
+	return false;
 }
