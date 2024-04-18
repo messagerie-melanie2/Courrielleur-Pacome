@@ -7,3 +7,4 @@ overlay  chrome://messenger/content/am-server.xul  chrome://pacome/content/am-se
 overlay  chrome://messenger/content/am-serverwithnoidentities.xul  chrome://pacome/content/am-serverwithnoidentities-overlay.xul
 overlay  chrome://messenger/content/messengercompose/messengercompose.xul  chrome://pacome/content/addressingWidgetOverlay.xul
 overlay  chrome://messenger/content/preferences/display.xul  chrome://pacome/content/tagPanel.xul
+overlay  chrome://pacome/content/pacomecompte.xul chrome://pacome/content/pacomePabloMCE.xul
