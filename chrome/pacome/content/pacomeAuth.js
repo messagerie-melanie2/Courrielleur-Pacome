@@ -52,8 +52,12 @@ window.addEventListener("load", () => {
 
   document.getElementById("uid").value=uid;
 
-	  let btValider=document.getElementById("boutonValider");
+	let btValider=document.getElementById("boutonValider");
   btValider.setAttribute("disabled",true);
+	btValider.addEventListener("keydown", toucheEnter);
+
+	let mdpCtrl=document.getElementById("mdp");
+	mdpCtrl.addEventListener("keydown", toucheEnter);
 
 	// tests
 	//document.getElementById("uid").value="Prenom.NOM";
@@ -61,6 +65,20 @@ window.addEventListener("load", () => {
 	dialog.showModal();
 });
 
+
+// appel ValiderAuth si mdp et touche enter
+function toucheEnter(aEvent) {
+
+	if (aEvent.keyCode != aEvent.DOM_VK_RETURN)
+		return;
+
+	// valider mdp ?
+	PacomeUtils.PacomeTrace("PacomeAuth DOM_VK_RETURN");
+	let btValider=document.getElementById("boutonValider");
+	if (!btValider.hasAttribute("disabled")){
+		ValiderAuth();
+	}
+}
 
 
 /*
@@ -94,6 +112,8 @@ function ValiderAuth() {
   let btValider=document.getElementById("boutonValider");
   btValider.setAttribute("disabled",true);
   btValider.focus();
+
+	document.getElementById("mdp").setAttribute("disabled",true);
 
   setBoutonAnnuler(false);
 
@@ -274,23 +294,22 @@ function ValiderAuth() {
           //mot de passe non valide
           if (49==code) {
 
+						let msgUser=PacomeUtils.MessageFromId("PacomeAuthNonValide");
+
             // cas mot de passe aurait du etre changé (mantis 5393)
-            if (""!=message &&
-                0==message.indexOf("GRILLED : ")) {
+            if (message.startsWith("GRILLED : "))
+							msgUser += " - " + message.substr(10);
 
-              let msgsrv=message.substr(10);
-              PacomeAfficheMsgId3("PacomeAuthErreurSrvTitre", PacomeUtils.MessageFromId("PacomeAuthNonValide"), msgsrv);
+						MsgAuthErreurSrv(msgUser);
 
-              PacomeUtils.passerHorsLigne();
+						PacomeUtils.passerHorsLigne();
 
-              //annulation
-              window.arguments[0].res=-1;
-              window.arguments[0].mdp="";
+						//annulation
+						window.arguments[0].res=-1;
+						window.arguments[0].mdp="";
 
-              FermePacomeAuth();
-              return;
-
-            } else PacomeAfficheMsgIdMsgId("PacomeAuthErreurSrvTitre", "PacomeMdpNonValide");
+						FermePacomeAuth();
+						return;
 
           } else if (-1==code) {
 
@@ -333,7 +352,9 @@ function ValiderAuth() {
 
           let btValider=document.getElementById("boutonValider");
           btValider.removeAttribute("disabled");
+
           let txtuid=document.getElementById("mdp");
+					txtuid.removeAttribute("disabled");
           txtuid.value="";
           txtuid.focus();
         }
