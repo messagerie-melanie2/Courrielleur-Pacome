@@ -77,9 +77,9 @@ var PacomeUtils={
 			this._init=true;
 		}
 	},
-	
+
 	get version() {
-		
+
 		return VERSION_PACOME;
 	},
 
@@ -185,7 +185,7 @@ var PacomeUtils={
 					PacomeUtils.PacomeTrace("RequeteParametrage httpRequest.status:"+statut);
 					if(statut !=200){
 
-						this.EcritLog(PACOME_LOGS_REQ, "code de reponse du serveur", statut);
+						PacomeUtils.EcritLog(PACOME_LOGS_REQ, "code de reponse du serveur", statut);
 
 						if (0==statut){
 
@@ -281,7 +281,7 @@ var PacomeUtils={
 		fichier.append(PACOME_FICHIER_LOG);
 		fichier.moveTo(null, PACOME_FICHIER_LOG1);
 	},
-	
+
 	passerHorsLigne(){
 
 		Services.io.manageOfflineStatus=false;
