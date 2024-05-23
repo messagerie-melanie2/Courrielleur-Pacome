@@ -68,6 +68,11 @@ window.addEventListener("load", () => {
 
 // appel ValiderAuth si mdp et touche enter
 function toucheEnter(aEvent) {
+	
+    if (aEvent.keyCode == aEvent.DOM_VK_ESCAPE){
+		FermePacomeAuth();
+		return;
+    }
 
 	if (aEvent.keyCode != aEvent.DOM_VK_RETURN)
 		return;
