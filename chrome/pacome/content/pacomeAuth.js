@@ -302,19 +302,25 @@ function ValiderAuth() {
 						let msgUser=PacomeUtils.MessageFromId("PacomeAuthNonValide");
 
             // cas mot de passe aurait du etre changé (mantis 5393)
-            if (message.startsWith("GRILLED : "))
+            if (message.startsWith("GRILLED : ")) {
+							
 							msgUser += " - " + message.substr(10);
 
-						MsgAuthErreurSrv(msgUser);
+							MsgAuthErreurSrv(msgUser);
 
-						PacomeUtils.passerHorsLigne();
+							PacomeUtils.passerHorsLigne();
 
-						//annulation
-						window.arguments[0].res=-1;
-						window.arguments[0].mdp="";
+							//annulation
+							window.arguments[0].res=-1;
+							window.arguments[0].mdp="";
 
-						FermePacomeAuth();
-						return;
+							FermePacomeAuth();
+							return;
+						} 
+						else {
+							PacomeUtils.PacomeTrace("PacomeAuth PacomeAuthNonValide");
+							Services.prompt.alert(window, PacomeUtils.MessageFromId("PacomeAuthNonValide"), msgReq+" (code "+code+")");							
+						}
 
           } else if (-1==code) {
 
@@ -350,9 +356,6 @@ function ValiderAuth() {
 
 						PacomeUtils.PacomeTrace("PacomeAuth PacomeAuthNonValide");
 						Services.prompt.alert(window, PacomeUtils.MessageFromId("PacomeAuthNonValide"), msgReq+" (code "+code+")");
-
-						FermePacomeAuth();
-            return;
           }
 
           let btValider=document.getElementById("boutonValider");
