@@ -22,7 +22,7 @@ function PacomeMajParam(retourfin){
   }
 
   //document de configuration
-  let config=PacomeDocumentConfig();
+  let config=PacomeDocumentConfigGN();
   if (null==config){
     PacomeTrace("PacomeMajParam erreur de lecture de configuration");
     PacomeEcritLog(PACOME_LOGS_MAJ, "erreur de lecture de configuration", "");
@@ -508,7 +508,7 @@ function PacomeMAJSilence(docparam){
         PacomeTrace("PacomeMAJSilence mise a jour silencieuse du compte uid:"+uid);
         PacomeEcritLog(PACOME_LOGS_MAJAUTO, "parametrage d'une boite", "uid:'"+uid+
                       "' - confid:'"+confid+"' - action:'maj'");
-        let res=ParamComptePacome(elemcompte);
+        let res=ParamComptePacomeGN(elemcompte);
         if (-1==res)
           PacomeEcritLog(PACOME_LOGS_ASSISTANT, "Echec de mise a jour");
         else

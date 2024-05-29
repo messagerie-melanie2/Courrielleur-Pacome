@@ -7,7 +7,7 @@ var g_docpacomesrv=null;
 function InitAddCal() {
 
   //lecture configuration pacome
-  let config=PacomeDocumentConfig();
+  let config=PacomeDocumentConfigGN();
   if (null==config){
     PacomeTrace("PacomeAjoutAG erreur de lecture de configuration");
     PacomeEcritLog(PACOME_LOGS_AG, "erreur de lecture de configuration", "");

@@ -73,11 +73,7 @@ function PacomeListeUid(){
       //uid
       let uid=GetUidReduit(compte.incomingServer.username);
       //ajout
-      for (var i=0;i<uids.length;i++){
-        if (uid==uids[i])
-          break;
-      }
-      if (i==uids.length){
+      if (!uids.includes(uid)){
         PacomeTrace("PacomeListeUid uid de boite:"+uid);
         uids.push(uid);
       }
@@ -96,16 +92,11 @@ function PacomeListeUid(){
           if (null==ignoreuids[i] || 0==ignoreuids[i].length)
             continue;
           PacomeTrace("PacomeListeUid  traitement ignoreuids:"+ignoreuids[i]);
-          let ident=GetUidReduit(ignoreuids[i]);
-          PacomeTrace("PacomeListeUid uid reduit:"+ident);
+          let uid=GetUidReduit(ignoreuids[i]);
           //ajout?
-          for (var u=0;u<uids.length;u++){
-            if (ident==uids[u])
-              break;
-          }
-          if (u==uids.length){
-            PacomeTrace("PacomeListeUid uid de boite:"+ident);
-            uids.push(ident);
+          if (!uids.includes(uid)){
+            PacomeTrace("PacomeListeUid uid de boite:"+uid);
+            uids.push(uid);
           }
         }
       }

@@ -12,6 +12,7 @@
   <script type="application/x-javascript" src="chrome://pacome/content/pacomereq.js"/>
   <script type="application/x-javascript" src="chrome://pacome/content/pacomeassist.js"/>
   <script type="application/x-javascript" src="chrome://pacome/content/pacomecompte.js"/>
+  <script type="application/x-javascript" src="chrome://pacome/content/pacomeParamGN.js"/>
   
   <script type="application/x-javascript" src="chrome://pacome/content/pacomecalp.js"/>
   <script type="application/x-javascript" src="chrome://pacome/content/messenger-overlay.js"/>

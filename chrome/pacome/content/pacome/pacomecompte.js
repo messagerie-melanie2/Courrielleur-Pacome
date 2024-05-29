@@ -473,7 +473,7 @@ function SortiePageSaisieUid(){
   let config="<pacome><identifiants><identifiant>"+uid+"</identifiant></identifiants>";
 
   //document de configuration
-  let config2=PacomeDocumentConfig();
+  let config2=PacomeDocumentConfigGN();
   if (null==config2){
     PacomeAfficheMsgIdGlobalErr("PageIdentsErrConfig");
     return false;
@@ -548,7 +548,7 @@ function SortiePageIdents(){
     PacomeTrace("SortiePageIdents tous les identifiants ont ete retires");
 
   //document de configuration
-  let config=PacomeDocumentConfig();
+  let config=PacomeDocumentConfigGN();
   if (null==config){
     PacomeAfficheMsgIdGlobalErr("PageIdentsErrConfig");
     return false;
@@ -694,7 +694,7 @@ function ValideUidBoiteDoc(doc){
           for (var c=0; c<nbp; c++) {
             let pref=prefs.children[c];
             if ("useremail"==pref.getAttribute("nom") &&
-                uidmail==pref.getAttribute("valeur").toLowerCase()){
+                uidmail==pref.getAttribute("valeur").toLowerCase().replace(".defense.",".interieur.")){
               return true;
             }
           }
@@ -786,7 +786,7 @@ function ValideListeUidBoiteDoc(doc){
             for (; p<nbp; p++) {
               let pref=prefs.children[p];
               if ("useremail"==pref.getAttribute("nom") &&
-                  uidmail==pref.getAttribute("valeur").toLowerCase()){
+                  uidmail==pref.getAttribute("valeur").toLowerCase().replace(".defense.",".interieur.")){
                 break;
               }
             }
@@ -1739,7 +1739,7 @@ function GetImageRichListItem(richlistitem){
 function TraiteElementCompte(uid, confid, action, simul){
 
   //etat initial
-  let etat=PacomeEtatCompteBoite(uid, confid);
+  let etat=PacomeEtatCompteBoiteGN(uid, confid);
 
   let elemcompte=null;
   if (null!=confid && ""!=confid)
@@ -1757,7 +1757,7 @@ function TraiteElementCompte(uid, confid, action, simul){
     if (simul)
       return 1;
 
-    let res=ParamComptePacome(elemcompte);
+    let res=ParamComptePacomeGN(elemcompte);
     if (-1==res){
       PacomeAfficheMsgIdGlobalErr("PacomeCompteEtatErreur");
       return -1;
@@ -1774,7 +1774,7 @@ function TraiteElementCompte(uid, confid, action, simul){
     if (simul)
       return 1;
 
-    let res=ParamComptePacome(elemcompte);
+    let res=ParamComptePacomeGN(elemcompte);
     if (-1==res){
       PacomeAfficheMsgIdGlobalErr("PacomeCompteEtatErreur");
       return -1;
@@ -1792,7 +1792,7 @@ function TraiteElementCompte(uid, confid, action, simul){
       return 1;
 
     if (PACOME_ETAT_PARAM==etat){
-      let res=PacomeSupprimeBoite(uid, confid);
+      let res=PacomeSupprimeBoiteGN(uid, confid);
       if (-1==res){
         PacomeAfficheMsgIdGlobalErr("PacomeCompteEtatErreur");
         return -1;
@@ -1811,7 +1811,7 @@ function TraiteElementCompte(uid, confid, action, simul){
       return 1;
 
     if (PACOME_ETAT_PARAM==etat){
-      let res=PacomeSupprimeBoite(uid, confid);
+      let res=PacomeSupprimeBoiteGN(uid, confid);
       if (-1==res){
         PacomeAfficheMsgIdGlobalErr("PacomeCompteEtatErreur");
         return -1;
