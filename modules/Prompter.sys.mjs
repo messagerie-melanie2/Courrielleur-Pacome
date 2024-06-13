@@ -7,6 +7,14 @@ import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 // This is redefined below, for strange and unfortunate reasons.
 import { PromptUtils } from "resource://gre/modules/PromptUtils.sys.mjs";
 
+var { PacomeAuthUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeAuthUtils.jsm");
+//pas un serveur melanie2
+const NON_MELANIE2=0;
+//serveur de messagerie melanie2
+const MSG_MELANIE2=1;
+//serveur d'application melanie2
+const APP_MELANIE2=2;
+
 const {
   MODAL_TYPE_TAB,
   MODAL_TYPE_CONTENT,
@@ -1653,11 +1661,65 @@ class ModalPrompter {
 
   promptAuth(channel, level, authInfo) {
     let message = InternalPromptUtils.makeAuthMessage(this, channel, authInfo);
-
+//Services.console.logStringMessage("*** Prompter.sys.mjs promptAuth channel:"+channel.URI.spec);
     let [username, password] = InternalPromptUtils.getAuthInfo(authInfo);
-
+//Services.console.logStringMessage("*** Prompter.sys.mjs promptAuth username:"+username);
     let userParam = this.async ? username : { value: username };
     let passParam = this.async ? password : { value: password };
+
+		// cas authentification pacome
+		// authentification proxy AMANDE? ou authentification melanie2
+    if (null!=channel && null!=channel.URI &&
+				(PacomeAuthUtils.isAuthProxyAmande(channel, authInfo) ||
+        APP_MELANIE2==PacomeAuthUtils.TestServeurMelanie2(channel.URI.host)) ) {
+      Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth authentification melanie2");
+
+			// rechercher login existant
+			let loging=PacomeAuthUtils.findLogins(null, channel.URI.host, null);
+			if (loging.length){
+				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth login pacome present");
+				authInfo.username = loging[0].username;
+				authInfo.password = loging[0].password;
+        return true;
+			}
+
+			let mdp=new Object();
+
+			// cas agenda : rechercher uid
+			let uid=PacomeAuthUtils.GetUidAgenda(channel.URI.spec);
+
+			if (null==uid || ""==uid) {
+
+				//authentification pacome avec le compte principal
+				let compte=PacomeAuthUtils.GetComptePrincipal();
+				if (null!=compte) {
+					uid=PacomeAuthUtils.GetUidReduit(compte.incomingServer.username);
+				}
+				else {
+					// le compte principal devrait exister
+					Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth authentification "+channel.URI.host+" - pas de compte principal!");
+					return false;
+				}
+			}
+			else Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth GetUidAgenda uid:"+uid);
+
+			//demande mot de passe
+			Services.console.logStringMessage("*** MsgAsyncPrompter.jsm authentification "+channel.URI.host+" - demande mot de passe");
+			let res=PacomeAuthUtils.PromptPacomeMdp(this._window, uid, mdp);
+
+			if (res!=1) {
+				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm echec authentification pacome ou annulation");
+				return false;
+			}
+
+			// mettre à jour tous les comptes
+			PacomeAuthUtils.modifyMdpPacome(uid, mdp.value);
+
+			authInfo.username=uid;
+			authInfo.password=mdp.value;
+
+			return true;
+    }
 
     let result;
     if (authInfo.flags & Ci.nsIAuthInformation.ONLY_PASSWORD) {

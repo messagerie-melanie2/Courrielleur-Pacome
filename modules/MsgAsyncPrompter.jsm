@@ -143,7 +143,7 @@ MsgAsyncPrompter.prototype = {
   _log: null,
 
   queueAsyncAuthPrompt(aKey, aJumpQueue, aCaller) {
-		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm queueAsyncAuthPrompt aKey:"+aKey);
+		//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm queueAsyncAuthPrompt aKey:"+aKey);
     if (aKey in this._pendingPrompts) {
       this._log.debug(
         "Prompt bound to an existing one in the queue, key: " + aKey
@@ -303,7 +303,7 @@ class MsgAuthPrompt {
     let checkBox = { value: false };
     let checkBoxLabel = null;
     let [origin, realm] = this._getRealmInfo(aPasswordRealm);
-		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptUsernameAndPassword origin:"+origin);
+		//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptUsernameAndPassword origin:"+origin);
 
     // If origin is null, we can't save this login.
     if (origin) {
@@ -379,20 +379,20 @@ class MsgAuthPrompt {
     let checkBox = { value: false };
     let checkBoxLabel = null;
     let [origin, realm, username] = this._getRealmInfo(aPasswordRealm);
-		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword aPasswordRealm:"+aPasswordRealm);
-		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword origin:"+origin);
+		//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptPassword aPasswordRealm:"+aPasswordRealm);
+		//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptPassword origin:"+origin);
 
     username = decodeURIComponent(username);
-		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword username:"+username);
+		//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptPassword username:"+username);
 
 		// cas authentification pacome
 		if (origin && PacomeAuthUtils.TestServeurMelanie2(origin)!=NON_MELANIE2) {
-			Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword cas authentification pacome");
+			//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptPassword cas authentification pacome");
 
 			// rechercher login existant
 			let loging2=PacomeAuthUtils.findLogins(origin, null, realm);
 			if (loging2.length){
-				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm login pacome present");
+				//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm login pacome present");
 				aPassword.value=loging2[0].password;
         return true;
 			}
@@ -403,7 +403,7 @@ class MsgAuthPrompt {
 
 			// retour infos
 			if (ok) {
-				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm utilisation login pacome");
+				//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm utilisation login pacome");
 				// mettre à jour tous les comptes
 				PacomeAuthUtils.modifyMdpPacome(username, outmdp.value);
 
@@ -481,7 +481,7 @@ class MsgAuthPrompt {
    * @returns {boolean} true for OK, false for Cancel.
    */
   promptPassword2(dialogTitle, text, password, checkMsg, checkValue) {
-		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword2 text:"+text);
+		//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptPassword2 text:"+text);
     return nsIPrompt_promptPassword(
       dialogTitle,
       text,
@@ -522,20 +522,20 @@ class MsgAuthPrompt {
     let username = { value: authInfo.username || "" };
     let password = { value: authInfo.password || "" };
 
-		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth username:"+username);
-		Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth channel.URI.spec:"+channel.URI.spec);
+		//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth username:"+username);
+		//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth channel.URI.spec:"+channel.URI.spec);
 
 		// cas authentification pacome
 		// authentification proxy AMANDE? ou authentification melanie2
     if (null!=channel && null!=channel.URI &&
 				(PacomeAuthUtils.isAuthProxyAmande(channel, authInfo) ||
         APP_MELANIE2==PacomeAuthUtils.TestServeurMelanie2(channel.URI.host)) ) {
-      Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth authentification melanie2");
+      //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth authentification melanie2");
 
 			// rechercher login existant
 			let loging=PacomeAuthUtils.findLogins(null, channel.URI.host, null);
 			if (loging.length){
-				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth login pacome present");
+				//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth login pacome present");
 				authInfo.username = loging[0].username;
 				authInfo.password = loging[0].password;
 				checkValue.value=false;
@@ -556,18 +556,18 @@ class MsgAuthPrompt {
 				}
 				else {
 					// le compte principal devrait exister
-					Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth authentification "+channel.URI.host+" - pas de compte principal!");
+					//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth authentification "+channel.URI.host+" - pas de compte principal!");
 					return false;
 				}
 			}
-			else Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth GetUidAgenda uid:"+uid);
+			else //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth GetUidAgenda uid:"+uid);
 
 			//demande mot de passe
-			Services.console.logStringMessage("*** MsgAsyncPrompter.jsm authentification "+channel.URI.host+" - demande mot de passe");
-			let res=PacomeAuthUtils.PromptPacomeMdp(this._window, uid, mdp);
+			Services.console.logStringMessage("***  MsgAsyncPrompter.jsm authentification Pacome host:"+channel.URI.host);
+			let res=PacomeAuthUtils.PromptPacomeMdp(null, uid, mdp);
 
 			if (res!=1) {
-				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm echec authentification pacome ou annulation");
+				//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm echec authentification pacome ou annulation");
 				return false;
 			}
 
