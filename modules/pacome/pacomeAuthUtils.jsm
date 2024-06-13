@@ -2,13 +2,13 @@
   Module pacome - fonctions utilitaires pour l'authentification
 */
 
-var EXPORTED_SYMBOLS = [ "PacomeAuthUtils"];
+const EXPORTED_SYMBOLS = [ "PacomeAuthUtils"];
 
 
-var { Services } = ChromeUtils.import("resource:///modules/Services.jsm");
-var { MailServices } = ChromeUtils.import("resource:///modules/MailServices.jsm");
-var { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeUtils.jsm");
-var { cal } = ChromeUtils.import("resource:///modules/calendar/calUtils.jsm");
+const { Services } = ChromeUtils.import("resource:///modules/Services.jsm");
+const { MailServices } = ChromeUtils.import("resource:///modules/MailServices.jsm");
+const { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeUtils.jsm");
+const { cal } = ChromeUtils.import("resource:///modules/calendar/calUtils.jsm");
 
 
 //pas un serveur melanie2

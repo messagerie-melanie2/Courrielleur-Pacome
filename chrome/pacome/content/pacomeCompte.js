@@ -2,8 +2,17 @@
 	certaines parties sont reprises/adaptées depuis chrome\messenger\content\messenger\accountcreation\accountSetup.js */
 
 
-var { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeUtils.jsm");
-var { PacomeParam } = ChromeUtils.import("resource:///modules/pacome/pacomeParam.jsm");
+const { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeUtils.jsm");
+const { PacomeParam } = ChromeUtils.import("resource:///modules/pacome/pacomeParam.jsm");
+
+var { XPCOMUtils } = ChromeUtils.importESModule(
+  "resource://gre/modules/XPCOMUtils.sys.mjs"
+);
+
+var pdoc = {};
+XPCOMUtils.defineLazyModuleGetters(pdoc, {
+  PacomeDoc: "resource:///modules/pacome/pacomeDoc.jsm"
+});
 
 
 /* constantes des actions de parametrage */
@@ -58,7 +67,7 @@ const PACOME_UID_MIN_LENGTH=3;
 const PACOME_UID_MAX_LENGTH=64;
 
 var ConfigAssistant={
-	
+
 	// 1ere page affichée
 	"debut": "PacomeAssistant.InitPageUid();",
 
@@ -166,8 +175,9 @@ var PacomeAssistant = {
 	btContinuer:null,
 	btQuitter:null,
 
-	// document xml de paramétrage (retour de RequeteParametrage)
-	_documentParam:null,
+
+	// instance PacomeDoc (document de paramétrage)
+	_docPacome: null,
 
 	// choix des boites
 	// tableau d'uid avec confid
@@ -176,7 +186,7 @@ var PacomeAssistant = {
 	_choixagendas:null,
 	// choix des flux : tableau d'identifiants à paramétrer
 	_choixflux: null,
-	
+
 	// mode mise à jour
 	_modeMaj: false,
 	// nombre de boites affichées
@@ -214,26 +224,29 @@ var PacomeAssistant = {
 		this.btQuitter=document.getElementById("btQuitter");
 
 		this.initOk=true;
-		
-	
+
+
 		// mode mise à jour ?
 		if (window.arguments &&  window.arguments.length){
-					 
+
 			let args=window.arguments[0];
-		 
+
 			if (args.mode && "maj"==args.mode) {
+
 				this._modeMaj=true;
-				this._documentParam=args.documentParam;
+
+				this._docPacome=args.docPacome;
+
 				this.logMsgDebug("onLoad mode mise a jour");
-				
+
 				// initialisation des pages en mode mise a jour
 				this.InitModeMaj();
 			}
 		}
-				
+
 		// afficher 1ere page
 		(this.AffichePage(ConfigAssistant.debut))();
-		
+
 		this.logMsgDebug("onLoad fin");
 	},
 
@@ -241,35 +254,27 @@ var PacomeAssistant = {
 
 		this.EcritLog("sortie de l'assistant", "");
 	},
-	
+
 	AffichePage(page){
 
 		return Function(page);
 	},
-	
+
 	// Modification de ConfigAssistant en mode mise a jour
 	// permet de gérer les pages affichées et les boutons retour
 	InitModeMaj(){
-		
+
 		this.logMsgDebug("InitModeMaj");
-		
-		let pacomeui=this._documentParam.getElementsByTagName("pacome_ui");
-		if (null==pacomeui || 0==pacomeui.length){
-			// ne devrait pas être le cas
-			 window.close();
-			return;
-		}
-		pacomeui=pacomeui[0];
-		
-		this._nbBoites=this.GetNbMajTypeVisibles(pacomeui, "compte");
-		this._nbAgendas=this.GetNbMajTypeVisibles(pacomeui, "agenda");
-		this._nbAutres=this.GetNbMajTypeVisibles(pacomeui, "compteflux");
-		this._nbAutres+=this.GetNbMajTypeVisibles(pacomeui, "application");
-		this._nbAutres+=this.GetNbMajTypeVisibles(pacomeui, "proxy");
-		
+
+		this._nbBoites=this._docPacome.GetNbMajByType("compte");
+		this._nbAgendas=this._docPacome.GetNbMajByType("agenda");
+		this._nbAutres=this._docPacome.GetNbMajByType("compteflux");
+		this._nbAutres+=this._docPacome.GetNbMajByType("application");
+		this._nbAutres+=this._docPacome.GetNbMajByType("proxy");
+
 		// configuration des pages
 		ConfigAssistant.debut="";
-		
+
 		if (0!=this._nbBoites) {
 			ConfigAssistant.debut="PacomeAssistant.InitPageBoites();";
 			ConfigAssistant.boites.btRetour.disabled=true;
@@ -313,28 +318,13 @@ var PacomeAssistant = {
 				ConfigAssistant.params.btRetour.onclick="PacomeAssistant.InitPageBoites();";
 		}
 	},
-	
-	// nombre de mises à jour visibles dans le document _documentParam
-	// type: compte/agenda/autres
-	GetNbMajTypeVisibles(pacomeui, type) {
-	
-		let nb=0;
-		let types=pacomeui.getElementsByTagName(type);
-		if (null==types || 0==types.length) {
-			return 0;
-		}
-		for (let i=0;null!=types && i<types.length;i++){
-			if ("true"==types[i].getAttribute("visible"))
-				nb++;			
-		}
-		return nb;
-	},
+
 
 	// fonction générique pour initialiser les pages selon configuration
 	// page : ConfigAssistant.XXX
 	InitPageFromConfig(page){
 
-		this.logMsgDebug(" InitPageFromConfig page:"+page);
+		this.logMsgDebug("InitPageFromConfig page:"+page);
 
 		this.setupView.setAttribute("class", page.setupView.class);
 		this.boites.setAttribute("class", page.boites.class);
@@ -380,7 +370,7 @@ var PacomeAssistant = {
 	// bouton suivant sur page identifiants
 	SortiePageUid(){
 
-		this.logMsgDebug(" SortiePageUid");
+		this.logMsgDebug("SortiePageUid");
 
 		this.EcritLog("Identifiants", this.ctrlIdentifiant.value);
 
@@ -389,12 +379,12 @@ var PacomeAssistant = {
 
 		// configuration client
 		let config=PacomeParam.GetConfigClient(this.ctrlIdentifiant.value);
-		this.logMsg("PacomeAssistant configuration client:"+config);
+
 		this.EcritLog("Configuration client", config);
 
 		// requête paramétrage
 		PacomeUtils.ClearErreurEx();
-		this._documentParam=null;
+		this._docPacome=null;
 
 		this.sablier();
 
@@ -410,7 +400,8 @@ var PacomeAssistant = {
 	// fonction de rappel pour la requete de paramétrage
 	// si succès afficher liste des boites
 	RetourRequete(statut, responseXML){
-		PacomeAssistant.logMsgDebug(" RetourRequete");
+
+		PacomeAssistant.logMsgDebug("RetourRequete");
 
 		PacomeAssistant.EcritLog("Réponse de la requête", "statut:"+statut);
 
@@ -419,13 +410,14 @@ var PacomeAssistant = {
 		PacomeAssistant.btQuitter.disabled=false;
 
 		if (statut==200){
+
 			PacomeAssistant.logMsg("Assistant pacome succès de la requete");
 
 			let res=PacomeUtils.AnalyseErreurDoc(responseXML);
 
 			if (res){
 
-				PacomeAssistant._documentParam=responseXML;
+				PacomeAssistant._docPacome=new pdoc.PacomeDoc(responseXML);
 
 				// en mode manuel => page des boites
 				PacomeAssistant.InitPageBoites();
@@ -441,10 +433,10 @@ var PacomeAssistant = {
 
 	// page des boites à lettres
 	InitPageBoites(){
-		this.logMsgDebug(" InitPageBoites");
+		this.logMsgDebug("InitPageBoites");
 
 		this.InitPageFromConfig(ConfigAssistant.boites);
-		
+
 		if (this._modeMaj){
 			this.btRetour.disabled=true;
 		}
@@ -470,22 +462,20 @@ var PacomeAssistant = {
 	// retourne le nombre de boites, -1 si erreur
 	ConstruitListeBoites(){
 
-		PacomeAssistant.logMsgDebug(" ConstruitListeBoites");
+		PacomeAssistant.logMsgDebug("ConstruitListeBoites");
 		try{
 
-			//construire la liste des boites
+			//construire la liste des boites visibles
 			let liste=document.getElementById("liste-boites");
 
-			let comptes=this._documentParam.querySelectorAll("pacome_ui > compte");
+			let comptes=this._docPacome.GetBoitesUI();
 			if (null==comptes || 0==comptes.length){
 				PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurPacomeUIBoite"));
 				return 0;
 			}
 			const nb=comptes.length;
 			for (let i=0;i<nb;i++){
-				let boite=comptes[i];
-				if ("true"==boite.getAttribute("visible"))
-					this.InsertBoiteUI(liste, boite);
+				this.InsertBoiteUI(liste, comptes[i]);
 			}
 
 			return nb;
@@ -523,7 +513,7 @@ var PacomeAssistant = {
 
 	// sortie page boites
 	SortiePageBoites(){
-		this.logMsgDebug(" SortiePageBoites");
+		this.logMsgDebug("SortiePageBoites");
 
 		// mémoriser choix des boites
 		this.MemoChoixUI("liste-boites", "compte", "uid");
@@ -534,7 +524,7 @@ var PacomeAssistant = {
 
 	// page agendas
 	InitPageAgendas(){
-		this.logMsgDebug(" InitPageAgendas");
+		this.logMsgDebug("InitPageAgendas");
 
 		this.InitPageFromConfig(ConfigAssistant.agendas);
 
@@ -556,26 +546,24 @@ var PacomeAssistant = {
 	},
 
 
-	// Ajoute les agendas d'apres le document de parametrage	
+	// Ajoute les agendas d'apres le document de parametrage
 	// retourne le nombre d'agendas, -1 si erreur
 	ConstruitListeAgendas(){
 
-		PacomeAssistant.logMsgDebug(" ConstruitListeAgendas");
+		PacomeAssistant.logMsgDebug("ConstruitListeAgendas");
 		try{
 
-			//construire la liste des agendas
+			//construire la liste des agendas visibles
 			let liste=document.getElementById("liste-agendas");
 
-			let agendas=this._documentParam.querySelectorAll("agenda");
+			let agendas=this._docPacome.GetAgendasUI();
 			if (null==agendas || 0==agendas.length){
 				PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurListeCals"));
 				return -1;
 			}
 			const nb=agendas.length;
 			for (let i=0;i<nb;i++){
-				let agenda=agendas[i];
-				if ("true"==agenda.getAttribute("visible"))
-					this.InsertAgendaUI(liste, agenda);
+				this.InsertAgendaUI(liste, agendas[i]);
 			}
 
 			return nb;
@@ -605,7 +593,7 @@ var PacomeAssistant = {
 
 	// sortie page agendas
 	SortiePageAgendas(){
-		this.logMsgDebug(" SortiePageAgendas");
+		this.logMsgDebug("SortiePageAgendas");
 
 		// mémoriser choix des agendas
 		this.MemoChoixUI("liste-agendas", "agenda", "url");
@@ -616,7 +604,7 @@ var PacomeAssistant = {
 
 	// page autres
 	InitPageAutres(){
-		this.logMsgDebug(" InitPageAutres");
+		this.logMsgDebug("InitPageAutres");
 
 		this.InitPageFromConfig(ConfigAssistant.autres);
 
@@ -639,38 +627,39 @@ var PacomeAssistant = {
 		// application et proxy
 		let liste=document.getElementById("liste-autres");
 
-		let app=this._documentParam.querySelector("pacome_ui > application");
-		if (app && "true"==app.getAttribute("visible")){
+		let app=this._docPacome.GetAppliUI();
+		if (app){
 			this.InsertElemUI(liste, app, "#autreUI");
 			nb++;
 		}
 
-		let proxy=this._documentParam.querySelector("pacome_ui > proxy");
-		if (proxy && "true"==proxy.getAttribute("visible")){
+		let proxy=this._docPacome.GetProxyUI();
+		if (proxy){
 			this.InsertElemUI(liste, proxy, "#autreUI");
 			nb++;
 		}
 	},
 
-	// Ajoute les flux d'apres le document de parametrage	
+	// Ajoute les flux d'apres le document de parametrage
 	// retourne le nombre de comptes, -1 si erreur
 	ConstruitListeFlux(){
-		PacomeAssistant.logMsgDebug(" ConstruitListeFlux");
+
+		PacomeAssistant.logMsgDebug("ConstruitListeFlux");
+
 		try{
 
-			//construire la liste des flux
+			//construire la liste des flux visibles
 			let liste=document.getElementById("liste-autres");
 
-			let fluxAll=this._documentParam.querySelectorAll("pacome_ui > compteflux");
-			if (null==fluxAll || 0==fluxAll.length){
+			let fluxAll=this._docPacome.GetFluxUI();
+			if (0==fluxAll.length){
 				// pas une erreur
+				this.logMsgDebug("ConstruitListeFlux aucun flux");
 				return 0;
 			}
 			const nb=fluxAll.length;
 			for (let i=0;i<nb;i++){
-				let flux=fluxAll[i];
-				if ("true"==flux.getAttribute("visible"))
-					this.InsertElemUI(liste, flux, "#fluxUI");
+				this.InsertElemUI(liste, fluxAll[i], "#fluxUI");
 			}
 
 			return nb;
@@ -699,7 +688,7 @@ var PacomeAssistant = {
 
 	// sortie page autres
 	SortiePageAutres(){
-		this.logMsgDebug(" SortiePageAutres");
+		this.logMsgDebug("SortiePageAutres");
 
 		// mémoriser choix des flux
 		this.MemoChoixUI("autres", "compteflux", "libelle");
@@ -734,56 +723,45 @@ var PacomeAssistant = {
 		}
 
 		// éléments avec defaut à "true" et action "params" ou "maj"
-		// boites
-		let comptes=this._documentParam.querySelectorAll("pacome_ui > compte");
+		// boites visibles
+		let comptes=this._docPacome.GetBoitesUI();
 		for (let i=0;i<comptes.length;i++){
 			let boite=comptes[i];
-			if ("true"==boite.getAttribute("visible")){
-				this.logMsgDebug("InitPageParam boite:"+boite.getAttribute("libelle"));
-				let choix=this.GetChoixDefaut(boite);
-				nbparam+=this.InsertParamUI(boite.getAttribute("libelle"), "chrome://pacome/content/img/"+boite.getAttribute("image").replace("gif","png"), choix.getAttribute("libelle"));
-			}
+			this.logMsgDebug("InitPageParam boite:"+boite.getAttribute("libelle"));
+			let choix=this._docPacome.GetChoixDefaut(boite);
+			nbparam+=this.InsertParamUI(boite.getAttribute("libelle"), "chrome://pacome/content/img/"+boite.getAttribute("image"), choix.getAttribute("libelle"));
 		}
 
-		// agendas
-		let agendas=this._documentParam.querySelectorAll("pacome_ui > agenda");
+		// agendas visibles
+		let agendas=this._docPacome.GetAgendasUI();
 		for (let i=0;i<agendas.length;i++){
 			let agenda=agendas[i];
-			if ("true"==agenda.getAttribute("visible")){
-				this.logMsgDebug("InitPageParam agenda:"+agenda.getAttribute("libelle"));
-				let choix=this.GetChoixDefaut(agenda);
-				nbparam+=this.InsertParamUI(agenda.getAttribute("libelle"), "chrome://pacome/content/img/calendar.png", choix.getAttribute("libelle"));
-			}
+			this.logMsgDebug("InitPageParam agenda:"+agenda.getAttribute("libelle"));
+			let choix=this._docPacome.GetChoixDefaut(agenda);
+			nbparam+=this.InsertParamUI(agenda.getAttribute("libelle"), "chrome://pacome/content/img/calendar.gif", choix.getAttribute("libelle"));
 		}
 
-		// flux
-		let compteflux=this._documentParam.querySelectorAll("pacome_ui > compteflux");
+		// flux visibles
+		let compteflux=this._docPacome.GetFluxUI();
 		for (let i=0;i<compteflux.length;i++){
 			let flux=compteflux[i];
-			this.logMsgDebug("InitPageParam flux 1:"+flux.getAttribute("libelle"));
-			if ("true"==flux.getAttribute("visible")) {
-				this.logMsgDebug("InitPageParam flux:"+flux.getAttribute("libelle"));
-				let choix=this.GetChoixDefaut(flux);
-				nbparam+=this.InsertParamUI(flux.getAttribute("libelle"), "chrome://messenger/skin/icons/new/compact/rss.svg", choix.getAttribute("libelle"));
-			}
+			this.logMsgDebug("InitPageParam flux:"+flux.getAttribute("libelle"));
+			let choix=this._docPacome.GetChoixDefaut(flux);
+			nbparam+=this.InsertParamUI(flux.getAttribute("libelle"), "chrome://messenger/skin/icons/new/compact/rss.svg", choix.getAttribute("libelle"));
 		}
 
-		// autres
-		let appli=this._documentParam.querySelector("pacome_ui > application");
+		// application
+		let appli=this._docPacome.GetAppliUI();
 		if (appli){
-			if (appli.getAttribute("visible")=="true"){
-				let choix=this.GetChoixDefaut(appli);
-				nbparam+=this.InsertParamUI(appli.getAttribute("libelle"), "", choix.getAttribute("libelle"));
-			}
+			let choix=this._docPacome.GetChoixDefaut(appli);
+			nbparam+=this.InsertParamUI(appli.getAttribute("libelle"), "", choix.getAttribute("libelle"));
 		}
 
 		//proxy
-		let proxy=this._documentParam.querySelector("pacome_ui > proxy");
+		let proxy=this._docPacome.GetProxyUI();
 		if (proxy){
-			if (proxy.getAttribute("visible")=="true"){
-				let choix=this.GetChoixDefaut(proxy);
-				nbparam+=this.InsertParamUI(proxy.getAttribute("libelle"), "", choix.getAttribute("libelle"));
-			}
+			let choix=this._docPacome.GetChoixDefaut(proxy);
+			nbparam+=this.InsertParamUI(proxy.getAttribute("libelle"), "", choix.getAttribute("libelle"));
 		}
 
 		// si la liste est vide => message et bouton continuer désactivé
@@ -896,74 +874,81 @@ var PacomeAssistant = {
 	ParamBoites(){
 
 		let nbparam=0;
-			
-		let boites=this._documentParam.querySelectorAll("pacome_ui > compte");
-		if (boites.length) this.EcritLog("Parametrage des boites", "");			
+
+		// boites visibles
+		let boites=this._docPacome.GetBoitesUI();
+		if (boites.length) this.EcritLog("Parametrage des boites", "");
+
 		for (let i=0;i<boites.length;i++){
+
 			let boite=boites[i];
 
-			if ("true"==boite.getAttribute("visible")){
-				this.logMsgDebug("ParamBoites boite:"+boite.getAttribute("libelle"));
+			let choix=this._docPacome.GetChoixDefaut(boite);
+			let action=choix.getAttribute("action");
+			let uid=boite.getAttribute("uid");
+			let libelle=boite.getAttribute("libelle");
+			let confid=choix.getAttribute("confid");
+			let res=-1;
 
-				let action=this.GetActionElement(boite);
-				let choix=this.GetChoixDefaut(boite);
-				let res=-1;
+			this.logMsgDebug("ParamBoites boite:"+libelle);
 
-				try{
+			try{
 
-					switch (action){
-						case PACOME_ACTION_PARAM :
-						case PACOME_ACTION_MAJ :
+				switch (action){
 
-							// paramétres de boites
-							let params=this.GetParamBoite(boite.getAttribute("uid"), choix.getAttribute("confid"));
-							if (null==params){
-								// devrait pas !!!
-								PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de boite");
-								return -1;
-							}
+					case PACOME_ACTION_PARAM :
+					case PACOME_ACTION_MAJ :
 
-							this.EcritLog("Parametrage de la boite", boite.getAttribute("libelle"));
-							res=PacomeParam.ParamBoite(params, choix.getAttribute("action"));
-							if (1!=res){
-								return -1;
-							}
+						// paramétres de boites
+						let params=this._docPacome.GetParamsBoite(uid, confid);
+						if (null==params){
+							// devrait pas !!!
+							PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de boite");
+							return -1;
+						}
 
-							nbparam++;
-							break;
+						this.EcritLog("Parametrage de la boite", libelle);
+						res=PacomeParam.ParamBoite(params, action);
+						if (1!=res){
+							return -1;
+						}
 
-						case PACOME_ACTION_SUPPRIME :
+						PacomeParam.UsageUid(uid, PACOME_IGNORE_UID);
 
-							this.EcritLog("Suppression de la boite", boite.getAttribute("libelle"));
-							res=PacomeParam.SupprimeBoite(boite.getAttribute("uid"), choix.getAttribute("confid"));
-							if (1!=res){
-								return -1;
-							}
-							PacomeParam.UsageUid(boite.getAttribute("uid"), PACOME_IGNORE_UID);
-							nbparam++;
-							break;
+						nbparam++;
+						break;
 
-						case PACOME_ACTION_IGNORE :
-							// suppression si existe
-							PacomeParam.SupprimeBoite(boite.getAttribute("uid"), choix.getAttribute("confid"));
+					case PACOME_ACTION_SUPPRIME :
 
-							PacomeParam.IgnoreUid(boite.getAttribute("uid"), PACOME_IGNORE_UID);
-							nbparam++;
-							break;
+						this.EcritLog("Suppression de la boite", libelle);
+						res=PacomeParam.SupprimeBoite(uid, confid);
 
-						case PACOME_ACTION_PRESERVE :
-							// on ne fait rien
-							break;
+						if (1==res) PacomeParam.UsageUid(uid, PACOME_IGNORE_UID);
 
-						default : // devrait pas
-						PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de boite action="+action);
-						return -1;
-					}
+						nbparam++;
+						break;
 
-				} catch(ex){
-					PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de boite", ex);
+					case PACOME_ACTION_IGNORE
+					:
+						// suppression si existe
+						PacomeParam.SupprimeBoite(uid, confid);
+
+						PacomeParam.IgnoreUid(uid, PACOME_IGNORE_UID);
+						nbparam++;
+						break;
+
+					case PACOME_ACTION_PRESERVE :
+						// on ne fait rien
+						break;
+
+					default : // devrait pas
+					PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de boite action="+action);
 					return -1;
 				}
+
+			} catch(ex){
+				PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de boite", ex);
+				return -1;
 			}
 		}
 
@@ -971,110 +956,91 @@ var PacomeAssistant = {
 		return nbparam;
 	},
 
-	// retourne l'action par défaut
-	// elem_ui :  element qui contient choix_ui
-	GetActionElement(elem_ui){
 
-		return this.GetChoixDefaut(elem_ui).getAttribute("action");
-	},
-
-	// retourne le choix par défaut d'une liste de choix (choix_ui)
-	// elem_ui :  element qui contient choix_ui
-	GetChoixDefaut(elem_ui){
-
-		return elem_ui.querySelector("choix_ui > choix[defaut=\"true\"]");
-	},
-
-	// retrouve l'élément compte dans le document
-	GetParamBoite(uid, confid){
-
-		this.logMsgDebug("GetParamBoite uid:"+uid+" - confid:"+confid);
-
-		let boites=this._documentParam.querySelectorAll("comptes > compte");
-		for (let i=0;i<boites.length;i++){
-			let boite=boites[i];
-			if (boite.getAttribute("uid")==uid && boite.getAttribute("confid")==confid)
-				return boite;
-		}
-		return null;
-	},
-
-	// paramétrage des agendas
+	// paramétrage des agendas visibles
 	// retourne le nombre d'agendas paramétrées
 	// -1 si erreur
 	ParamAgendas(){
 
 		let nbparam=0;
-		let agendas=this._documentParam.querySelectorAll("pacome_ui > agenda");
+		let agendas=this._docPacome.GetAgendasUI();
 		if (agendas.length) this.EcritLog("Parametrage des agendas", "");
+
 		for (let i=0;i<agendas.length;i++){
+
 			let agenda=agendas[i];
 
-			if ("true"==agenda.getAttribute("visible")){
-				this.logMsgDebug("ParamAgendas agenda:"+agenda.getAttribute("libelle"));
+			let libelle=agenda.getAttribute("libelle");
+			this.logMsgDebug("ParamAgendas agenda:"+libelle);
 
-				let action=this.GetActionElement(agenda);
-				let url=agenda.getAttribute("url");
-				let res=-1;
+			let choix=this._docPacome.GetChoixDefaut(agenda);
+			let action=choix.getAttribute("action");
+			let url=agenda.getAttribute("url");
+			let res=-1;
 
-				try{
+			try{
 
-					switch (action){
-						case PACOME_ACTION_PARAM :
-						case PACOME_ACTION_MAJ :
+				switch (action){
+					case PACOME_ACTION_PARAM :
+					case PACOME_ACTION_MAJ :
 
-							// paramétres d'agendas
-							let params=this.GetParamAgenda(url);
-							if (null==params){
-								// devrait pas !!!
-								PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage d'agenda");
-								return -1;
-							}
+						// paramétres d'agendas
+						let params=this._docPacome.GetParamsAgenda(url);
+						if (null==params){
+							// devrait pas !!!
+							PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage d'agenda (paramétrage absent!)");
+							return -1;
+						}
 
-							this.EcritLog("Parametrage de l'agenda", agenda.getAttribute("libelle"));
-							if (action==PACOME_ACTION_PARAM)
-								res=PacomeParam.AjoutAgenda(params);
-							else
-								res=PacomeParam.ModifieAgenda(params);
+						this.EcritLog("Parametrage de l'agenda", libelle);
 
-							if (1!=res){
-								return -1;
-							}
+						if (action==PACOME_ACTION_PARAM)
+							res=PacomeParam.AjoutAgenda(params);
+						else
+							res=PacomeParam.ModifieAgenda(params);
 
-							nbparam++;
-							break;
+						if (1!=res){
+							return -1;
+						}
 
-						case PACOME_ACTION_SUPPRIME :
+						PacomeParam.UsageUid(url, PACOME_IGNORE_CAL);
 
-							this.EcritLog("Suppression de l'agenda", agenda.getAttribute("libelle"));
-							res=PacomeParam.SupAgenda(url);
-							if (1!=res){
-								return -1;
-							}
-							PacomeParam.UsageUid(url, PACOME_IGNORE_CAL);
-							nbparam++;
-							break;
+						nbparam++;
+						break;
 
-						case PACOME_ACTION_IGNORE :
-							// suppression si existe (pas une erreur)
-							PacomeParam.SupAgenda(url);
-							PacomeParam.IgnoreUid(url, PACOME_IGNORE_CAL);
-							nbparam++;
-							break;
+					case PACOME_ACTION_SUPPRIME :
 
-						case PACOME_ACTION_PRESERVE :
-							// on ne fait rien
-							break;
+						this.EcritLog("Suppression de l'agenda", libelle);
 
-						default : // devrait pas
-						PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage d'agenda action="+action);
-						return -1;
-					}
+						res=PacomeParam.SupAgenda(url);
+						if (1!=res){
+							return -1;
+						}
+						PacomeParam.UsageUid(url, PACOME_IGNORE_CAL);
+						nbparam++;
+						break;
 
-				} catch(ex){
-					PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage d'agenda", ex);
+					case PACOME_ACTION_IGNORE :
+						// suppression si existe (pas une erreur)
+						PacomeParam.SupAgenda(url);
+
+						PacomeParam.IgnoreUid(url, PACOME_IGNORE_CAL);
+
+						nbparam++;
+						break;
+
+					case PACOME_ACTION_PRESERVE :
+						// on ne fait rien
+						break;
+
+					default : // devrait pas
+					PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage d'agenda action="+action);
 					return -1;
 				}
+
+			} catch(ex){
+				PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage d'agenda", ex);
+				return -1;
 			}
 		}
 
@@ -1082,19 +1048,6 @@ var PacomeAssistant = {
 		return nbparam;
 	},
 
-	// retrouve l'élément agenda dans le document
-	GetParamAgenda(url){
-
-		this.logMsgDebug("GetParamAgenda url:"+url);
-
-		let agendas=this._documentParam.querySelectorAll("agendas > agenda");
-		for (let i=0;i<agendas.length;i++){
-			let agenda=agendas[i];
-			if (agenda.getAttribute("url")==url)
-				return agenda;
-		}
-		return null;
-	},
 
 	// paramétrage des flux
 	// retourne le nombre de comptes de flux paramétrés
@@ -1102,78 +1055,85 @@ var PacomeAssistant = {
 	ParamFlux(){
 
 		let nbparam=0;
-		let comptes=this._documentParam.querySelectorAll("pacome_ui > compteflux");
+		let comptes=this._docPacome.GetFluxUI();
 		if (comptes.length) this.EcritLog("Parametrage des comptes de flux", "");
+
 		for (let i=0;i<comptes.length;i++){
+
 			let flux=comptes[i];
 
-			if ("true"==flux.getAttribute("visible")){
+			let choix=this._docPacome.GetChoixDefaut(flux);
+			let action=choix.getAttribute("action");
+			let libelle=flux.getAttribute("libelle");
+			this.logMsgDebug("ParamFlux flux:"+libelle);
 
-				let action=this.GetActionElement(flux);
-				let libelle=flux.getAttribute("libelle");
-				this.logMsgDebug("ParamFlux flux:"+libelle);
+			try{
 
-				try{
+				switch (action){
+					case PACOME_ACTION_PARAM :
+					case PACOME_ACTION_MAJ :
 
-					switch (action){
-						case PACOME_ACTION_PARAM :
-						case PACOME_ACTION_MAJ :
+						// paramétres du compte de flux
+						let params=this._docPacome.GetParamsFlux(libelle);
+						if (null==params){
+							// devrait pas !!!
+							PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de flux");
+							return -1;
+						}
 
-							// paramétres du compte de flux
-							let params=this.GetParamFlux(libelle);
-							if (null==params){
-								// devrait pas !!!
-								PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de flux");
-								return -1;
-							}
+						if (action==PACOME_ACTION_PARAM){
+							res=PacomeParam.AjoutCompteFlux(params);
+						}
+						else{
+							res=PacomeParam.ModifieCompteFlux(params);
+						}
 
-							if (action==PACOME_ACTION_PARAM){
-								res=PacomeParam.AjoutCompteFlux(params);
-							}
-							else{
-								res=PacomeParam.ModifieCompteFlux(params);
-							}
+						if (1!=res){
+							PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de flux");
+							return -1;
+						}
 
-							if (1!=res){
-								PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de flux");
-								return -1;
-							}
+						PacomeParam.UsageUid(libelle, PACOME_IGNORE_FLUX);
 
-							nbparam++;
-							break;
+						nbparam++;
+						break;
 
-						case PACOME_ACTION_SUPPRIME :
-							res=PacomeParam.SupCompteFlux(libelle);
-							if (1!=res){
-								PacomeUtils.SetErreurEx(-1, "Erreur de suppression de flux");
-								return -1;
-							}
-							PacomeParam.UsageUid(libelle, PACOME_IGNORE_FLUX);
-							nbparam++;
-							break;
+					case PACOME_ACTION_SUPPRIME :
 
-						case PACOME_ACTION_IGNORE :
-							// suppression si existe (pas une erreur)
-							PacomeParam.SupCompteFlux(libelle);
-							PacomeParam.IgnoreUid(libelle, PACOME_IGNORE_FLUX);
-							nbparam++;
-							break;
+						res=PacomeParam.SupCompteFlux(libelle);
+						if (1!=res){
+							PacomeUtils.SetErreurEx(-1, "Erreur de suppression de flux");
+							return -1;
+						}
 
-						case PACOME_ACTION_PRESERVE :
-							// on ne fait rien
-							break;
+						PacomeParam.UsageUid(libelle, PACOME_IGNORE_FLUX);
 
-						default : // devrait pas
-						PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de compte de flux action="+action);
-						return -1;
-					}
+						nbparam++;
+						break;
 
-					nbparam++;
+					case PACOME_ACTION_IGNORE :
+						// suppression si existe (pas une erreur)
+						PacomeParam.SupCompteFlux(libelle);
 
-				} catch(ex){
-					PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de compte de flux", ex);
+						PacomeParam.IgnoreUid(libelle, PACOME_IGNORE_FLUX);
+
+						nbparam++;
+						break;
+
+					case PACOME_ACTION_PRESERVE :
+						// on ne fait rien
+						break;
+
+					default : // devrait pas
+					PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de compte de flux action="+action);
 					return -1;
 				}
+
+				nbparam++;
+
+			} catch(ex){
+				PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage de compte de flux", ex);
+				return -1;
 			}
 		}
 
@@ -1181,48 +1141,28 @@ var PacomeAssistant = {
 		return nbparam;
 	},
 
-	// retrouve l'élément flux dans le document
-	GetParamFlux(libelle){
-
-		this.logMsgDebug("GetParamFlux libelle:"+libelle);
-
-		let flux=this._documentParam.querySelectorAll("comptes_flux > compteflux");
-		for (let i=0;i<flux.length;i++){
-			let compteflux=flux[i];
-			if (compteflux.getAttribute("libelle")==libelle)
-				return compteflux;
-		}
-		return null;
-	},
-
 	ParamAppli(){
 
 		try{
 
-			let appli=this._documentParam.querySelector("pacome_ui > application ");
-			if (null==appli && this._modeMaj){
+			let appli=this._docPacome.GetAppliUI();
+			if (null==appli){
 				return 0;
 			}
-					
+
 			this.EcritLog("Parametrage du courrielleur", "");
 
-			if ("true"==appli.getAttribute("visible")){
+			let choix=this._docPacome.GetChoixDefaut(appli);
+			let action=choix.getAttribute("action");
 
-				let action=this.GetActionElement(appli);
-
-				if (action==PACOME_ACTION_PRESERVE){
-					// on ne fait rien
-					return 1;
-				}
-
-				let choix=this.GetChoixDefaut(appli);
-
-				let res=PacomeParam.ParamAppli(this._documentParam, choix.getAttribute("action"));
-				this.logMsgDebug("ParamAppli PacomeParam.ParamAppli:"+res);
-				return res;
+			if (action==PACOME_ACTION_PRESERVE){
+				// on ne fait rien
+				return 1;
 			}
 
-			return 0;
+			let res=PacomeParam.ParamAppli(this._docPacome, action);
+			this.logMsgDebug("ParamAppli PacomeParam.ParamAppli:"+res);
+			return res;
 
 		} catch(ex){
 			PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage d'application", ex);
@@ -1237,30 +1177,26 @@ var PacomeAssistant = {
 
 		try{
 
-			let proxy=this._documentParam.querySelector("pacome_ui > proxy");
-			if (null==proxy && this._modeMaj){
+			let proxy=this._docPacome.GetProxyUI();
+			if (null==proxy){
 				return 0;
 			}
 
-			if ("true"==proxy.getAttribute("visible")){
+			let choix=this._docPacome.GetChoixDefaut(proxy);
+			let action=choix.getAttribute("action");
 
-				let action=this.GetActionElement(proxy);
-
-				if (action==PACOME_ACTION_PRESERVE){
-					// on ne fait rien
-					return 1;
-				}
-
-				let params=this._documentParam.querySelector("pacome > proxy");
-							
-				this.EcritLog("Parametrage du proxy", "");
-
-				let res=PacomeParam.ParamProxy(params);
-
-				return res;
+			if (action==PACOME_ACTION_PRESERVE){
+				// on ne fait rien
+				return 1;
 			}
 
-			return 0;
+			let params=this._docPacome.GetParamsProxy();
+
+			this.EcritLog("Parametrage du proxy", "");
+
+			let res=PacomeParam.ParamProxy(params);
+
+			return res;
 
 		} catch(ex){
 			PacomeUtils.SetErreurEx(-1, "Erreur de paramétrage proxy", ex);
@@ -1294,21 +1230,25 @@ var PacomeAssistant = {
 	// listeId : id liste des éléments (boites, ...)
 	// typeElem : "compte", "agenda", etc...
 	// ident : "uid", "url"
+	// ignore les éléments non visible
 	MemoChoixUI(listeId, typeElem, ident){
 
+		this.logMsgDebug("MemoChoixUI typeElem:"+typeElem);
+
 		let liste=document.getElementById(listeId);
-		let elems=this._documentParam.querySelectorAll("pacome_ui > "+typeElem);
+		// elements visibles
+		let elems=this._docPacome.GetElemsUI(typeElem);
 		const nb=elems.length;
 		for (let i=0;i<nb;i++){
 			let elem=elems[i];
 			let idElem=elem.getAttribute(ident);
-			this.logMsgDebug(" MemoChoixUI idElem:"+idElem);
+			this.logMsgDebug("MemoChoixUI idElem:"+idElem);
 			let choix_ui=elem.querySelectorAll("choix");
 			let sel=this.GetSelectUI(liste, idElem);
 			for (let n=0;n<choix_ui.length;n++){
 				let choix=choix_ui[n];
 				choix.setAttribute("defaut", (sel.value==choix.getAttribute("libelle")) ? "true" : "false");
-				this.logMsgDebug(" MemoChoixUI libelle:"+choix.getAttribute("libelle")+" - confid:"+ choix.getAttribute("confid")+" - defaut:"+ choix.getAttribute("defaut"));
+				this.logMsgDebug("MemoChoixUI libelle:"+choix.getAttribute("libelle")+" - confid:"+ choix.getAttribute("confid")+" - defaut:"+ choix.getAttribute("defaut"));
 			}
 		}
 	},
@@ -1327,7 +1267,9 @@ var PacomeAssistant = {
 
 	// vide la liste de éléments (boites/agendas/etc...)
 	VideListeElements(listeId){
-		PacomeAssistant.logMsgDebug(" VideListeElements");
+
+		PacomeAssistant.logMsgDebug("VideListeElements");
+
 		try{
 
 			let liste=document.getElementById(listeId);
@@ -1348,22 +1290,16 @@ var PacomeAssistant = {
 		return false;
 	},
 
-
-	// cas profil existant
-	initExistant(){
-
-	},
-
 	// saisie identifiant
 	onInputUid(){
 
 		let uid=this.ctrlIdentifiant.value;
-		//this.logMsgDebug(" onInputUid:"+uid);
+		//this.logMsgDebug("onInputUid:"+uid);
 
 		// vérification caractères autorisés
 		uid=uid.match(PACOME_FILTRE_UID);
 		if (null==uid) {
-			//this.logMsgDebug(" onInputUid null==uid");
+			//this.logMsgDebug("onInputUid null==uid");
 			this.msgSaisieUid();
 			this.ctrlIdentifiant.value="";
 			this.btContinuer.disabled=true;
@@ -1380,21 +1316,21 @@ var PacomeAssistant = {
 			this.ctrlIdentifiant.value=uid;
 		}
 
-		//this.logMsgDebug(" onInputUid 2:"+uid);
+		//this.logMsgDebug("onInputUid 2:"+uid);
 		this.btContinuer.disabled = uid.length<PACOME_UID_MIN_LENGTH;
 	},
 
 	/* boutons onclick configuré lors de l'initialisation des pages */
 	Retour(){
-		this.logMsgDebug(" btRetour");
+		this.logMsgDebug("btRetour");
 	},
 
 	Continuer(){
-		this.logMsgDebug(" btContinuer");
+		this.logMsgDebug("btContinuer");
 	},
 
 	Quitter(){
-		this.logMsgDebug(" btQuitter");
+		this.logMsgDebug("btQuitter");
 		this.confirmExitDialog();
 	},
 

@@ -1,5 +1,8 @@
 pref("pacome.trace", false);
+// true si recherche mise a jour pacome active
 pref("pacome.majauto", true);
+// délai en secondes pour recherche mise a jour au demarrage
+pref("pacome.delaimaj", 10);
 
 
 //url du serveur pacome de parametrage

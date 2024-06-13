@@ -3,14 +3,24 @@
 */
 
 
-var EXPORTED_SYMBOLS = ["PacomeParam"];
+const EXPORTED_SYMBOLS = ["PacomeParam"];
 
-var { Services } = ChromeUtils.import("resource:///modules/Services.jsm");
-var { MailServices } = ChromeUtils.import("resource:///modules/MailServices.jsm");
-var { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeUtils.jsm");
-var { cal } = ChromeUtils.import("resource:///modules/calendar/calUtils.jsm");
-var { Feed } = ChromeUtils.import("resource:///modules/Feed.jsm");
-var { FeedUtils } = ChromeUtils.import("resource:///modules/FeedUtils.jsm");
+const { Services } = ChromeUtils.import("resource:///modules/Services.jsm");
+const { MailServices } = ChromeUtils.import("resource:///modules/MailServices.jsm");
+const { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeUtils.jsm");
+const { cal } = ChromeUtils.import("resource:///modules/calendar/calUtils.jsm");
+const { Feed } = ChromeUtils.import("resource:///modules/Feed.jsm");
+const { FeedUtils } = ChromeUtils.import("resource:///modules/FeedUtils.jsm");
+
+
+var { XPCOMUtils } = ChromeUtils.importESModule(
+  "resource://gre/modules/XPCOMUtils.sys.mjs"
+);
+
+var pdoc = {};
+XPCOMUtils.defineLazyModuleGetters(pdoc, {
+  PacomeDoc: "resource:///modules/pacome/pacomeDoc.jsm"
+});
 
 //preference de la liste des uids de boites non utilisées
 //uid séparés par PACOME_IGNORE_UID_SEP
@@ -30,6 +40,13 @@ const PACOME_IGNORE_CAL="pacome.cal.ignorecals";
 const PACOME_ETAT_ABSENT=0;//non configuré
 const PACOME_ETAT_PARAM=1;//configuré
 const PACOME_ETAT_IGNORE=2;//inutilisé
+
+/* constantes des actions de parametrage */
+const PACOME_ACTION_PARAM     ="param";
+const PACOME_ACTION_IGNORE    ="ignore";
+const PACOME_ACTION_SUPPRIME  ="supprime";
+const PACOME_ACTION_PRESERVE  ="preserve";
+const PACOME_ACTION_MAJ       ="maj";
 
 
 const PACOME_CAL_PROVIDER="caldav";
@@ -73,8 +90,13 @@ const PREFS_PROXY_INT=[ "network.proxy.type",
                         ];
 
 
+const PACOME_LOGS_MAJAUTO="MAJ_AUTO";
+
 
 var PacomeParam={
+
+	// instance PacomeDoc (document de paramétrage)
+	_docPacome: null,
 
 	// contruit le document de configuration client
 	// (équivalent pacome tb60 PacomeDocumentConfig)
@@ -88,7 +110,7 @@ var PacomeParam={
 
 			//configuration des identifiants
 			let uids;
-			if (listeUids && listeUids!="")
+			if (listeUids!="")
 				uids=listeUids.split(";");
 			else
 				uids=this.ListeIdentifiants();
@@ -99,115 +121,21 @@ var PacomeParam={
 			configuids+="</identifiants>";
 
 			//configuration des boites
-			let configbal="<comptes>";
+			let configbal=this.ConfigBoites();
 
 			//configuration des flux
-			let configflux="<comptes_flux>";
-
-			//parcours des comptes
-			for (let compte of MailServices.accounts.accounts) {
-
-				//boite melanie2
-				if ("imap"==compte.incomingServer.type || "pop3"==compte.incomingServer.type){
-
-					let cle=compte.incomingServer.key;
-					let pref="mail.server."+cle+".pacome.version";
-					if (Services.prefs.prefHasUserValue(pref)){
-						this.PacomeTrace("PacomeDocumentConfig traitement boite Melanie2:"+compte.incomingServer.username);
-						let ver=Services.prefs.getCharPref(pref);
-						let ts=-1;
-						let confid="";
-						pref="mail.server."+cle+".pacome.confid";
-						if (Services.prefs.prefHasUserValue(pref))
-							confid=Services.prefs.getCharPref(pref);
-						pref="mail.server."+cle+".pacome.ts";
-						if (Services.prefs.prefHasUserValue(pref))
-							ts=Services.prefs.getCharPref(pref);
-
-						let nom=this.RemplaceCars(compte.incomingServer.prettyName);
-
-						let cfg="<compte uid='"+compte.incomingServer.username+"' serveur='"+compte.incomingServer.hostName+
-										"' confid='"+confid+"' version='"+ver;
-						if (-1!=ts)
-							cfg+="' ts='"+ts;
-						cfg+="' usage='true' libelle='"+nom+"'/>";
-
-						configbal+=cfg;
-					}
-				}
-
-				//flux melanie2
-				else if ("rss"==compte.incomingServer.type){
-
-					let cle=compte.incomingServer.key;
-					let pref="mail.server."+cle+".pacome.version";
-					if (Services.prefs.prefHasUserValue(pref)){
-						this.PacomeTrace("PacomeDocumentConfig traitement flux:"+compte.incomingServer.prettyName);
-
-						let ver=Services.prefs.getCharPref(pref);
-						let confid="";
-						pref="mail.server."+cle+".pacome.confid";
-						if (Services.prefs.prefHasUserValue(pref))
-							confid=Services.prefs.getCharPref(pref);
-
-						let nom=this.RemplaceCars(compte.incomingServer.prettyName);
-
-						let cfg="<compteflux libelle='"+nom+"' version='"+ver;
-						cfg+="' usage='true'/>";
-
-						configflux+=cfg;
-					}
-				}
-			}
-
-			//boites non utilisées
-			if (Services.prefs.prefHasUserValue(PACOME_IGNORE_UID)){
-				let ignoreuids=Services.prefs.getCharPref(PACOME_IGNORE_UID);
-				if (""!=ignoreuids){
-					this.PacomeTrace("PacomeDocumentConfig "+PACOME_IGNORE_UID+": "+ignoreuids);
-					uids=ignoreuids.split(PACOME_IGNORE_UID_SEP);
-					for (let i=0;i<uids.length;i++){
-						if (null==uids[i] || 0==uids[i].length)
-							continue;
-						let cfg="<compte uid='"+uids[i]+"' serveur='' libelle='' usage='false'/>";
-						configbal+=cfg;
-					}
-				}
-			}
-
-			//flux non utilisés
-			if (Services.prefs.prefHasUserValue(PACOME_IGNORE_FLUX)){
-				let ignoreflux=Services.prefs.getStringPref(PACOME_IGNORE_FLUX);
-				if (""!=ignoreflux){
-					this.PacomeTrace("PacomeDocumentConfig "+PACOME_IGNORE_FLUX+": "+ignoreflux);
-					let flux=ignoreflux.split(PACOME_IGNORE_FLUX_SEP);
-					for (let i=0;i<flux.length;i++){
-						if (null==flux[i] || 0==flux[i].length)
-							continue;
-						let cfg="<compteflux libelle='"+flux[i]+"' serveur='' usage='false'/>";
-						configflux+=cfg;
-					}
-				}
-			}
-
-
-			configbal+="</comptes>";
-			configflux+="</comptes_flux>";
+			let configflux=this.ConfigFlux();
 
 			//configuration d'application
-			let configapp="";
-			if (Services.prefs.prefHasUserValue("pacome.parametrage.version")){
-				let vapp=Services.prefs.getCharPref("pacome.parametrage.version");
-				configapp="<application version='"+vapp+"'/>";
-			}
+			let vapp=Services.prefs.getCharPref("pacome.parametrage.version", "");
+			let	configapp="<application version='"+vapp+"'/>";
 
 			//v6 - configuration du proxy (valeur initiale dans les preferences globales)
-			let configprx="";
-			let vprx=Services.prefs.getCharPref("pacome.proxy.version");
-			configprx="<proxy version='"+vprx+"'/>";
+			let vprx=Services.prefs.getCharPref("pacome.proxy.version", "");
+			let configprx="<proxy version='"+vprx+"'/>";
 
 			//configuration des agendas
-			let cfgagendas=this.CalendarConfiguration();
+			let cfgagendas=this.ConfigAgendas();
 
 			//configuration globale
 			let config="<pacome>"+configuids+configbal+configflux+cfgagendas+configapp+configprx+"</pacome>";
@@ -221,6 +149,111 @@ var PacomeParam={
 		}
 	},
 
+	// calcul la configuration des boites pour les requetes client
+	ConfigBoites(){
+
+		let configbal="<comptes>";
+
+		//parcours des comptes
+		for (let compte of MailServices.accounts.accounts) {
+
+			//boite imap/pop
+			if ("imap"==compte.incomingServer.type || "pop3"==compte.incomingServer.type){
+
+				let cle=compte.incomingServer.key;
+				let pref="mail.server."+cle+".pacome.confid";
+				// compte géré par pacome
+				if (Services.prefs.prefHasUserValue(pref)){
+
+					let confid=Services.prefs.getCharPref(pref, "");
+
+					this.PacomeTrace("ConfigBoites boite pacome:"+compte.incomingServer.username);
+					pref="mail.server."+cle+".pacome.version";
+					let ver=Services.prefs.getCharPref(pref, "");
+
+					pref="mail.server."+cle+".pacome.ts";
+					let	ts=Services.prefs.getCharPref(pref, "");
+
+					let nom=this.RemplaceCars(compte.incomingServer.prettyName);
+
+					let cfg="<compte uid='"+compte.incomingServer.username+"' serveur='"+compte.incomingServer.hostName+
+									"' confid='"+confid+"' version='"+ver;
+					if (-1!=ts)
+						cfg+="' ts='"+ts;
+					cfg+="' usage='true' libelle='"+nom+"'/>";
+
+					configbal+=cfg;
+				}
+			}
+		}
+
+		//boites non utilisées
+		let ignoreuids=Services.prefs.getCharPref(PACOME_IGNORE_UID, "");
+		if (""!=ignoreuids){
+			this.PacomeTrace("ConfigBoites "+PACOME_IGNORE_UID+": "+ignoreuids);
+			let uids=ignoreuids.split(PACOME_IGNORE_UID_SEP);
+			for (let i=0;i<uids.length;i++){
+				if (""==uids[i].length)
+					continue;
+				let cfg="<compte uid='"+uids[i]+"' serveur='' libelle='' usage='false'/>";
+				configbal+=cfg;
+			}
+		}
+
+		configbal+="</comptes>";
+
+		return configbal;
+	},
+
+	// calcul la configuration des comptes de flux pour les requetes client
+	ConfigFlux(){
+
+		let configflux="<comptes_flux>";
+
+		//parcours des comptes
+		for (let compte of MailServices.accounts.accounts) {
+
+			if ("rss"==compte.incomingServer.type){
+
+				let cle=compte.incomingServer.key;
+				let pref="mail.server."+cle+".pacome.version";
+				if (Services.prefs.prefHasUserValue(pref)){
+
+					this.PacomeTrace("ConfigFlux flux:"+compte.incomingServer.prettyName);
+
+					let version=Services.prefs.getCharPref(pref);
+
+					let nom=this.RemplaceCars(compte.incomingServer.prettyName);
+
+					let cfg="<compteflux libelle='"+nom+"' version='"+version;
+					cfg+="' usage='true'/>";
+
+					configflux+=cfg;
+				}
+			}
+		}
+
+		//flux non utilisés
+		if (Services.prefs.prefHasUserValue(PACOME_IGNORE_FLUX)){
+			let ignoreflux=Services.prefs.getStringPref(PACOME_IGNORE_FLUX);
+			if (""!=ignoreflux){
+				this.PacomeTrace("ConfigFlux "+PACOME_IGNORE_FLUX+": "+ignoreflux);
+				let flux=ignoreflux.split(PACOME_IGNORE_FLUX_SEP);
+				for (let i=0;i<flux.length;i++){
+					if (null==flux[i] || 0==flux[i].length)
+						continue;
+					let cfg="<compteflux libelle='"+flux[i]+"' serveur='' usage='false'/>";
+					configflux+=cfg;
+				}
+			}
+		}
+
+		configflux+="</comptes_flux>";
+
+		return configflux;
+	},
+
+
 	/* calcul la configuration des agendas pour les requetes client
 	 retourne le contenu pour la fonction PacomeDocumentConfig
 	 (équivalent pacome tb60 pacomecalp.js)
@@ -230,13 +263,13 @@ var PacomeParam={
 	...
 	</agendas>
 	*/
-	CalendarConfiguration() {
+	ConfigAgendas() {
 
 		let config="<agendas>";
 
 		//agendas actifs
 		if (null==cal.manager) {
-			this.PacomeTrace("CalendarConfiguration pas de configuration d'agenda");
+			this.PacomeTrace("ConfigAgendas pas de configuration d'agenda");
 			config+="</agendas>";
 			return config;
 		}
@@ -246,18 +279,18 @@ var PacomeParam={
 			if (agenda.getProperty("pacome")) {
 
 				let url=agenda.getProperty("uri");
-				this.PacomeTrace("CalendarConfiguration url="+url);
+				this.PacomeTrace("ConfigAgendas url="+url);
 				//identite - l'utilisateur peut l'avoir supprime
 				let ident=null;
 				let key=agenda.getProperty("imip.identity.key");
-				this.PacomeTrace("CalendarConfiguration key="+key);
+				this.PacomeTrace("ConfigAgendas key="+key);
 				if (null!=key && ""!=key)
 					ident=this.IdentiteFromKey(key);
 				if (null==ident || ""==ident) {
 					// prendre identite par defaut
 					ident=MailServices.accounts.defaultAccount.defaultIdentity;
 				}
-				this.PacomeTrace("CalendarConfiguration ident="+ident);
+				this.PacomeTrace("ConfigAgendas ident="+ident);
 				let uid="";
 				if (null!=ident) {
 					try {
@@ -265,7 +298,7 @@ var PacomeParam={
 						uid=Services.prefs.getCharPref(pref);
 					} catch(ex) {}
 				}
-				this.PacomeTrace("CalendarConfiguration uid="+uid);
+				this.PacomeTrace("ConfigAgendas uid="+uid);
 
 				let alarme="true";
 				if (agenda.getProperty("suppressAlarms"))
@@ -293,11 +326,11 @@ var PacomeParam={
 
 			let ignorecals=Services.prefs.getCharPref(PACOME_IGNORE_CAL);
 
-			this.PacomeTrace("CalendarConfiguration PACOME_IGNORE_CAL:"+ignorecals);
+			this.PacomeTrace("ConfigAgendas PACOME_IGNORE_CAL:"+ignorecals);
 
 			if (0!=ignorecals.length && ""!=ignorecals.length){
 
-				let urls=ignorecals.split(PACOME_IGNORE_CAL_SEPELEMS);
+				let urls=ignorecals.split(PACOME_IGNORE_UID_SEP);
 
 				for (let i=0;i<urls.length;i++){
 
@@ -306,8 +339,7 @@ var PacomeParam={
 						continue;
 
 					//vérifier que l'agenda n'est pas utilise (cas bug utilise/non utilise)
-					if (PACOME_ETAT_PARAM==pacomeCalEtat(url))
-						continue;
+					if (config.includes(url)) continue;
 
 					let cfg="<agenda uid='' libelle='' url='"+url+"' color='' usage='false' alarme='' refreshInterval=''/>";
 
@@ -356,7 +388,7 @@ var PacomeParam={
 						"pop3"==cprinc.incomingServer.type) &&
 						(null!=cprinc.incomingServer.getCharValue("pacome.confid")) ) {
 					let uid=PacomeUtils.GetUidReduit(cprinc.incomingServer.username);
-					this.PacomeTrace("PacomeListeUid identifiant principal:"+uid);
+					this.PacomeTrace("ListeIdentifiants identifiant principal:"+uid);
 					uids.push(uid);
 				}
 			}
@@ -374,7 +406,7 @@ var PacomeParam={
 				let uid=PacomeUtils.GetUidReduit(compte.incomingServer.username);
 				//ajout
 				if (!uids.includes(uid)){
-					this.PacomeTrace("PacomeListeUid uid de boite:"+uid);
+					this.PacomeTrace("ListeIdentifiants uid de boite:"+uid);
 					uids.push(uid);
 				}
 			}
@@ -382,7 +414,7 @@ var PacomeParam={
 			//enfin lister les identifiants inutilisés
 			if (Services.prefs.prefHasUserValue(PACOME_IGNORE_UID)){
 				let ignoreuids=Services.prefs.getCharPref(PACOME_IGNORE_UID);
-				this.PacomeTrace("PacomeListeUid ignoreuids:"+ignoreuids);
+				this.PacomeTrace("ListeIdentifiants ignoreuids:"+ignoreuids);
 
 				if (0!=ignoreuids.length && ""!=ignoreuids.length){
 
@@ -392,17 +424,13 @@ var PacomeParam={
 						if (null==ignoreuids[i] || 0==ignoreuids[i].length)
 							continue;
 
-						this.PacomeTrace("PacomeListeUid  traitement ignoreuids:"+ignoreuids[i]);
+						this.PacomeTrace("ListeIdentifiants  traitement ignoreuids:"+ignoreuids[i]);
 						let ident=PacomeUtils.GetUidReduit(ignoreuids[i]);
-						this.PacomeTrace("PacomeListeUid uid reduit:"+ident);
+						this.PacomeTrace("ListeIdentifiants uid reduit:"+ident);
 
 						//ajout?
-						for (let u=0;u<uids.length;u++){
-							if (ident==uids[u])
-								break;
-						}
-						if (u==uids.length){
-							this.PacomeTrace("PacomeListeUid uid de boite:"+ident);
+						if (!uids.includes(ident)) {
+							this.PacomeTrace("ListeIdentifiants uid de boite:"+ident);
 							uids.push(ident);
 						}
 					}
@@ -412,7 +440,7 @@ var PacomeParam={
 			return uids;
 
 		} catch(ex){
-			this.PacomeTrace("PacomeListeUid exception:"+ex);
+			this.PacomeTrace("ListeIdentifiants exception:"+ex);
 			PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PageIdentsErrConfig"), ex);
 			return null;
 		}
@@ -579,21 +607,23 @@ var PacomeParam={
 					//suppression effective
 					this.PacomeTrace("SupprimeBoite suppression du compte uid:"+uid+" - confid:"+confid);
 					MailServices.accounts.removeAccount(compte);
+
+					return 1;
 				}
 			}
 		}
 
-		return 1;
+		return 0;
 	},
 
 	// mémorise uid dans pref (PACOME_IGNORE_UID, etc...)
+	// cas compte non utilisé
 	IgnoreUid(uid, pref){
 
 		let ignoreuids=Services.prefs.getCharPref(pref, "");
 
     let uids=ignoreuids.split(PACOME_IGNORE_UID_SEP);
-    let bpresent=uids.includes(uid);
-		if (!bpresent){
+		if (!uids.includes(uid)){
 			this.PacomeTrace("IgnoreUid:"+uid);
 			uids.push(uid);
 			Services.prefs.setCharPref(pref, uids.join(PACOME_IGNORE_UID_SEP));
@@ -601,19 +631,21 @@ var PacomeParam={
 	},
 
 	// retire uid dans pref (PACOME_IGNORE_UID, etc...)
+	// cas compte utilisé
 	UsageUid(uid, pref){
 
 		let ignoreuids=Services.prefs.getCharPref(pref, "");
 
     let uids=ignoreuids.split(PACOME_IGNORE_UID_SEP);
-    let pos=uids.indexOf(uid);
-		ignoreuids="";
-		if (-1!=pos){
-			this.PacomeTrace("UsageUid:"+uid);
-			for (let i=0;i<uids.length;i++)
-				if (i!=pos) ignoreuids+=uids[i]+PACOME_IGNORE_UID_SEP;
-			Services.prefs.setCharPref(pref, ignoreuids);
+		let uids_new=[];
+
+		for (let i=0;i<uids.length;i++){
+			let uid_i=uids[i];
+			if (uid_i==uid) continue;
+			uids_new.push(uid_i);
 		}
+
+		Services.prefs.setCharPref(pref, uids_new.join(PACOME_IGNORE_UID_SEP));
 	},
 
 	/*  fixe les paramètres d'une identité
@@ -1023,7 +1055,7 @@ var PacomeParam={
 
 		try{
 
-			let feed = new lazy.Feed(url, serveur.rootMsgFolder);
+			let feed = new pdoc.Feed(url, serveur.rootMsgFolder);
 			FeedUtils.deleteFeed(feed);
 
 		} catch(ex){
@@ -1068,16 +1100,17 @@ var PacomeParam={
 	},
 
 	// paramétrage préférences application
+	// docPacome : instance PacomeDoc
 	// action : PACOME_ACTION_PARAM|PACOME_ACTION_MAJ
 	// retour 1 si ok, -1 si erreur
-	ParamAppli(params, action){
+	ParamAppli(docPacome, action){
 
 		try{
 
 			//parametrage annuaires
 			//a faire avant application
 			PacomeUtils.PacomeTrace("ParamAppli parametrage annuaires");
-			let annuaires=params.querySelectorAll("pacome > annuaires > annuaire");
+			let annuaires=docPacome.GetParamsAnnuaire();
 			if (null!=annuaires){
 				for (let i=0;i<annuaires.length;i++){
 					let res=this.ParamAnnuaire(annuaires[i]);
@@ -1090,7 +1123,7 @@ var PacomeParam={
 
 			//parametrage application
 			PacomeUtils.PacomeTrace("ParamAppli parametrage application");
-			let elemappli=params.querySelector("pacome > preferences");
+			let elemappli=docPacome.GetParamsAppli();
 			if (null!=elemappli){
 				PacomeUtils.PacomeTrace("ParamAppli traitement preferences");
 				let res=this.SetPreferences(elemappli);
@@ -1833,8 +1866,300 @@ var PacomeParam={
 		return null;
 	},
 
+	// Mises à jour silencieuses
+	// traite les éléments non visibles dans l'interface
+	MajSilence(docparam){
+
+		this._docPacome=new pdoc.PacomeDoc(docparam);
+
+		this.PacomeTrace("MajSilence");
+
+		this.MajBoitesSilence();
+
+		MailServices.accounts.saveAccountInfo();
+
+		this.MajAgendasSilence();
+
+		this.MajAutresSilence();
+
+		Services.prefs.savePrefFile(null);
+	},
+
+	// retour 0 si succès, -1 si erreur
+	MajBoitesSilence(){
+
+		try{
+
+			let boites=this._docPacome.GetBoitesUI(false);
+			this.PacomeTrace("MajBoitesSilence nb boites:"+boites.length);
+
+			for (let i=0;i<boites.length;i++){
+
+				let boite=boites[i];
+
+				let res=-1;
+				let choix=boite.querySelector("choix_ui > choix");
+				let action=choix.getAttribute("action");
+				let uid=boite.getAttribute("uid");
+				let libelle=boite.getAttribute("libelle");
+				let confid=choix.getAttribute("confid");
+				this.PacomeTrace("MajSilence boite:"+uid);
+
+				switch(action){
+					case PACOME_ACTION_PARAM :
+					case PACOME_ACTION_MAJ :
+						// paramétres de boites
+						let params=this._docPacome.GetParamsBoite(uid, confid);
+						if (null==params){
+							// devrait pas !!!
+							this.EcritLog("Erreur de parametrage de la boite (parametres)", libelle);
+							break;
+						}
+						res=this.ParamBoite(params, action);
+						if (1!=res){
+							this.EcritLog("Erreur de parametrage de la boite (mode silencieux)", libelle);
+							return -1;
+						}
+						else
+							this.EcritLog("Parametrage de la boite (mode silencieux)", libelle);
+
+						this.UsageUid(uid, PACOME_IGNORE_UID);
+
+						break;
+
+					case PACOME_ACTION_SUPPRIME :
+						this.EcritLog("Suppression de la boite (mode silencieux)", libelle);
+						res=this.SupprimeBoite(uid, confid);
+						if (1!=res){
+							return -1;
+						}
+						this.UsageUid(uid, PACOME_IGNORE_UID);
+
+						break;
+				}
+			}
+
+			return 0;
+
+		} catch(ex){
+			this.EcritLog("Erreur lors de la mise a jour silencieuse d'une boite (mode silencieux)", ex);
+		}
+		return -1;
+	},
+
+	// retour 0 si succès, -1 si erreur
+	MajAgendasSilence(){
+
+		// agendas
+		try{
+
+			let agendas=this._docPacome.GetAgendasUI(false);
+			this.PacomeTrace("MajAgendasSilence nb agendas:"+agendas.length);
+
+
+			for (let i=0;i<agendas.length;i++){
+
+				let agenda=agendas[i];
+
+				let libelle=agenda.getAttribute("libelle");
+				let url=agenda.getAttribute("url");
+
+				let choix=agenda.querySelector("choix_ui > choix");
+				let action=choix.getAttribute("action");
+
+				let res=-1;
+
+				switch (action){
+					case PACOME_ACTION_PARAM :
+					case PACOME_ACTION_MAJ :
+
+						// paramétres d'agendas
+						let params=this._docPacome.GetParamAgenda(url);
+						if (null==params){
+							// devrait pas !!!
+							this.EcritLog("Erreur de paramétrage d'agenda (parametres)", libelle);
+							break;
+						}
+
+						if (action==PACOME_ACTION_PARAM)
+							res=PacomeParam.AjoutAgenda(params);
+						else
+							res=PacomeParam.ModifieAgenda(params);
+
+						if (1!=res){
+							this.EcritLog("Erreur de paramétrage d'agenda (mode silencieux)", libelle);
+							return -1;
+						}
+						else
+							this.EcritLog("Paramétrage de l'agenda (mode silencieux)", libelle);
+
+						PacomeParam.UsageUid(url, PACOME_IGNORE_CAL);
+
+						break;
+
+					case PACOME_ACTION_SUPPRIME :
+
+						res=PacomeParam.SupAgenda(url);
+
+						if (1!=res){
+							this.EcritLog("Erreur de suppression d'agenda (mode silencieux)", libelle);
+							return -1;
+						}
+						else
+							this.EcritLog("Suppression de l'agenda (mode silencieux)", libelle);
+
+						PacomeParam.UsageUid(url, PACOME_IGNORE_CAL);
+
+						break;
+
+					case PACOME_ACTION_IGNORE :
+						// suppression si existe (pas une erreur)
+						PacomeParam.SupAgenda(url);
+						PacomeParam.IgnoreUid(url, PACOME_IGNORE_CAL);
+						break;
+
+					case PACOME_ACTION_PRESERVE :
+						// on ne fait rien
+						break;
+
+					default : // devrait pas
+						this.EcritLog("Erreur de paramétrage d'agenda action:", action);
+				}
+			}
+
+			return 0;
+
+		} catch(ex){
+			this.EcritLog("Erreur de paramétrage des agendas (mode silencieux)", ex);
+		}
+		return -1;
+	},
+
+
+	MajAutresSilence(){
+
+		//traitement des flux
+		this.MajFluxSilence();
+
+		// application/annuaires
+		this.MajAppliSilence();
+
+		// proxy
+		this.MajProxySilence();
+	},
+
+	// retour 0 si succès, -1 si erreur
+	MajFluxSilence(){
+
+		try{
+
+			let flux_all=this._docPacome.GetFluxUI(false);
+			this.PacomeTrace("MajFluxSilence nb comptes flux:"+flux_all.length);
+
+			for (let i=0;i<flux_all.length;i++){
+
+				let flux=flux_all[i];
+
+				let libelle=flux.getAttribute("libelle");
+				let choix=flux.querySelector("choix_ui > choix");
+				let action=choix.getAttribute("action");
+
+				// autres action non gérées en mode silence
+				if ("supprime"!=action){
+					this.PacomeTrace("MajFluxSilence erreur d'action pour flux:"+libelle+" - action:"+action);
+					continue;
+				}
+
+				let res=PacomeParam.SupCompteFlux(libelle);
+				if (-1==res){
+					this.EcritLog("Erreur de suppression de compte flux (mode silencieux)", libelle);
+					return -1;
+				}
+				else
+					this.EcritLog("Suppression de compte flux (mode silencieux)", libelle);
+			}
+			return 0;
+
+		} catch(ex){
+			this.EcritLog("Erreur de paramétrage des comptes flux (mode silencieux)", ex);
+		}
+		return -1;
+	},
+
+	// retour 0 si succès, -1 si erreur
+	MajAppliSilence(){
+
+		try{
+
+			let appli=this._docPacome.GetAppliUI(false);
+			if (null==appli) return 0;
+
+			this.PacomeTrace("MajAppliSilence");
+
+			let choix=appli.querySelector("choix_ui > choix");
+			let action=choix.getAttribute("action");
+
+			let res=PacomeParam.ParamAppli(this._docPacome.GetParamsAppli(), action);
+
+			if (-1==res)
+				this.EcritLog("Erreur de paramétrage courrielleur (mode silencieux)", libelle);
+			else
+				this.EcritLog("Paramétrage courrielleur (mode silencieux)", libelle);
+
+			return res;
+
+		} catch(ex){
+			this.EcritLog("Erreur de paramétrage courrielleur (mode silencieux)", ex);
+		}
+		return -1;
+	},
+
+	// retour 0 si succès, -1 si erreur
+	MajProxySilence(){
+
+		try{
+
+			let proxy=this._docPacome.GetProxyUI(false);
+
+			if (null==proxy) return 0;
+
+			this.PacomeTrace("MajProxySilence");
+
+			let choix=proxy.querySelector("choix_ui > choix");
+
+			let action=choix.getAttribute("action");
+			if (action==PACOME_ACTION_PRESERVE){
+				// on ne fait rien
+				return 0;
+			}
+
+			let params=this._docPacome.GetParamsProxy();
+
+			let res=PacomeParam.ParamProxy(params);
+
+			if (-1==res)
+				this.EcritLog("Erreur de paramétrage proxy (mode silencieux)", libelle);
+			else
+				this.EcritLog("Paramétrage proxy (mode silencieux)", libelle);
+
+			return res;
+
+		} catch(ex){
+			this.EcritLog("Erreur de paramétrage proxy (mode silencieux)", ex);
+		}
+		return -1;
+	},
+
+
 	// trace dans la console
 	PacomeTrace(msg) {
 		PacomeUtils.PacomeTrace(msg);
-	}
+	},
+
+	EcritLog(message, donnees, logs=PACOME_LOGS_MAJAUTO) {
+
+		this.PacomeTrace(message+donnees);
+
+		PacomeUtils.EcritLog(logs, message, donnees);
+	},
 };

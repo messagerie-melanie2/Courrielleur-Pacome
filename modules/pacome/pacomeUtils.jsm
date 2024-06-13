@@ -1,10 +1,10 @@
 /* fonctions utilitaires pacome pour thunderbird 115 */
 
 
-var EXPORTED_SYMBOLS = ["PacomeUtils"];
+const EXPORTED_SYMBOLS = ["PacomeUtils"];
 
 
-var { FileUtils } = ChromeUtils.importESModule(
+const { FileUtils } = ChromeUtils.importESModule(
   "resource://gre/modules/FileUtils.sys.mjs"
 );
 
@@ -228,7 +228,7 @@ var PacomeUtils={
 			return false;
 		}
 	},
-	
+
 	/*
 	*  analyse le document xml anaismoz - extrait le code erreur et le message
 	*  @param  docXML instance de document xml
@@ -265,7 +265,7 @@ var PacomeUtils={
 
 		return true;
 	},
-	
+
 
 	/* fonctions de log fichier */
 	_fichierLogs:null,
