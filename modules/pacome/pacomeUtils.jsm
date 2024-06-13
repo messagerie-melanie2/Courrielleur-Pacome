@@ -228,6 +228,44 @@ var PacomeUtils={
 			return false;
 		}
 	},
+	
+	/*
+	*  analyse le document xml anaismoz - extrait le code erreur et le message
+	*  @param  docXML instance de document xml
+	*  @return true si code erreur = 0
+	* sinon retourne false (erreur globale dans gPacomeMsgErreur)
+	*/
+	AnalyseErreurDoc(docXML){
+
+		let racine=docXML.documentElement;
+
+		if (null==racine || "pacome"!=racine.nodeName){
+			PacomeUtils.SetErreurEx(-1, PacomeMessageFromId("PacomeErreurFormatDoc"));
+			return false;
+		}
+
+		let resultat=racine.querySelectorAll("pacome > resultat");
+		if (null==resultat || 0==resultat.length){
+			PacomeUtils.SetErreurEx(-1, PacomeMessageFromId("PacomeErreurFormatDoc"));
+			return false;
+		}
+
+		PacomeUtils.SetErreurEx(resultat[0].getAttribute("code"), resultat[0].getAttribute("erreur"));
+
+		if (PacomeUtils._codeErreur!=0){
+			return false;
+		}
+
+		//verification pacome_ui
+		let pacomeui=docXML.querySelector("pacome_ui");
+		if (null==pacomeui){
+			PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurPacomeUI"));
+			return false;
+		}
+
+		return true;
+	},
+	
 
 	/* fonctions de log fichier */
 	_fichierLogs:null,

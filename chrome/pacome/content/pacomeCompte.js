@@ -58,6 +58,9 @@ const PACOME_UID_MIN_LENGTH=3;
 const PACOME_UID_MAX_LENGTH=64;
 
 var ConfigAssistant={
+	
+	// 1ere page affichée
+	"debut": "PacomeAssistant.InitPageUid();",
 
 	"saisieuid" : {
 		"setupView": { "class": "assistant-contenu"},
@@ -71,6 +74,7 @@ var ConfigAssistant={
 		"pacomeTexte1" : "PageUidTexte1",
 		"pacomeTexte2" : "PageUidTexte2",
 		"pacomeTexte3" : "PageUidTexte3",
+		"suivante": "PacomeAssistant.InitPageBoites();",
 	},
 
 	"boites" : {
@@ -85,6 +89,7 @@ var ConfigAssistant={
 		"pacomeTexte1" : "PageBoitesTexte1",
 		"pacomeTexte2" : "PageBoitesTexte2",
 		"pacomeTexte3" : "PageBoitesTexte3",
+		"suivante": "PacomeAssistant.InitPageAgendas();",
 	},
 
 	"agendas" : {
@@ -99,6 +104,7 @@ var ConfigAssistant={
 		"pacomeTexte1" : "PageAgendasTexte1",
 		"pacomeTexte2" : "PageAgendasTexte2",
 		"pacomeTexte3" : "PageAgendasTexte3",
+		"suivante": "PacomeAssistant.InitPageAutres();",
 	},
 
 	"autres" : {
@@ -113,6 +119,7 @@ var ConfigAssistant={
 		"pacomeTexte1" : "PageAutresTexte1",
 		"pacomeTexte2" : "PageAutresTexte2",
 		"pacomeTexte3" : "PageAutresTexte3",
+		"suivante": "PacomeAssistant.InitPageParam();",
 	},
 
 	"params" : {
@@ -127,6 +134,7 @@ var ConfigAssistant={
 		"pacomeTexte1" : "PageParamTexte1",
 		"pacomeTexte2" : "PageParamTexte2",
 		"pacomeTexte3" : "PageParamTexte3",
+		"suivante": "window.close();",
 	}
 };
 
@@ -168,11 +176,20 @@ var PacomeAssistant = {
 	_choixagendas:null,
 	// choix des flux : tableau d'identifiants à paramétrer
 	_choixflux: null,
+	
+	// mode mise à jour
+	_modeMaj: false,
+	// nombre de boites affichées
+	_nbBoites: 0,
+	// nombre d'agenda affichés
+	_nbAgendas: 0,
+	// nombre autres affichés
+	_nbAutres: 0,
 
 
 	onLoad(){
 
-		this.logMsgDebug(" onLoad");
+		this.logMsgDebug("onLoad");
 		if (this.initOk) return;
 
 		this.EcritLog("initialiation", "");
@@ -196,14 +213,121 @@ var PacomeAssistant = {
 		this.btContinuer=document.getElementById("btContinuer");
 		this.btQuitter=document.getElementById("btQuitter");
 
-		this.InitPageUid();
-
 		this.initOk=true;
+		
+	
+		// mode mise à jour ?
+		if (window.arguments &&  window.arguments.length){
+					 
+			let args=window.arguments[0];
+		 
+			if (args.mode && "maj"==args.mode) {
+				this._modeMaj=true;
+				this._documentParam=args.documentParam;
+				this.logMsgDebug("onLoad mode mise a jour");
+				
+				// initialisation des pages en mode mise a jour
+				this.InitModeMaj();
+			}
+		}
+				
+		// afficher 1ere page
+		(this.AffichePage(ConfigAssistant.debut))();
+		
+		this.logMsgDebug("onLoad fin");
 	},
 
 	onUnload(){
 
 		this.EcritLog("sortie de l'assistant", "");
+	},
+	
+	AffichePage(page){
+
+		return Function(page);
+	},
+	
+	// Modification de ConfigAssistant en mode mise a jour
+	// permet de gérer les pages affichées et les boutons retour
+	InitModeMaj(){
+		
+		this.logMsgDebug("InitModeMaj");
+		
+		let pacomeui=this._documentParam.getElementsByTagName("pacome_ui");
+		if (null==pacomeui || 0==pacomeui.length){
+			// ne devrait pas être le cas
+			 window.close();
+			return;
+		}
+		pacomeui=pacomeui[0];
+		
+		this._nbBoites=this.GetNbMajTypeVisibles(pacomeui, "compte");
+		this._nbAgendas=this.GetNbMajTypeVisibles(pacomeui, "agenda");
+		this._nbAutres=this.GetNbMajTypeVisibles(pacomeui, "compteflux");
+		this._nbAutres+=this.GetNbMajTypeVisibles(pacomeui, "application");
+		this._nbAutres+=this.GetNbMajTypeVisibles(pacomeui, "proxy");
+		
+		// configuration des pages
+		ConfigAssistant.debut="";
+		
+		if (0!=this._nbBoites) {
+			ConfigAssistant.debut="PacomeAssistant.InitPageBoites();";
+			ConfigAssistant.boites.btRetour.disabled=true;
+			if (0==this._nbAgendas){
+				if (0==this._nbAutres)
+					ConfigAssistant.boites.suivante="PacomeAssistant.InitPageParam();";
+				else
+					ConfigAssistant.boites.suivante="PacomeAssistant.InitPageAutres();";
+			}
+			ConfigAssistant.boites.pacomeTexte1="PageMajComptesTitre";
+			ConfigAssistant.boites.pacomeTexte2="PageMajComptesTexte1";
+			ConfigAssistant.boites.pacomeTexte3="PageMajComptesTexte2";
+		}
+		if (0!=this._nbAgendas){
+			if (ConfigAssistant.debut==""){
+				ConfigAssistant.debut="PacomeAssistant.InitPageAgendas();";
+				ConfigAssistant.agendas.btRetour.disabled=true;
+			}
+			if (0==this._nbAutres){
+				ConfigAssistant.agendas.suivante="PacomeAssistant.InitPageParam();"
+			}
+			ConfigAssistant.agendas.pacomeTexte1="PageMajAgendasTitre";
+			ConfigAssistant.agendas.pacomeTexte2="PageMajAgendasTexte1";
+			ConfigAssistant.agendas.pacomeTexte3="PageMajAgendasTexte2";
+		}
+		if (0!=this._nbAutres){
+			if (ConfigAssistant.debut==""){
+				ConfigAssistant.debut="PacomeAssistant.InitPageAutres();";
+			}
+			if (0==this._nbBoites && 0==this._nbAgendas){
+				ConfigAssistant.autres.btRetour.disabled=true;
+			}
+			ConfigAssistant.autres.pacomeTexte1="PageMajAutresTitre";
+			ConfigAssistant.autres.pacomeTexte2="PageMajAutresTexte1";
+			ConfigAssistant.autres.pacomeTexte3="PageMajAutresTexte2";
+		}
+		else {
+			if (0!=this._nbAgendas)
+				ConfigAssistant.params.btRetour.onclick="PacomeAssistant.InitPageAgendas();";
+			else
+				ConfigAssistant.params.btRetour.onclick="PacomeAssistant.InitPageBoites();";
+		}
+	},
+	
+	// nombre de mises à jour visibles dans le document _documentParam
+	// type: compte/agenda/autres
+	GetNbMajTypeVisibles(pacomeui, type) {
+	
+		let nb=0;
+		let types=pacomeui.getElementsByTagName(type);
+		if (null==types || 0==types.length) {
+			return 0;
+		}
+		for (let i=0;null!=types && i<types.length;i++){
+			if ("true"==types[i].getAttribute("visible"))
+				nb++;			
+		}
+		return nb;
 	},
 
 	// fonction générique pour initialiser les pages selon configuration
@@ -297,12 +421,13 @@ var PacomeAssistant = {
 		if (statut==200){
 			PacomeAssistant.logMsg("Assistant pacome succès de la requete");
 
-			let res=PacomeAssistant.AnalyseErreurDoc(responseXML);
+			let res=PacomeUtils.AnalyseErreurDoc(responseXML);
 
 			if (res){
 
 				PacomeAssistant._documentParam=responseXML;
 
+				// en mode manuel => page des boites
 				PacomeAssistant.InitPageBoites();
 
 				return;
@@ -319,6 +444,10 @@ var PacomeAssistant = {
 		this.logMsgDebug(" InitPageBoites");
 
 		this.InitPageFromConfig(ConfigAssistant.boites);
+		
+		if (this._modeMaj){
+			this.btRetour.disabled=true;
+		}
 
 		// vider la liste
 		let res=this.VideListeElements("liste-boites");
@@ -329,8 +458,8 @@ var PacomeAssistant = {
 		}
 
 		// contruire liste des boites à paramétrer
-		res=this.ConstruitListeBoites();
-		if (!res){
+		let nb=this.ConstruitListeBoites();
+		if (-1==nb){
 			PacomeUtils.SetErreurEx(-1, "Erreur lors de la construction de la liste des boites");
 			this.AfficheMsgExit("Erreur", PacomeUtils._msgErreur);
 			return;
@@ -338,6 +467,7 @@ var PacomeAssistant = {
 	},
 
 	// Ajoute les boites d'apres le document de parametrage
+	// retourne le nombre de boites, -1 si erreur
 	ConstruitListeBoites(){
 
 		PacomeAssistant.logMsgDebug(" ConstruitListeBoites");
@@ -349,7 +479,7 @@ var PacomeAssistant = {
 			let comptes=this._documentParam.querySelectorAll("pacome_ui > compte");
 			if (null==comptes || 0==comptes.length){
 				PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurPacomeUIBoite"));
-				return false;
+				return 0;
 			}
 			const nb=comptes.length;
 			for (let i=0;i<nb;i++){
@@ -358,12 +488,12 @@ var PacomeAssistant = {
 					this.InsertBoiteUI(liste, boite);
 			}
 
-			return true;
+			return nb;
 
 		} catch(ex){
 			PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurInitListeComptes"), ex);
 		}
-		return false;
+		return -1;
 	},
 
 	// cree et insere l'élément UI d'une boite
@@ -398,8 +528,8 @@ var PacomeAssistant = {
 		// mémoriser choix des boites
 		this.MemoChoixUI("liste-boites", "compte", "uid");
 
-		// afficher page agendas
-		this.InitPageAgendas();
+		// afficher page suivante
+		(this.AffichePage(ConfigAssistant.boites.suivante))();
 	},
 
 	// page agendas
@@ -417,8 +547,8 @@ var PacomeAssistant = {
 		}
 
 		// contruire liste des agendas à paramétrer
-		res=this.ConstruitListeAgendas();
-		if (!res){
+		let nb=this.ConstruitListeAgendas();
+		if (-1==nb){
 			PacomeUtils.SetErreurEx(-1, "Erreur lors de la construction de la liste des agendas");
 			this.AfficheMsgExit("Erreur", PacomeUtils._msgErreur);
 			return;
@@ -426,7 +556,8 @@ var PacomeAssistant = {
 	},
 
 
-	// Ajoute les agendas d'apres le document de parametrage
+	// Ajoute les agendas d'apres le document de parametrage	
+	// retourne le nombre d'agendas, -1 si erreur
 	ConstruitListeAgendas(){
 
 		PacomeAssistant.logMsgDebug(" ConstruitListeAgendas");
@@ -438,7 +569,7 @@ var PacomeAssistant = {
 			let agendas=this._documentParam.querySelectorAll("agenda");
 			if (null==agendas || 0==agendas.length){
 				PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurListeCals"));
-				return false;
+				return -1;
 			}
 			const nb=agendas.length;
 			for (let i=0;i<nb;i++){
@@ -447,12 +578,12 @@ var PacomeAssistant = {
 					this.InsertAgendaUI(liste, agenda);
 			}
 
-			return true;
+			return nb;
 
 		} catch(ex){
 			PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurInitListeCals"), ex);
 		}
-		return false;
+		return -1;
 	},
 
 	// construit et insert une ligne agenda dans l'interface
@@ -479,8 +610,8 @@ var PacomeAssistant = {
 		// mémoriser choix des agendas
 		this.MemoChoixUI("liste-agendas", "agenda", "url");
 
-		// afficher page autres
-		this.InitPageAutres();
+		// afficher page suivante
+		(this.AffichePage(ConfigAssistant.agendas.suivante))();
 	},
 
 	// page autres
@@ -498,7 +629,12 @@ var PacomeAssistant = {
 		}
 
 		// construire liste des flux
-		this.ConstruitListeFlux();
+		let nb=this.ConstruitListeFlux();
+		if (-1==nb){
+			PacomeUtils.SetErreurEx(-1, "Erreur lors de la construction de la liste des flux");
+			this.AfficheMsgExit("Erreur", PacomeUtils._msgErreur);
+			return;
+		}
 
 		// application et proxy
 		let liste=document.getElementById("liste-autres");
@@ -506,15 +642,18 @@ var PacomeAssistant = {
 		let app=this._documentParam.querySelector("pacome_ui > application");
 		if (app && "true"==app.getAttribute("visible")){
 			this.InsertElemUI(liste, app, "#autreUI");
+			nb++;
 		}
 
 		let proxy=this._documentParam.querySelector("pacome_ui > proxy");
 		if (proxy && "true"==proxy.getAttribute("visible")){
 			this.InsertElemUI(liste, proxy, "#autreUI");
+			nb++;
 		}
 	},
 
-	// Ajoute les flux d'apres le document de parametrage
+	// Ajoute les flux d'apres le document de parametrage	
+	// retourne le nombre de comptes, -1 si erreur
 	ConstruitListeFlux(){
 		PacomeAssistant.logMsgDebug(" ConstruitListeFlux");
 		try{
@@ -525,7 +664,7 @@ var PacomeAssistant = {
 			let fluxAll=this._documentParam.querySelectorAll("pacome_ui > compteflux");
 			if (null==fluxAll || 0==fluxAll.length){
 				// pas une erreur
-				return true;
+				return 0;
 			}
 			const nb=fluxAll.length;
 			for (let i=0;i<nb;i++){
@@ -534,12 +673,12 @@ var PacomeAssistant = {
 					this.InsertElemUI(liste, flux, "#fluxUI");
 			}
 
-			return true;
+			return nb;
 
 		} catch(ex){
 			PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurInitListe"), ex);
 		}
-		return false;
+		return -1;
 	},
 
 	// construit et insert une ligne avec libellé et choix dans l'interface
@@ -571,8 +710,8 @@ var PacomeAssistant = {
 		// mémoriser choix proxy
 		this.MemoChoixUI("autres", "proxy", "libelle");
 
-		// afficher page de paramétrage
-		this.InitPageParam();
+		// afficher page suivante
+		(this.AffichePage(ConfigAssistant.autres.suivante))();
 	},
 
 
@@ -691,7 +830,6 @@ var PacomeAssistant = {
 		this.EcritLog("Réalisation des opérations de paramétrage", "");
 
 		// boites
-		this.EcritLog("Parametrage des boites", "");
 		let res=this.ParamBoites();
 		if (-1==res){
 			// erreur de paramétrage => message + stop
@@ -709,7 +847,6 @@ var PacomeAssistant = {
 		}
 
 		// agendas
-		this.EcritLog("Parametrage des agendas", "");
 		res=this.ParamAgendas();
 		if (-1==res){
 			// erreur de paramétrage => message + stop
@@ -719,7 +856,6 @@ var PacomeAssistant = {
 		}
 
 		// comptes de flux
-		this.EcritLog("Parametrage des comptes de flux", "");
 		res=this.ParamFlux();
 		if (-1==res){
 			// erreur de paramétrage => message + stop
@@ -729,7 +865,6 @@ var PacomeAssistant = {
 		}
 
 		// application
-		this.EcritLog("Parametrage du courrielleur", "");
 		res=this.ParamAppli();
 		if (-1==res){
 			// erreur de paramétrage => message + stop
@@ -739,7 +874,6 @@ var PacomeAssistant = {
 		}
 
 		// proxy
-		this.EcritLog("Parametrage du proxy", "");
 		res=this.ParamProxy();
 		if (-1==res){
 			// erreur de paramétrage => message + stop
@@ -762,8 +896,9 @@ var PacomeAssistant = {
 	ParamBoites(){
 
 		let nbparam=0;
-
+			
 		let boites=this._documentParam.querySelectorAll("pacome_ui > compte");
+		if (boites.length) this.EcritLog("Parametrage des boites", "");			
 		for (let i=0;i<boites.length;i++){
 			let boite=boites[i];
 
@@ -871,6 +1006,7 @@ var PacomeAssistant = {
 
 		let nbparam=0;
 		let agendas=this._documentParam.querySelectorAll("pacome_ui > agenda");
+		if (agendas.length) this.EcritLog("Parametrage des agendas", "");
 		for (let i=0;i<agendas.length;i++){
 			let agenda=agendas[i];
 
@@ -967,6 +1103,7 @@ var PacomeAssistant = {
 
 		let nbparam=0;
 		let comptes=this._documentParam.querySelectorAll("pacome_ui > compteflux");
+		if (comptes.length) this.EcritLog("Parametrage des comptes de flux", "");
 		for (let i=0;i<comptes.length;i++){
 			let flux=comptes[i];
 
@@ -1063,6 +1200,11 @@ var PacomeAssistant = {
 		try{
 
 			let appli=this._documentParam.querySelector("pacome_ui > application ");
+			if (null==appli && this._modeMaj){
+				return 0;
+			}
+					
+			this.EcritLog("Parametrage du courrielleur", "");
 
 			if ("true"==appli.getAttribute("visible")){
 
@@ -1096,6 +1238,9 @@ var PacomeAssistant = {
 		try{
 
 			let proxy=this._documentParam.querySelector("pacome_ui > proxy");
+			if (null==proxy && this._modeMaj){
+				return 0;
+			}
 
 			if ("true"==proxy.getAttribute("visible")){
 
@@ -1107,6 +1252,8 @@ var PacomeAssistant = {
 				}
 
 				let params=this._documentParam.querySelector("pacome > proxy");
+							
+				this.EcritLog("Parametrage du proxy", "");
 
 				let res=PacomeParam.ParamProxy(params);
 
@@ -1321,43 +1468,6 @@ var PacomeAssistant = {
 	logMsg(msg){
 
 		PacomeUtils.PacomeTrace(msg);
-	},
-
-	/*
-	*  analyse le document xml anaismoz - extrait le code erreur et le message
-	*  @param  docXML instance de document xml
-	*  @return true si code erreur = 0
-	* sinon retourne false (erreur globale dans gPacomeMsgErreur)
-	*/
-	AnalyseErreurDoc(docXML){
-
-		let racine=docXML.documentElement;
-
-		if (null==racine || "pacome"!=racine.nodeName){
-			PacomeUtils.SetErreurEx(-1, PacomeMessageFromId("PacomeErreurFormatDoc"));
-			return false;
-		}
-
-		let resultat=racine.querySelectorAll("pacome > resultat");
-		if (null==resultat || 0==resultat.length){
-			PacomeUtils.SetErreurEx(-1, PacomeMessageFromId("PacomeErreurFormatDoc"));
-			return false;
-		}
-
-		PacomeUtils.SetErreurEx(resultat[0].getAttribute("code"), resultat[0].getAttribute("erreur"));
-
-		if (PacomeUtils._codeErreur!=0){
-			return false;
-		}
-
-		//verification pacome_ui
-		let pacomeui=docXML.querySelector("pacome_ui");
-		if (null==pacomeui){
-			PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurPacomeUI"));
-			return false;
-		}
-
-		return true;
 	},
 
 
