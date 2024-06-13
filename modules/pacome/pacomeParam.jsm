@@ -91,7 +91,7 @@ var PacomeParam={
 			if (listeUids && listeUids!="")
 				uids=listeUids.split(";");
 			else
-				uids=this.PacomeListeUid();
+				uids=this.ListeIdentifiants();
 
 			let configuids="<identifiants>";
 			for (let i=0;i<uids.length;i++)
