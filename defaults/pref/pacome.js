@@ -8,9 +8,13 @@ pref("pacome.delaimaj", 10);
 //url du serveur pacome de parametrage
 pref("pacome.urlparam", "https://pacome.s2.m2.e2.rie.gouv.fr/param.php");
 
+// si true les requête sur le serveur pacome sont authentifiée
+pref("pacome.urlparam.auth", false);
+
+
 //url du serveur pacome de verification de mot de passe
 pref("pacome.urlmdp", "https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php");
-//pref("pacome.urlmdp", "http://pacome.ida.melanie2.i2/pacomemdp2.php");
+
 
 // // TODO
 // // TODO

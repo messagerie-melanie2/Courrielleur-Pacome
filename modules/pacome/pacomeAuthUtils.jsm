@@ -272,6 +272,7 @@ var PacomeAuthUtils = {
     }
     catch (error) {
       console.log('PromptPacomeMdp openDialog error', error);
+			return false;
     }
 
     // 0005099: Action en cas de non-saisie de mot de passe au démarrage

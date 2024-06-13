@@ -4,6 +4,7 @@
 
 const { PacomeUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeUtils.jsm");
 const { PacomeParam } = ChromeUtils.import("resource:///modules/pacome/pacomeParam.jsm");
+const { PacomeAuthUtils } = ChromeUtils.import("resource:///modules/pacome/pacomeAuthUtils.jsm");
 
 var { XPCOMUtils } = ChromeUtils.importESModule(
   "resource://gre/modules/XPCOMUtils.sys.mjs"
@@ -386,10 +387,44 @@ var PacomeAssistant = {
 		PacomeUtils.ClearErreurEx();
 		this._docPacome=null;
 
+		// authentification requise (MI ticket 27)
+		let res;
+		let creds=null;
+		if ( Services.prefs.getBoolPref("pacome.urlparam.auth", false) &&
+				 Services.prefs.getCharPref("pacome.urlparam", "").startsWith("https://") ){
+
+			PacomeAssistant.logMsgDebug("SortiePageUid demande mdp pacome");
+			// demande mdp pacome
+			let outmdp={};
+			let uid=this.ctrlIdentifiant.value.split(";")[0];
+			uid=uid.split("@")[0];
+
+			this.EcritLog("Requete de parametrage - authentification requise", uid);
+			res=this.AuthPacome(uid, outmdp);
+
+			if (res){
+
+				creds={};
+				creds.uid=uid;
+				creds.mdp=outmdp.value;
+
+				// mémorisation locale pour initialiser l'authentification des comptes à la fin
+				this.nouveauMdp=outmdp.value;
+
+			} else{
+
+				window.close();
+				return;
+			}
+		}
+
 		this.sablier();
 
 		this.EcritLog("Page de saisie d'identifiant - envoie de la requete", "");
-		let res=PacomeUtils.RequeteParametrage(config, this.RetourRequete);
+		if (creds)
+			res=PacomeUtils.RequeteParametrage(config, this.RetourRequete, false, creds);
+		else
+			res=PacomeUtils.RequeteParametrage(config, this.RetourRequete);
 
 		// si erreur : afficher message et fermer assistant
 		if (!res){
@@ -859,6 +894,9 @@ var PacomeAssistant = {
 			this.EcritLog("Erreur de paramétrage du proxy", PacomeUtils._msgErreur);
 			return;
 		}
+
+		// cas 1ere utilisation initialisation des mot de passe des comptes
+		this.ParamMemoMdp();
 
 		// afficher le résultat (popup)
 		this.EcritLog("Succès des opérations de paramétrage", "");
@@ -1424,5 +1462,74 @@ var PacomeAssistant = {
 	passablier(){
 		document.body.classList.remove("sablier");
 		document.body.classList.add("passablier");
+	},
+
+
+	// nouveau profil : authentification lors du paramétrage
+	// uid : identifiant ou courriel
+	// outmdp : mot passe validé
+	// outmemomdp (optionnel) : true si le mot de passe doit être mémorisé
+	// retour true si authentification valide, sinon false
+	//AuthPacome(uid, outmdp, outmemomdp){
+
+	nouveauMdp: null,
+
+	AuthPacome(uid, outmdp){
+
+		this.logMsg("AuthPacome uid:"+uid);
+
+		let outresmdp={};
+
+		while (true){
+
+			// mémorisation de mot de passe non implémentée
+			//let res=PacomeAuthUtils.PromptPacomeMdp(window, uid, outmdp, outmemomdp, outresmdp);
+			let res=PacomeAuthUtils.PromptPacomeMdp(null, uid, outmdp);
+			// outresmdp.res
+			//   1 -> mot de passe valide ou bouton continuer (mot de passe non vérifié)
+			//  -1 => passage en mode deconnecte
+			if (res){
+
+				this.logMsg("AuthPacome PromptMdp true outresmdp.mdpforce:"+outresmdp.mdpforce);
+
+				if (outresmdp.mdpforce){
+					// mot de passe forcé => auth non valide
+					//return false;
+					// cas erreur de saisie => afficher à nouveau
+					continue;
+				}
+
+				// auth ok
+				mdp=outmdp.value;
+
+				return true;
+
+			} else{
+
+				this.logMsg("AuthPacome PromptMdp false => offline");
+				return false;
+			}
+		}
+	},
+
+	// nouveau profil avec authentification pacome : mémoriser uid/mdp
+	ParamMemoMdp(){
+
+	if (this.nouveauMdp!=null && this.nouveauMdp!=""){
+
+		let compte=PacomeAuthUtils.GetComptePrincipal();
+		if (compte){
+
+			let uid=compte.incomingServer.username;
+
+			this.logMsg("ParamMemoMdp appel PacomeAuthUtils.modifyMdpPacome uid:'"+uid+"'");
+			PacomeAuthUtils.modifyMdpPacome(uid, this.nouveauMdp);
+/*
+			if (gPacomeAssitVars.memoMdp){
+				this.logMsg("ParamMemoMdp appel PacomeAuthUtils.MemoriseMdp uid:'"+uid+"'");
+				PacomeAuthUtils.MemoriseMdp(uid, gPacomeAssitVars.nouveauMdp);
+			}*/
+		}
 	}
+}
 };

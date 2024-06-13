@@ -134,8 +134,9 @@ var PacomeUtils={
 	*  config : element (xml) de configuration
 	*  fncrappel : fonction de rappel
 	*  bmaj : si true requete de mise à jour
+	*  creds : si non null login/password (creds.uid && creds.mdp)
 	*/
-	RequeteParametrage(config, fncrappel, bmaj){
+	RequeteParametrage(config, fncrappel, bmaj, creds=null){
 
 		try {
 			// PacomeUtils.SetErreurEx("code test", this.MessageFromId("pacomesrverr-"+404));
@@ -164,6 +165,11 @@ var PacomeUtils={
 			httpRequest.open("POST", url, true);
 
 			httpRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded; charset=UTF-8");
+
+			// authentification si creds non null
+			if (creds && creds.uid && creds.mdp){
+				httpRequest.setRequestHeader("Authorization", "Basic "+btoa(creds.uid+":"+creds.mdp));
+			}
 
 			httpRequest.onreadystatechange=function(){
 
