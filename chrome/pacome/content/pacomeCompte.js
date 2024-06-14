@@ -391,14 +391,15 @@ var PacomeAssistant = {
 		let res;
 		let creds=null;
 		if ( Services.prefs.getBoolPref("pacome.urlparam.auth", false) &&
-				 Services.prefs.getCharPref("pacome.urlparam", "").startsWith("https://") ){
+				 Services.prefs.getCharPref("pacome.urlparam", "").startsWith("https://") &&
+				 null==PacomeAuthUtils.GetComptePrincipal() ){
 
 			PacomeAssistant.logMsgDebug("SortiePageUid demande mdp pacome");
 			// demande mdp pacome
 			let outmdp={};
 			let uid=this.ctrlIdentifiant.value.split(";")[0];
 			uid=uid.split("@")[0];
-
+			
 			this.EcritLog("Requete de parametrage - authentification requise", uid);
 			res=this.AuthPacome(uid, outmdp);
 
