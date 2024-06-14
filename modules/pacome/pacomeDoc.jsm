@@ -97,7 +97,7 @@ class PacomeDoc {
 	// retourne les paramétrages annuaire
 	GetParamsAnnuaire(){
 
-		return this._documentParam.querySelector("pacome > annuaires > annuaire");
+		return this._documentParam.querySelectorAll("pacome > annuaires > annuaire");
 	}
 
 
