@@ -399,7 +399,7 @@ var PacomeAssistant = {
 			let outmdp={};
 			let uid=this.ctrlIdentifiant.value.split(";")[0];
 			uid=uid.split("@")[0];
-			
+
 			this.EcritLog("Requete de parametrage - authentification requise", uid);
 			res=this.AuthPacome(uid, outmdp);
 
@@ -765,7 +765,7 @@ var PacomeAssistant = {
 			let boite=comptes[i];
 			this.logMsgDebug("InitPageParam boite:"+boite.getAttribute("libelle"));
 			let choix=this._docPacome.GetChoixDefaut(boite);
-			nbparam+=this.InsertParamUI(boite.getAttribute("libelle"), "chrome://pacome/content/img/"+boite.getAttribute("image"), choix.getAttribute("libelle"));
+			nbparam+=this.InsertParamUI(boite.getAttribute("libelle"), "chrome://pacome/content/img/"+boite.getAttribute("image").replace("gif","png"), choix.getAttribute("libelle"));
 		}
 
 		// agendas visibles
@@ -774,7 +774,7 @@ var PacomeAssistant = {
 			let agenda=agendas[i];
 			this.logMsgDebug("InitPageParam agenda:"+agenda.getAttribute("libelle"));
 			let choix=this._docPacome.GetChoixDefaut(agenda);
-			nbparam+=this.InsertParamUI(agenda.getAttribute("libelle"), "chrome://pacome/content/img/calendar.gif", choix.getAttribute("libelle"));
+			nbparam+=this.InsertParamUI(agenda.getAttribute("libelle"), "chrome://pacome/content/img/calendar.png", choix.getAttribute("libelle"));
 		}
 
 		// flux visibles
