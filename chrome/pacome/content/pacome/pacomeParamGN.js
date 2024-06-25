@@ -56,6 +56,7 @@ ChromeUtils.import("resource://gre/modules/pacomeAuthUtils.jsm");
  // type boite partagée
  const TYPE_BALP=2;
  
+ const AT_INTERIEUR="@gendarmerie.interieur.gouv.fr";
 
 
 /*
@@ -104,8 +105,7 @@ function ParamBoiteBaliGN(elemcompte){
   }
 
   try{
-    // cas courriel en defense ou interieur
-    // l'adresse a pu changer (cas maj)
+
     // retrouver compte bali
     let elemsrventrant=elemcompte.getElementsByTagName("srventrant");
     elemsrventrant=elemsrventrant[0];
@@ -115,38 +115,79 @@ function ParamBoiteBaliGN(elemcompte){
     let typein=elemsrventrant.getAttribute("type");
 
     let srventrant=MailServices.accounts.FindServer(uid, srvname, typein);
-    let compte=MailServices.accounts.FindAccountForServer(srventrant);   
-    
-    let email=GetUseremail(elemcompte);
+    let compte=MailServices.accounts.FindAccountForServer(srventrant); 
 
-    if (-1!=email.indexOf(".defense.")) {
+    let identBali=GetIdentiteInterieur(compte);
+    PacomeTrace("ParamBoiteBaliGN identBali:"+identBali);
+    compte.defaultIdentity=identBali;
 
-      // modifier identityName de l'identite defense
-      let idbali=compte.defaultIdentity.key;
-      let val=Services.prefs.getCharPref("mail.identity."+idbali+".identityName", "");
-      Services.prefs.setCharPref("mail.identity."+idbali+".identityName", val.replace(".interieur.", ".defense."));
+    // cas ou la boite a d'autres adresses
+    let othersemail=GetOthersEmail(elemcompte);
+    PacomeTrace("ParamBoiteBaliGN othersemail:"+othersemail);
 
-      // ajout identité en interieur si aucune
-      if (compte.identities.length==1){
-        let ident2=MailServices.accounts.createIdentity();
-        ident2.copy(compte.defaultIdentity);
-        // modification email
-        ident2.email=email.replace(".defense.", ".interieur.");
-        // identityName
-        Services.prefs.setCharPref("mail.identity."+ident2.key+".identityName", val);
+    if (""==othersemail){
 
-        PacomeTrace("ParamBoiteBaliGN ajout seconde identité à la bali:"+ident2.email);
-        compte.addIdentity(ident2);
+      // ne conserver que l'identité en interieur
+      let i=compte.identities.length-1;
+      while (i>=0){
+        let ident=compte.identities.queryElementAt(i, Components.interfaces.nsIMsgIdentity);
+        if (!ident.email.endsWith(AT_INTERIEUR)){
+          compte.removeIdentity(ident);
+        }
+        i--;
+      }
+    } else{
+
+      // ajouter et/ou supprimer autres identités avec adresses supplémentaires
+      let courriels=othersemail.split(" ");
+
+      // supprimer les identites obsoletes
+      let i=compte.identities.length-1;
+      while (i>=0){
+
+        let ident=compte.identities.queryElementAt(i, Components.interfaces.nsIMsgIdentity);
+
+        if (!ident.email.endsWith(AT_INTERIEUR)){
+          if (!courriels.includes(ident.email)){
+            PacomeTrace("ParamBoiteBaliGN suppresion identité bali:"+ident.email);
+            compte.removeIdentity(ident);
+          }
+        } else{
+          compte.defaultIdentity=ident;
+        }
+        i--;
       }
 
-    } else {
+      // ajouter ou mettre à jour les identites
+      for (c=0; c<courriels.length; c++){
 
-      // cas retrait defense => supprimer identite additionnelle si existe (sinon doublon)
-      if (compte.identities.length>1){
+        let courriel=courriels[c];
 
-        let ident2=compte.identities.queryElementAt(1, Components.interfaces.nsIMsgIdentity);
-        PacomeTrace("ParamBoiteBaliGN suppression de l'identité bali:"+ident2.email);
-        compte.removeIdentity(ident2);
+        // rechercher identite
+        for (i=0;i<compte.identities.length;i++){
+          let ident=compte.identities.queryElementAt(i, Components.interfaces.nsIMsgIdentity);
+          if (ident.email==courriel){
+
+            PacomeTrace("ParamBoiteBaliGN mise a jour identité bali:"+ident.email);
+            // mettre à jour
+            ident.copy(identBali);
+            // modification email
+            ident.email=courriel;
+          }
+        }
+        if (i==compte.identities.length){
+
+          // ajouter identite
+          let ident2=MailServices.accounts.createIdentity();
+          ident2.copy(identBali);
+          // modification email
+          ident2.email=courriel;
+          // identityName
+          Services.prefs.setCharPref("mail.identity."+ident2.key+".identityName", courriel);
+
+          PacomeTrace("ParamBoiteBaliGN ajout identité à la bali:"+ident2.email);
+          compte.addIdentity(ident2);
+        }
       }
     }
 
@@ -159,6 +200,21 @@ function ParamBoiteBaliGN(elemcompte){
   } 
     
   return res;
+}
+
+// retourne l'identité en interieur du compte 
+// compte : instance compte courrier
+// en principe ce sera l'identité par défaut mais on recherche quand même
+function GetIdentiteInterieur(compte){
+
+  for (let i=0;i<compte.identities.length;i++){
+    let ident=compte.identities.queryElementAt(i, Components.interfaces.nsIMsgIdentity);
+    if (ident.email.endsWith(AT_INTERIEUR)){
+      return ident;
+    }
+  }
+  
+  return null;
 }
 
 // retourne la valeur de useremail de l'identité à partir de l'élément compte du document
@@ -175,6 +231,27 @@ function GetUseremail(elemcompte){
 
     let nom=p.getAttribute("nom");
     if (nom=="useremail"){
+      return p.getAttribute("valeur");
+    }
+  }
+
+  return "";
+}
+
+// retourne la valeur de l'attribut 'othersemail' (mailalternateaddress) de l'identité
+// peut retourner une chaine vide ou une ou plusieurs adresses séparées par des espaces.
+function GetOthersEmail(elemcompte){
+
+  let elemidentite=elemcompte.getElementsByTagName("identite");
+  elemidentite=elemidentite[0];
+  let elemprefs=elemidentite.getElementsByTagName("prefs");
+  let prefs=elemprefs[0].getElementsByTagName("pref");
+
+  for (let i=0;i<prefs.length;i++){
+    let p=prefs[i];
+
+    let nom=p.getAttribute("nom");
+    if (nom=="othersemail"){
       return p.getAttribute("valeur");
     }
   }
