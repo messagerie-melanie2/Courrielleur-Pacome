@@ -375,32 +375,43 @@ const PacomeAssistant = {
 		let res;
 		let creds=null;
 		if ( Services.prefs.getBoolPref(PACOME_PREF_PARAM_AUTH, false) &&
-				 Services.prefs.getCharPref(PACOME_PREF_URLPARAM, "").startsWith("https://") &&
-				 null==PacomeAuthUtils.GetComptePrincipal() ){
+				 Services.prefs.getCharPref(PACOME_PREF_URLPARAM, "").startsWith("https://")) {
 
-			PacomeAssistant.logMsgDebug("SortiePageUid demande mdp pacome");
-			// demande mdp pacome
-			let outmdp={};
-			let uid=this.ctrlIdentifiant.value.split(";")[0];
-			uid=uid.split("@")[0];
-			
-			this.EcritLog("Requete de parametrage - authentification requise", uid);
-			res=this.AuthPacome(uid, outmdp);
+			const compte=PacomeAuthUtils.GetComptePrincipal();
+      
+      if (null==compte) {
 
-			if (res){
+        PacomeAssistant.logMsgDebug("SortiePageUid demande mdp pacome");
+        // demande mdp pacome
+        let outmdp={};
+        let uid=this.ctrlIdentifiant.value.split(";")[0];
+        uid=uid.split("@")[0];
+        
+        this.EcritLog("Requete de parametrage - authentification requise", uid);
+        res=this.AuthPacome(uid, outmdp);
 
-				creds={};
-				creds.uid=uid;
-				creds.mdp=outmdp.value;
+        if (res){
 
-				// mémorisation locale pour initialiser l'authentification des comptes à la fin
-				this.nouveauMdp=outmdp.value;
+          creds={};
+          creds.uid=uid;
+          creds.mdp=outmdp.value;
 
-			} else{
+          // mémorisation locale pour initialiser l'authentification des comptes à la fin
+          this.nouveauMdp=outmdp.value;
 
-				window.close();
-				return;
-			}
+        } else{
+
+          window.close();
+          return;
+        }
+      }
+      else if (compte.incomingServer.username && compte.incomingServer.password) {
+        // si compte principal avec mdp => utiliser
+        creds={};
+        creds.uid=PacomeAuthUtils.GetUidReduit(compte.incomingServer.username);
+        creds.mdp=compte.incomingServer.password;
+        this.EcritLog("Requete de parametrage - authentification avec le compte principal", creds.uid);
+      }
 		}
 
 		this.sablier();

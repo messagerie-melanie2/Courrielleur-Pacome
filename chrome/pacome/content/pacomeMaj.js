@@ -2,9 +2,9 @@
 */
 
 const { PacomeDoc } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeDoc.mjs");
-const { PacomeUtils, PACOME_LOGS_MAJ } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeUtils.mjs");
+const { PacomeUtils, PACOME_LOGS_MAJ, PACOME_PREF_PARAM_AUTH } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeUtils.mjs");
 const { PacomeParam } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeParam.mjs");
-
+const { PacomeAuthUtils } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeAuthUtils.mjs");
 
 
 var PacomeMaj = {
@@ -45,7 +45,19 @@ var PacomeMaj = {
 			PacomeUtils.ClearErreurEx();
 			this.logMsgDebug("pacomeRechercheMaj envoie de la requete au serveur");
 			this.EcritLog("Envoie de la requete au serveur", "");
-			const res=PacomeUtils.RequeteParametrage(config, this.ReceptionReponse, true);
+      
+      let creds=null;
+      if (Services.prefs.getBoolPref(PACOME_PREF_PARAM_AUTH, false)){
+        // si compte principal avec mdp => utiliser
+        const compte=PacomeAuthUtils.GetComptePrincipal();
+        if (compte && compte.incomingServer.username && compte.incomingServer.password){
+          creds={};
+          creds.uid=PacomeAuthUtils.GetUidReduit(compte.incomingServer.username);
+          creds.mdp=compte.incomingServer.password;
+        }
+      }
+
+			const res=PacomeUtils.RequeteParametrage(config, this.ReceptionReponse, true, creds);
 
 			// si erreur : log message
 			if (!res) {
@@ -86,7 +98,7 @@ var PacomeMaj = {
 					PacomeMaj.AffichePacome();
 				}
 				else{
-					PacomeMaj.EcritLog("Aucune mise à jour visible");
+					PacomeMaj.EcritLog("Aucune mise à jour visible", "");
 				}
 
 				const nbnon=PacomeMaj.GetNbMajNonVisibles();
@@ -96,7 +108,7 @@ var PacomeMaj = {
 					PacomeParam.MajSilence(responseXML);
 				}
 				else{
-					PacomeMaj.EcritLog("Aucune mise à jour silencieuse");
+					PacomeMaj.EcritLog("Aucune mise à jour silencieuse", "");
 				}
 
 				return;
