@@ -19,7 +19,7 @@ export class PacomeDoc {
 	GetParamsBoite(uid, confid){
 
 		const boites=this._documentParam.querySelectorAll("comptes > compte");
-		for (const i=0;i<boites.length;i++){
+		for (let i=0;i<boites.length;i++){
 			const boite=boites[i];
 			if (boite.getAttribute("uid")==uid && boite.getAttribute("confid")==confid)
 				return boite;
@@ -38,7 +38,7 @@ export class PacomeDoc {
 	GetParamsAgenda(url){
 
 		const agendas=this._documentParam.querySelectorAll("agendas > agenda");
-		for (const i=0;i<agendas.length;i++){
+		for (let i=0;i<agendas.length;i++){
 			const agenda=agendas[i];
 			if (agenda.getAttribute("url")==url)
 				return agenda;
@@ -57,7 +57,7 @@ export class PacomeDoc {
 	GetParamsFlux(libelle){
 
 		const flux=this._documentParam.querySelectorAll("comptes_flux > compteflux");
-		for (const i=0;i<flux.length;i++){
+		for (let i=0;i<flux.length;i++){
 			const compteflux=flux[i];
 			if (compteflux.getAttribute("libelle")==libelle)
 				return compteflux;
