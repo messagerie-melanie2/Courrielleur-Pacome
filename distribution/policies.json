@@ -1,6 +1,8 @@
 {
   "policies": {
 	"BlockAboutConfig": false,
+	"AppAutoUpdate": false,
+	"DisableAppUpdate": true,
     "Preferences":{
 			
 			"extensions.pacome.trace":{
