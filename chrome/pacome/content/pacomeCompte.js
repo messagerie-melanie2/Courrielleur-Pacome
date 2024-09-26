@@ -6,9 +6,9 @@ const { PacomeDoc } = ChromeUtils.importESModule("resource:///modules/pacome/pac
 const { PacomeUtils, PACOME_PREF_URLPARAM, PACOME_PREF_PARAM_AUTH, PACOME_LOGS_ASSISTANT } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeUtils.mjs");
 
 const { PacomeParam, PACOME_ACTION_PARAM, PACOME_ACTION_IGNORE, PACOME_ACTION_SUPPRIME,
-				PACOME_ACTION_PRESERVE, PACOME_ACTION_MAJ, PACOME_IGNORE_UID, PACOME_IGNORE_UID_SEP, PACOME_IGNORE_FLUX, PACOME_IGNORE_CAL 
+				PACOME_ACTION_PRESERVE, PACOME_ACTION_MAJ, PACOME_IGNORE_UID, PACOME_IGNORE_UID_SEP, PACOME_IGNORE_FLUX, PACOME_IGNORE_CAL
 			} = ChromeUtils.importESModule("resource:///modules/pacome/pacomeParam.mjs");
-			
+
 const { PacomeAuthUtils, PACOME_SEP_UID } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeAuthUtils.mjs");
 
 
@@ -171,7 +171,7 @@ const PacomeAssistant = {
 
 
 	onLoad(){
-		
+
 		// pas en mode offline
 		if (Services.io.offline){
 			this.AfficheMsgExit("", PacomeUtils.MessageFromId("PacomePas2Reseau"));
@@ -357,7 +357,7 @@ const PacomeAssistant = {
 
 		// configuration client
 		const config=PacomeParam.GetConfigClient(this.ctrlIdentifiant.value);
-		
+
 		if (null==config){
 			this.EcritLog("Erreur de configuration client", "");
 			this.AfficheMsgExit("Erreur", "Configuration client non definie");
@@ -378,7 +378,7 @@ const PacomeAssistant = {
 				 Services.prefs.getCharPref(PACOME_PREF_URLPARAM, "").startsWith("https://")) {
 
 			const compte=PacomeAuthUtils.GetComptePrincipal();
-      
+
       if (null==compte) {
 
         PacomeAssistant.logMsgDebug("SortiePageUid demande mdp pacome");
@@ -386,7 +386,7 @@ const PacomeAssistant = {
         let outmdp={};
         let uid=this.ctrlIdentifiant.value.split(";")[0];
         uid=uid.split("@")[0];
-        
+
         this.EcritLog("Requete de parametrage - authentification requise", uid);
         res=this.AuthPacome(uid, outmdp);
 
@@ -464,7 +464,7 @@ const PacomeAssistant = {
 
 	// page des boites à lettres
 	InitPageBoites(){
-		
+
 		this.logMsgDebug("InitPageBoites");
 
 		this.InitPageFromConfig(ConfigAssistant.boites);
@@ -556,7 +556,7 @@ const PacomeAssistant = {
 
 	// page agendas
 	InitPageAgendas(){
-		
+
 		this.logMsgDebug("InitPageAgendas");
 
 		this.InitPageFromConfig(ConfigAssistant.agendas);
@@ -898,12 +898,17 @@ const PacomeAssistant = {
 		// cas 1ere utilisation initialisation des mot de passe des comptes
 		this.ParamMemoMdp();
 
-		// afficher le résultat (popup)
+		// Affiche le résultat dans les logs
 		this.EcritLog("Succès des opérations de paramétrage", "");
-		this.AfficheMsgExit("Succès", PacomeUtils.MessageFromId("PacomeFinParamTexte2"));
 
-		this.btQuitter.setAttribute("onclick", "window.close();");
-		this.btQuitter.disabled=false;
+		// #8529 Si tout a fonctionné, on peut lancer la toolbar et fermer cette fenêtre
+		gMainWindow.parent.gSpacesToolbar.onLoad();
+		window.close();
+
+		// Une autre façon serait d'afficher un message de validation de la configuration:
+		//this.AfficheMsgExit("Succès", PacomeUtils.MessageFromId("PacomeFinParamTexte2"));
+		//this.btQuitter.setAttribute("onclick", "window.close();");
+		//this.btQuitter.disabled=false;
 	},
 
 	// paramétrage des boites
