@@ -29,13 +29,16 @@ export const PacomeAuthUtils = {
   _ExpProxyAmande : null,
 
   Init() {
-
-    if (this._regServeursMel2==null){
-      let policies=Services.policies.getExtensionPolicy("pacome");
-      this._regServeursMel2=policies.regServeursMel2;
-      this._regServeursAppM2=policies.regServeursAppM2;
-      this._ExpProxyAmande=policies.ExpProxyAmande;
+    try
+    {
+      if (this._regServeursMel2==null){
+        let policies=Services.policies.getExtensionPolicy("pacome");
+        this._regServeursMel2=policies.regServeursMel2;
+        this._regServeursAppM2=policies.regServeursAppM2;
+        this._ExpProxyAmande=policies.ExpProxyAmande;
+      }
     }
+    catch{}
   },
 
   // test si origin est du type melanie2
