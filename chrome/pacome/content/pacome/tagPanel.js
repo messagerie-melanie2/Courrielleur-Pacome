@@ -68,7 +68,7 @@ function InitMenuPartage(){
     let pos=uid.indexOf(".-.");
     if (-1!=pos)
       uid=uid.substr(pos+3);
-    
+
     var labelList = [];
     for (var b=0;b<nbc;b++)
     if (gBalpConf[b]["uid"]==uid){
@@ -79,7 +79,7 @@ function InitMenuPartage(){
       item.setAttribute("value", uid);
       item.setAttribute("type", "checkbox");
       item.setAttribute("oncommand",  "partageTagButton('"+uid+"');");
-      
+
       // #5846
       if(!labelList.includes(cn))
       {
@@ -106,13 +106,17 @@ function cm2TagSelect(){
   //etiquette par defaut => griser
   let tagdefaut=IsEtiquetteDefaut(key);
   let boutonDel=document.getElementById("removeTagButton");
+  //#8647: Les etiquettes natives ne devraient pas pouvoir être modifiées
+  let boutonEdit = document.getElementById("editTagButton");
 
   if (tagdefaut){
     boutonDel.disabled=true;
     boutonPart.disabled=true;
+    boutonEdit.disabled=true;
   } else{
     boutonDel.disabled=false;
     boutonPart.disabled=false;
+    boutonEdit.disabled=false;
   }
   if (0==gSynchro.droitsbalp.length)
     boutonPart.disabled=true;
@@ -340,12 +344,12 @@ function SauveRapportTest(config){
 gDisplayPane.appendTagItem=function(aTagName, aKey, aColor)
 {
   cm2TagsInit();
-  
+
   let item = this.mTagListBox.appendItem(aTagName, aKey);
   item.style.color = aColor;
   if(aTagName.includes(INFOTAG_PARTAGE))
     item.setAttribute("tooltiptext", getToolTip(aKey));
-  
+
   return item;
 }
 
@@ -356,7 +360,7 @@ function getToolTip(key)
   toolTip = "";
   sep = "";
   var toolTipArray = [];
-  
+
   // balis
   let nb=gBaliConf.length;
   for (var i=0;i<nb;i++){
@@ -367,7 +371,7 @@ function getToolTip(key)
       sep="\u000A";
     }
   }
-  
+
   // balps
   nb=gBalpConf.length;
   for (var i=0;i<nb;i++){
@@ -378,10 +382,10 @@ function getToolTip(key)
       sep="\u000A";
     }
   }
-  
+
   uniqToolTipArray = [...new Set(toolTipArray)];
   toolTip = uniqToolTipArray.join(sep);
-  
+
   //console.log("tooltip = " + toolTip);
   return(toolTip);
 }
