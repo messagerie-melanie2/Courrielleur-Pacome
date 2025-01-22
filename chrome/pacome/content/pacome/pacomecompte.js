@@ -409,7 +409,7 @@ function SortiePageSaisieUid(){
 
 		// authentification pacome
 		let outmdp={}, outmemomdp={}, outresmdp={};
-		uidp=uid.split("@")[0];
+		uidp=uid;
 		PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - authentification", uidp);
 
 		let res=AuthPacome(uidp, outmdp, outmemomdp);
