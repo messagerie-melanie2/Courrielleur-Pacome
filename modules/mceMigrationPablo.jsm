@@ -1306,10 +1306,21 @@ var mceMigrationMCE={
 	},
 
 	// retourne true si adresse courriel obsolète
+  // tests réalisés sur le nom de domaine du courriel
+  // Si un domaine de la liste commence par un point, on test si le domaine se termine par la valeur de la liste
+  // sinon on teste l'égalité des domaines.
 	CourrielObsolete: function(courriel){
 		if (courriel==undefined || courriel=="") return false;
 		if (-1==courriel.indexOf("@")) return false;
-		return this._ListeDomainesOld.includes(courriel.split("@")[1]);
+    const domaine=courriel.split("@")[1];
+    const nb=this._ListeDomainesOld.length;
+    for (let i=0;i<nb;i++){
+      let dom=this._ListeDomainesOld[i];
+      if (dom=="") continue;
+      if (dom.startsWith(".") && domaine.endsWith(dom)) return true;
+      if (domaine==dom) return true;
+    }
+    return false;
 	},
 
 	// Nettoyage des contacts : chargement du fichier des domaines obsolètes
