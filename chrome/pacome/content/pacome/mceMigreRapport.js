@@ -1,20 +1,20 @@
 /*
-	Rapport de migration Pablo vers MCE
+	Rapport de migration Pablo vers MATISSE
 
 	Structure possible pour le rapport :
 
-	Le profil Pablo <NOM Prenom> a été migré avec succès dans le nouveau profil MCE.
+	Le profil Pablo <NOM Prenom> a été migré avec succès dans le nouveau profil MATISSE.
 									(nom du compte principal)
 	Les opérations suivantes ont été réalisées :
 
-	Paramétrage de la boite MCE <NOM Prenom>
+	Paramétrage de la boite MATISSE <NOM Prenom>
 		Ajout de l'identité supplémentaire <uid>
 		Ajout de la signature
 		Filtres de messages Pablo récupérés
 
 	etc...
 
-	Paramétrage de l'agenda MCE <NOM Prenom>
+	Paramétrage de l'agenda MATISSE <NOM Prenom>
 	etc...
 
 	Paramétrage du compte de flux <infos>
@@ -35,8 +35,8 @@
 	Reprise des paramètres d'impression Pablo
 
 	Les dossiers et courriels des comptes Pablo suivants ont été récupérés :
-	- Compte <NOM Prenom> dans le compte MCE <Archives de NOM Prenom>
-	- Compte <Dossiers locaux> dans le compte MCE <Dossiers locaux>
+	- Compte <NOM Prenom> dans le compte MATISSE <Archives de NOM Prenom>
+	- Compte <Dossiers locaux> dans le compte MATISSE <Dossiers locaux>
 	etc...
 
 
@@ -48,7 +48,7 @@ ChromeUtils.import("resource://gre/modules/mceMigrationPablo.jsm");
 ChromeUtils.import("resource:///modules/iteratorUtils.jsm");
 ChromeUtils.import("resource://calendar/modules/calUtils.jsm");
 
-const FICHIER_RAPPORT="migrationMCE.txt";
+const FICHIER_RAPPORT="migrationMATISSE.txt";
 
 
 function InitMigreRapport(){
@@ -134,7 +134,7 @@ var gRapport={
 		return false;
 	},
 
-	// construit le rapport de migration Pablo vers MCE
+	// construit le rapport de migration Pablo vers MATISSE
 	GenereRapport: function(){
 
 		this._lignes=[];
@@ -163,7 +163,7 @@ var gRapport={
 	Entete: function(){
 
 		let compte=mceMigrationMCE._infosPablo.boites[0].name;
-		this._lignes.push("Le profil Pablo '"+compte+"' a été migré avec succès dans le nouveau profil MCE.");
+		this._lignes.push("Le profil Pablo '"+compte+"' a été migré avec succès dans le nouveau profil MATISSE.");
 		this._lignes.push("Les opérations suivantes ont été réalisées :");
 		this._lignes.push("");
 		return true;
@@ -181,7 +181,7 @@ var gRapport={
 
 				if (!compte.defaultIdentity) continue;
 
-				this._lignes.push("Paramétrage de la boite MCE : '"+compte.defaultIdentity.fullName+"'");
+				this._lignes.push("Paramétrage de la boite MATISSE : '"+compte.defaultIdentity.fullName+"'");
 
 				// ajouts Pablo si correspondance
 				let pablo=this._getBoitePablo(compte);
@@ -219,7 +219,7 @@ var gRapport={
 			for (var i=0; i<nb; i++) {
 				let agenda=agendas[i];
 				if (agenda.getProperty("pacome")) {
-					this._lignes.push("Paramétrage de l'agenda MCE : '"+agenda.getProperty("name")+"'");
+					this._lignes.push("Paramétrage de l'agenda MATISSE : '"+agenda.getProperty("name")+"'");
 				}
 			}
 
@@ -235,12 +235,12 @@ var gRapport={
 
 		try{
 
-			// comptes de flux MCE
+			// comptes de flux MATISSE
 			let allServers=MailServices.accounts.allServers;
       for (let server of fixIterator(allServers, Components.interfaces.nsIMsgIncomingServer)){
         if (server.type=="rss" && "flux"==server.getCharValue("pacome.confid")){
 					let nom=Services.prefs.getCharPref("mail.server."+server.key+".name");
-					this._lignes.push("Paramétrage du compte de flux MCE : '"+nom+"'");
+					this._lignes.push("Paramétrage du compte de flux MATISSE : '"+nom+"'");
 				}
 			}
 
@@ -352,14 +352,14 @@ var gRapport={
 				let boite=mceMigrationMCE._infosPablo.boites[i];
 				if (!boite.archive) continue;
 				let libelle="Archives de "+boite.name.split("@")[0];
-				let txt=" - Les messages du compte Pablo '"+boite.name+"' ont été archivés dans le dossier local MCE :'"+libelle+"'";
+				let txt=" - Les messages du compte Pablo '"+boite.name+"' ont été archivés dans le dossier local MATISSE :'"+libelle+"'";
 				this._lignes.push(txt);
 			}
 
 			for (let i=0;i<mceMigrationMCE._infosPablo.dossiers.length;i++){
 				let dossier=mceMigrationMCE._infosPablo.dossiers[i];
 				if (!dossier.archive) continue;
-				let txt=" - Les messages du compte Pablo '"+dossier.name+"' ont été archivés dans le dossier local MCE :'"+dossier.name+"'";
+				let txt=" - Les messages du compte Pablo '"+dossier.name+"' ont été archivés dans le dossier local MATISSE :'"+dossier.name+"'";
 				this._lignes.push(txt);
 			}
 

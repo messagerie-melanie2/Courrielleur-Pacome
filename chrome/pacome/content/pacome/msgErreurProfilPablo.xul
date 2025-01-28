@@ -16,7 +16,7 @@
   </vbox>
 
   <vbox class="pacomemsg-texte">
-    <description id="pacomemsg.texte">Ce profil n'est pas compatible avec le courrielleur MCE.</description>
+    <description id="pacomemsg.texte">Ce profil n'est pas compatible avec le courrielleur MATISSE.</description>
     <description id="pacomemsg.texte2">Utiliser un autre profil.</description>
   </vbox>
 
