@@ -3,7 +3,7 @@
 <!ENTITY pacomemsg.titre "Pacome">
 
 <!-- pacomecompte.xul -->
-<!ENTITY pacome.titre "Assistant de gestion des comptes de messagerie MCE">
+<!ENTITY pacome.titre "Assistant de gestion des comptes de messagerie MATISSE">
 <!ENTITY pacome.libnom "Identifiant(s) de l'utilisateur">
 
 <!ENTITY pacome.resume "Résumé des paramétrages à modifier">
@@ -42,7 +42,7 @@
 
 <!-- accountmanager-overlay.xul -->
 <!ENTITY pacome.btcomptes "Gérer les comptes...">
-<!ENTITY pacome.btcomptestip "Gérer les comptes MCE avec Pacome">
+<!ENTITY pacome.btcomptestip "Gérer les comptes MATISSE avec Pacome">
 <!ENTITY pacome.btcomptes.racc "G">
 
 <!ENTITY pacome.ovelay.btmotdepasse "Changer le mot de passe...">
@@ -174,11 +174,11 @@ Cliquer sur le bouton &#91;Mettre à jour&#93; pour effectuer automatiquement la
 
 <!ENTITY migrationPablo-bandeau "Choix du profil à migrer">
 <!ENTITY migrationPablo.choixProfil.texte1 "L'assistant de paramétrage du courrielleur a détecté un ou plusieurs profils Pablo sur votre poste de travail.
-Le courrielleur peut migrer automatiquement les données d'un profil Pablo à la fois vers un nouveau profil MCE.
+Le courrielleur peut migrer automatiquement les données d'un profil Pablo à la fois vers un nouveau profil MATISSE.
 Pour migrer le ou les autres profils, vous devrez relancer cette assistant de migration et le choisir.">
 <!ENTITY migrationPablo.choixProfil.texte2 "Choisir le profil Pablo à migrer, puis cliquer sur Valider. 
 			Pour ne pas migrer de profil, cliquer sur Ignorer. Le premier profil de la liste est le dernier utilisé.">
 
-<!ENTITY migrationPablo-Titre "Migration Pablo vers MCE">
+<!ENTITY migrationPablo-Titre "Migration Pablo vers MATISSE">
 
 <!ENTITY mceMigreRapport.titre "Migration réussie">
