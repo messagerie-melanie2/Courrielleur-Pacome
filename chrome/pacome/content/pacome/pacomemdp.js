@@ -143,8 +143,7 @@ function ValiderMdp(){
 
   setBoutonAnnuler(false);
 
-  //vérifier (requête asynchrone)
-  window.setCursor("wait");
+/*
   //url modifiable dans les préférences
   //nom de préférence definie par PACOME_PREF_URLMDP
   //si valeur absente, on utilise la valeur par défaut
@@ -158,17 +157,163 @@ function ValiderMdp(){
 
   PacomeEcritLog(PACOME_LOGS_MDP, "url serveur de verification de mot de passe", url);
 
+  if (!PacomeAuthUtils.TestServeurMelanie2(url)){
+    PacomeEcritLog(PACOME_LOGS_MDP, "ValiderMdp url non conforme:"+url);
+    PacomeAfficheMsgId2("PacomeMdpErreurSrvTitre", "Url Pacome non conforme");
+    //passage en mode déconnecté
+    PacomeEcritLog(PACOME_LOGS_MDP, "passage en mode deconnecte", "");
+    passerHorsLigne();
+    //annulation
+    window.arguments[0].res=-1;
+    window.arguments[0].mdp="";
+    window.arguments[0].offline=true;
+    window.close();
+    return;
+  }*/
+
+  //vérifier (requête asynchrone)
+  window.setCursor("wait");
+
+  let retourVerif=function(code, message) {
+
+    window.setCursor("auto");
+
+    PacomeTrace("ValiderMdp retourVerif code:"+code+" - message:"+message);
+
+    //cas mot de passe valide
+    if (0==code || 0xFFFF==code) {
+
+      PacomeSetOpenHours(message);
+
+      let argchg=Array();
+
+      if (0xFFFF==code) {
+
+        PacomeSetOpenHours(message);
+        let argchg=Array();
+
+        //le mot de passe doit changer
+        PacomeTrace("Pacomemdp ValiderMdp le mot de passe doit changer");
+
+        PacomeEcritLog(PACOME_LOGS_MDP, "le mot de passe doit changer", "");
+        //si l'utilisateur change le mot de passe, le nouveau mot de passe est retourné dans argchg["nouveau"]
+        argchg["uid"]=uid;
+        argchg["actuel"]=mdp;
+        argchg["mineqpassworddoitchanger"]=message;
+
+        let res=window.openDialog("chrome://pacome/content/pacomechgmdp.xul","","chrome,modal,centerscreen,titlebar",argchg);
+
+        if (null!=argchg["nouveau"]){
+          PacomeEcritLog(PACOME_LOGS_MDP, "le mot de passe a chang\u00e9", "");
+          mdp=argchg["nouveau"];
+        }
+      }
+
+      window.arguments[0].res=1;
+      window.arguments[0].mdp=mdp;
+
+      if ("true"==document.getElementById("memomdp").getAttribute("checked"))
+        window.arguments[0].memomdp=true;
+
+      window.close();
+
+      return;
+
+    } // fin mdp valide
+
+    //mot de passe non valide
+    if (1==code || 49==code){
+
+      // cas mot de passe aurait du etre changé (mantis 5393)
+      if (""!=message &&
+          0==message.indexOf("GRILLED : ")){
+
+        let msgsrv=message.substr(10);
+        PacomeAfficheMsgId3("PacomeMdpErreurSrvTitre", PacomeMessageFromId("PacomeMdpNonValide"), msgsrv);
+
+        passerHorsLigne();
+
+        //annulation
+        window.arguments[0].res=-1;
+        window.arguments[0].mdp="";
+
+        window.close();
+        return;
+
+      }
+
+      PacomeAfficheMsgIdMsgId("PacomeMdpErreurSrvTitre", "PacomeMdpNonValide");
+
+      let bt=document.getElementById("pacomemdp.btValider");
+      bt.removeAttribute("disabled");
+      let txtuid=document.getElementById("pacomemdp.mdp");
+      txtuid.value="";
+      txtuid.focus();
+    }
+
+    else {
+      // autres erreurs
+      // erreur de vérification
+
+      //Traiter erreur spécifique
+      //erreur du serveur PacomeMdpErreurSrv
+      let msgerr=PacomeMessageFromId("PacomeMdpErreurSrvLib")+"\nErreur:\n"+message;
+      PacomeTrace("Pacomemdp msgerr="+msgerr);
+
+      let res=PacomeMsgConfirmBt(PacomeMessageFromId("PacomeMdpErreurSrvTitre"), msgerr, "Continuer", "Hors ligne");
+
+      PacomeTrace("Pacomemdp PacomeMsgConfirmBt res="+res);
+
+      //v2.4: 1->continuer
+      if (1!=res){
+
+        //passage en mode déconnecté
+        PacomeEcritLog(PACOME_LOGS_MDP, "erreur du serveur - passage en mode deconnecte", msgerr);
+        passerHorsLigne();
+        //annulation
+        window.arguments[0].res=-1;
+        window.arguments[0].mdp="";
+        window.arguments[0].memomdp=false;
+        window.arguments[0].offline=true;
+
+      }  else{
+
+        PacomeEcritLog(PACOME_LOGS_MDP, "erreur du serveur - mot de passe force", msgerr);
+
+        window.arguments[0].res=1;
+        window.arguments[0].mdp=mdp;
+        window.arguments[0].memomdp=false;// pas de memorisation si erreur de verification par le serveur
+        window.arguments[0].mdpforce=true;
+      }
+
+      window.close();
+      return;
+
+    }
+
+    setBoutonAnnuler(true);
+
+    return;
+  };
+
+  // on verifie le mdp
+  PacomeTrace("ValiderMdp  vérification du mot de passe");
+
+  PacomeAuthUtils.VerifieMdp(uid, mdp, retourVerif, true);
+
+
+/*
   let httpRequest=new XMLHttpRequest();
 
   let param="op=verifmdp&uid="+encodeURIComponent(uid);
   param+="&mdp="+encodeURIComponent(mdp);
-  param+="&extver="+encodeURIComponent(VERSION_PACOME);
+  param+="&extver="+encodeURIComponent(PacomeAuthUtils.VERSION_PACOME);
 
   //Bug mantis 0004135: Traces incontournables avec uid et version du courrielleur
   let cm2ver=PacomeGetCharPref("courrielleur.version");
   param+="&cm2ver="+cm2ver;
   //org
-  let org=GetOrgForUid(uid);
+  let org=PacomeAuthUtils.GetOrgForUid(uid);
   param+="&org="+org;
 
   // 4582 : Logguer le temps de chargement du Courrielleur
@@ -314,7 +459,8 @@ function ValiderMdp(){
           if (null==argchg["nouveau"]) {
 
             //v3 mettre à jour les comptes
-            MajMdpClient(uid, mdp);
+            // TODO LoginsMatisse.js : à supprimer
+            //MajMdpClient(uid, mdp);
           }
 
           window.arguments[0].res=1;
@@ -406,7 +552,7 @@ function ValiderMdp(){
 
   httpRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded;charset=ISO-8859-1");
 
-  httpRequest.send(param);
+  httpRequest.send(param);*/
 }
 
 
@@ -518,7 +664,7 @@ function ValiderChgMdp(){
     let param="op=chgmdp&uid="+encodeURIComponent(uid);
     param+="&mdp="+encodeURIComponent(actuel);
     param+="&nouv="+encodeURIComponent(nouveau);
-    param+="&extver="+encodeURIComponent(VERSION_PACOME);
+    param+="&extver="+encodeURIComponent(PacomeAuthUtils.VERSION_PACOME);
 
     httpRequest.onreadystatechange= function() {
 
@@ -591,9 +737,6 @@ function ValiderChgMdp(){
             setBoutonsChgMdp(true);
             return;
           }
-
-          //v3 mettre à jour les comptes
-          MajMdpClient(uid, nouveau);
 
           //retourner le nouveau mot de passe
           window.arguments[0]["nouveau"]=nouveau;
@@ -681,6 +824,7 @@ function InitChgMdp(){
 *  change les mots de passe temporaire (dans les instances en mémoire)
 *  Les mots de passe ne sont changés qui si la valeur originale est vide
 */
+// TODO LoginsMatisse.js : à supprimer
 function MajMdpClient(uid,mdp){
 
   PacomeTrace("MajMdpClient uid="+uid);
@@ -719,18 +863,6 @@ function MajMdpClient(uid,mdp){
 }
 
 
-function GetOrgForUid(uid){
-
-	const nb=MailServices.accounts.accounts.length;
-	for (var  i=0;i<nb;i++){
-		let compte=MailServices.accounts.accounts.queryElementAt(i,Components.interfaces.nsIMsgAccount);
-		if (null==compte.defaultIdentity) continue;
-		let idname=PacomeGetCharPref("mail.identity."+compte.defaultIdentity.key+".identityName");
-		if (idname==uid) return compte.defaultIdentity.organization;
-	}
-
-  return "";
-}
 
 // 0004357: Vérifier que lors des erreurs de cht de mot de passe par wsAmande l'explication est bien remontée à l'utilisateur
 // requete pour obtenir texte changement de mot de passe
@@ -741,7 +873,7 @@ function pacomeReqMdptxt(){
   if (null!=p && 0!=p.length)
     url=p;
 
-  url+="?op=mdptxt&extver="+encodeURIComponent(VERSION_PACOME);
+  url+="?op=mdptxt&extver="+encodeURIComponent(PacomeAuthUtils.VERSION_PACOME);
 
   let httpRequest=new XMLHttpRequest();
 

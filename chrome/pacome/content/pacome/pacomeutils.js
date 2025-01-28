@@ -2,17 +2,6 @@
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
 
-//courrielleur 5.2T2+ => v6.0
-//courrielleur 6.1 => v 6.4
-//courrielleur 6.2T1 => v 6.5
-//courrielleur 7.0T1 => 7.0
-//courrielleur 7.1T1 => 7.1
-//courrielleur 7.2T1 => 7.2
-//courrielleur 7.2.1T1 => 7.2
-//courrielleur 8.0 => 7.4
-//courrielleur 8.5 => 8.5
-const VERSION_PACOME="8.5";
-
 
 /* liens d'aide */
 var gUrlsAidesPacome=new Array();

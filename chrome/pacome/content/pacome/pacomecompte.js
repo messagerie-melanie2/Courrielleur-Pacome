@@ -65,12 +65,6 @@ var gPacomeAssitVars={
 	//tableau des resultats [libelle]=PACOME_PARAM_SUCCESS|PACOME_PARAM_ERREUR
   tbl_results:null,
   tbl_results_p:null,
-
-	// nouveau profil avec authentification pacome : mémoriser uid/mdp
-	// si non null, à la fin du paramétrage mémoriser pour le compte principal
-	nouveauMdp: null,
-	// si true, mémorise le mot de passe
-	memoMdp: false
 }
 
 
@@ -396,42 +390,10 @@ function SortiePageSaisieUid(){
   //reinitialiser document parametrage
   gPacomeAssitVars.docpacomesrv=null;
 
-
-	// authentification requise (MI ticket 27)
-	let uidp, mdp;
-	let compte=PacomeAuthUtils.GetComptePrincipal();
-
-	if (null!=compte){
-		uidp=compte.incomingServer.username;
-		mdp=compte.incomingServer.password;
-
-	} else {
-
-		// authentification pacome
-		let outmdp={}, outmemomdp={}, outresmdp={};
-		uidp=uid;
-		PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - authentification", uidp);
-
-		let res=AuthPacome(uidp, outmdp, outmemomdp);
-
-		if (res){
-
-			mdp=outmdp.value;
-			gPacomeAssitVars.nouveauMdp=mdp;
-			gPacomeAssitVars.memoMdp=outmemomdp.value;
-
-		} else{
-
-			window.close();
-			return false;
-		}
-	}
-
   //envoyer la requete
 	PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - envoie de la requete", cfg);
 
-  let ret=RequeteParametrage(cfg, ReceptionParametrage, false, uidp, mdp);
-
+  let ret=RequeteParametrage(cfg, ReceptionParametrage, false, uid);
 
   if (false==ret){
     PacomeAfficheMsgIdGlobalErr("PacomeErreurInitListeUid");
@@ -443,46 +405,6 @@ function SortiePageSaisieUid(){
   return false;
 }
 
-// nouveau profil : authentification lors du paramétrage
-// uid : identifiant ou courriel
-// outmdp : mot passe validé
-// outmemomdp (optionnel) : true si le mot de passe doit être mémorisé
-// retour true si authentification valide, sinon false
-function AuthPacome(uid, outmdp, outmemomdp){
-
-	PacomeTrace("AuthPacome uid:"+uid);
-
-	let outresmdp={};
-
-	while (true){
-		let res=PacomeAuthUtils.PromptMdp(window, uid, outmdp, outmemomdp, outresmdp);
-		// outresmdp.res
-		//   1 -> mot de passe valide ou bouton continuer (mot de passe non vérifié)
-		//  -1 => passage en mode deconnecte
-		if (res){
-			PacomeTrace("AuthPacome PromptMdp true outresmdp.mdpforce:"+outresmdp.mdpforce);
-
-			if (outresmdp.mdpforce){
-				// mot de passe forcé => auth non valide
-				//return false;
-				// cas erreur de saisie => afficher à nouveau
-				continue;
-			}
-
-			// auth ok
-			mdp=outmdp.value;
-			gPacomeAssitVars.nouveauMdp=mdp;
-			gPacomeAssitVars.memoMdp=outmemomdp.value;
-
-			return true;
-
-		} else{
-
-			PacomeTrace("AuthPacome PromptMdp false => offline");
-			return false;
-		}
-	}
-}
 
 /* initialisation page identifiants */
 function InitPageIdents(){
@@ -538,42 +460,13 @@ function SortiePageIdents(){
   let pos=config.indexOf("<comptes>");
   let cfg="<pacome>"+idents+config.substr(pos);
 
-	// authentification requise (MI ticket 27)
-	let uidp, mdp;
-	let compte=PacomeAuthUtils.GetComptePrincipal();
-
-	if (null!=compte){
-		uidp=compte.incomingServer.username;
-		mdp=compte.incomingServer.password;
-
-	} else {
-		// authentification pacome
-		let outmdp={}, outmemomdp={};
-		uidp=uids[0].split("@")[0];
-		PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page de saisie d'identifiant - authentification", uidp);
-
-		let res=AuthPacome(uidp, outmdp, outmemomdp);
-
-		if (res){
-
-			mdp=outmdp.value;
-			gPacomeAssitVars.nouveauMdp=mdp;
-			gPacomeAssitVars.memoMdp=outmemomdp.value;
-
-		} else{
-
-			window.close();
-			return false;
-		}
-	}
-
   //reinitialiser document parametrage
   gPacomeAssitVars.docpacomesrv=null;
 
-  PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page des identifiants - envoie de la requete", cfg);
-
   //envoyer la requete
-  let ret=RequeteParametrage(cfg, ReceptionParametrage, false, uidp, mdp);
+  let uid=uids[0];
+  PacomeEcritLog(PACOME_LOGS_ASSISTANT, "page des identifiants - envoie de la requete", cfg);
+  let ret=RequeteParametrage(cfg, ReceptionParametrage, false, uid);
 
   if (false==ret){
     PacomeAfficheMsgIdGlobalErr("PacomeErreurInitListeUid");
@@ -1386,8 +1279,6 @@ function SortiePageFin(){
       bredemarre=true;
   }
 
-	// nouveau profil avec authentification pacome : mémoriser uid/mdp
-	ParamMemoMdp();
 
   //affichage resultats
 	PacomeAfficheResultats(gPacomeAssitVars.tbl_results.concat(gPacomeAssitVars.tbl_results_p), bredemarre);
@@ -1399,26 +1290,6 @@ function SortiePageFin(){
     window.arguments[0].res=1;
 
   window.close();
-}
-
-
-// nouveau profil avec authentification pacome : mémoriser uid/mdp
-function ParamMemoMdp(){
-
-	if (gPacomeAssitVars.nouveauMdp!=null && gPacomeAssitVars.nouveauMdp!=""){
-
-		let compte=PacomeAuthUtils.GetComptePrincipal();
-		if (compte){
-			let uid=compte.incomingServer.username;
-			PacomeTrace("SortiePageFinMigre modifyMdpPacome uid:'"+uid+"'");
-			PacomeAuthUtils.modifyMdpPacome(uid, gPacomeAssitVars.nouveauMdp);
-
-			if (gPacomeAssitVars.memoMdp){
-				PacomeTrace("SortiePageFinMigre MemoriseMdp uid:'"+uid+"'");
-				PacomeAuthUtils.MemoriseMdp(uid, gPacomeAssitVars.nouveauMdp);
-			}
-		}
-	}
 }
 
 

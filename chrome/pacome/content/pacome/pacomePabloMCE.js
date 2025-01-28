@@ -299,10 +299,6 @@ function SortiePageFinMigre(){
 	ExecParametrages();
 	window.setCursor("auto");
 
-
-	// nouveau profil avec authentification pacome : mémoriser uid/mdp
-	ParamMemoMdp();
-
 	return true;
 }
 

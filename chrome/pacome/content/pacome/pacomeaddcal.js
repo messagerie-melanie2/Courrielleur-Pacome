@@ -1,4 +1,4 @@
-
+ChromeUtils.import("resource://gre/modules/pacomeAuthUtils.jsm");
 
 //document de parametrage
 var g_docpacomesrv=null;
