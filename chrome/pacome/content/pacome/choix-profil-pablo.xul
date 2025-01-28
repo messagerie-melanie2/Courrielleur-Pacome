@@ -39,7 +39,7 @@
 	</vbox>
 	
   <hbox class="pacome_zone">
-    <vbox id="infosapropos"/>
+    <vbox id="infosapropos" flex="1"/>
   </hbox>
 
   <menuseparator/>	
