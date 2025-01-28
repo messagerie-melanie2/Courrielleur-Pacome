@@ -35,7 +35,7 @@
 	Reprise des paramètres d'impression Pablo
 
 	Les dossiers et courriels des comptes Pablo suivants ont été récupérés :
-	- Compte <NOM Prenom> dans le compte MATISSE <Archives de NOM Prenom>
+	- Compte <NOM Prenom> dans le compte MATISSE <Archives Icasso de NOM Prenom>
 	- Compte <Dossiers locaux> dans le compte MATISSE <Dossiers locaux>
 	etc...
 
@@ -351,7 +351,7 @@ var gRapport={
 			for (let i=0;i<mceMigrationMCE._infosPablo.boites.length;i++){
 				let boite=mceMigrationMCE._infosPablo.boites[i];
 				if (!boite.archive) continue;
-				let libelle="Archives de "+boite.name.split("@")[0];
+				let libelle="Archives Icasso de "+boite.name.split("@")[0];
 				let txt=" - Les messages du compte Pablo '"+boite.name+"' ont été archivés dans le dossier local MATISSE :'"+libelle+"'";
 				this._lignes.push(txt);
 			}

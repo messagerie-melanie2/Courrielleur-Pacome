@@ -311,7 +311,7 @@ var archiveBoitesDossiers={
 		try{
 
 			// créer compte dossier local
-			// avec libellé "Archives de "<nom du compte>
+			// avec libellé "Archives Icasso de "<nom du compte>
 			let compte=this.InitDossierBoite(boite);
 			this.logMsg("Archivage de la boite Pablo", boite.name);
 			MessageUI("Archivage de la boite Pablo :"+boite.name);
@@ -616,7 +616,7 @@ var archiveBoitesDossiers={
 	},
 
 	// crée le dossier local pour l'archivage de la boite Pablo
-	// avec libellé "Archives de "<nom du compte>
+	// avec libellé "Archives Icasso de "<nom du compte>
 	// retourne instance nsIAccount
 	InitDossierBoite: function(boite){
 
@@ -624,7 +624,7 @@ var archiveBoitesDossiers={
 			this.logMsg("Initialisation compte dossier local", boite.name);
 
 			// libellé du compte
-			let libelle="Archives de "+boite.name.split("@")[0];
+			let libelle="Archives Icasso de "+boite.name.split("@")[0];
 
 			this.logMsg("Creation du compte dossier local", libelle);
 			let repPablo=new FileUtils.File(boite.directory);
