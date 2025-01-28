@@ -355,6 +355,8 @@ function initMessengerOverlayDelai(){
   let calMan=cal.getCalendarManager();
   if (null!=calMan)
     calMan.addObserver(gPacomeCalManagerObserver);
+
+  pacomeDemarre();
 }
 
 function unloadMessengerOverlay(){
@@ -383,7 +385,8 @@ function pacomeRetourParam(){
 
 function pacomeDemarre(){
 
-  if (!Services.io.offline){
+  if (!Services.io.offline && 
+       Services.prefs.getBoolPref("pacome.majauto", false)){
     // au moins 1 compte => maj pacome
     PacomeMajParam(pacomeRetourParam);
     return;
