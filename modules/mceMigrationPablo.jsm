@@ -577,7 +577,7 @@ var mceMigrationMCE={
 
 
 
-	/* fonctions de migration Pablo vers MCE */
+	/* fonctions de migration Pablo vers MATISSE */
 
 	// fonction principale de migration PABLO
 	MigrePablo: function(){
@@ -1365,7 +1365,7 @@ var mceMigrationMCE={
 	},
 
 
-	/* fin fonctions de migration Pablo vers MCE */
+	/* fin fonctions de migration Pablo vers MATISSE */
 
 
 
