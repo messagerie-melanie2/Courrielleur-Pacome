@@ -62,6 +62,12 @@ ChromeUtils.import("resource:///modules/mailServices.js");
 ChromeUtils.import("resource://gre/modules/Services.jsm");
 ChromeUtils.import("resource:///modules/iteratorUtils.jsm");
 ChromeUtils.import("resource://gre/modules/FileUtils.jsm");
+ChromeUtils.import("resource://gre/modules/pacomeAuthUtils.jsm");
+
+let loader=Components.classes["@mozilla.org/moz/jssubscript-loader;1"]
+                      .getService(Components.interfaces.mozIJSSubScriptLoader);
+loader.loadSubScript("chrome://pacome/content/pacomeutils.js");
+loader.loadSubScript("chrome://pacome/content/pacomereq.js");
 
 
 const EXPORTED_SYMBOLS = ["ConfigCm2Tags", "MajConfigCm2Tags",
@@ -86,6 +92,7 @@ const ETIQUETTES_PARTAGE_PREF="courrielleur.etiquettes.partages";
 const ETIQUETTES_TEST="courrielleur.etiquettes.rapportdetest";
 
 
+
 // log console (mode debug)
 function cm2DebugMsg(msg){
 
@@ -95,7 +102,7 @@ function cm2DebugMsg(msg){
 // retourne la liste des partages depuis la preference
 // retourne vide si pas de valeur
 function GetPrefPartageVals(){
-  
+
   if (Services.prefs.prefHasUserValue(ETIQUETTES_PARTAGE_PREF)){
     return Services.prefs.getCharPref(ETIQUETTES_PARTAGE_PREF);
   }
@@ -144,7 +151,7 @@ function cm2TagsListeBoites(){
       return 0;
     });
   }
-  
+
   cm2DebugMsg("cm2TagsListeBoites:"+JSON.stringify(boites));
   return boites;
 }
@@ -279,7 +286,7 @@ function cm2TagsPartage(key, uid){
   if (!exist){
     return false;
   }
-  
+
   // nom de partage
   let partage=uid;
   let pos=uid.indexOf(".-.");
@@ -500,7 +507,7 @@ function cm2SynchroniseTags(fncRappel){
     }
     return;
   }
-  
+
   // si aucune boite pas de synchro
   if (0==configCm2.boites.length){
     cm2DebugMsg("cm2SynchroniseTags aucune boîte pas de synchro");
@@ -578,7 +585,6 @@ function cm2SynchroniseTags(fncRappel){
   }
 
   cm2ReqServiceTags(strConfig, ReponseService);
-
 }
 
 
@@ -594,7 +600,6 @@ function cm2ReqServiceTags(strConfig, fncRappel){
 
   // Requête http auprès du service : envoie de la configuration
   // asynchrone
-  let httpRequest=new XMLHttpRequest();
 
   let url=ETIQUETTES_SERVICE_URL;
   try {
@@ -603,62 +608,26 @@ function cm2ReqServiceTags(strConfig, fncRappel){
   cm2DebugMsg("cm2ReqServiceTags url:"+url);
   cm2DebugMsg("cm2ReqServiceTags configuration:"+strConfig);
 
-
-  httpRequest.open("POST", url, true);
-
-  httpRequest.setRequestHeader("Accept-Charset", "UTF-8");
-  httpRequest.setRequestHeader("Content-Type", "application/json");
-
-  httpRequest.onload=function(aEvt) {
-
-    let request=aEvt.target;
-    let statut=request.status;
-
-    if (200==statut){
-
-      //extraire la reponse
-      let contentType=request.getResponseHeader('Content-Type');
-      if (null!=contentType &&
-          null!=httpRequest.responseText &&
-          0<httpRequest.responseText.length &&
-          0==contentType.indexOf('application/json')){
-        cm2DebugMsg("cm2ReqServiceTags onload responseText:'"+httpRequest.responseText+"'");
-        if (fncRappel){
-          let result={};
-          result.code=statut;
-          result.erreur="";
-          fncRappel(result, httpRequest.responseText);
-        }
-        return;
-      }
-
-    }
-    // erreur
-    cm2DebugMsg("cm2ReqServiceTags onload statut:'"+statut+"' - erreur:'"+request.statusText+"'");
-    if (fncRappel){
-      let result={};
-      result.code=statut;
-      result.erreur=request.statusText;
-      fncRappel(result, null);
-    }
+  // vérifier que l'url est bien gérée par pacome
+  if (!PacomeAuthUtils.TestServeurMelanie2(url)){
+    cm2DebugMsg("!!! cm2ReqServiceTags url non gérée par pacome");
+    let result={};
+    result.code=-1;
+    result.erreur="Url non gérée par pacome";
+    fncRappel(result, null);
     return;
   }
 
-  httpRequest.onerror=function(aEvt) {
+  // cas serveur authentifié (similaire pacomereq.js)
+  // vérification du mot de passe et/ou saisie
+  if (Services.prefs.getBoolPref("pacome.auth", true)){
 
-    let request=aEvt.target;
-    let statut=request.status;
-    cm2DebugMsg("cm2ReqServiceTags onerror statut:'"+statut+"' - erreur:'"+request.statusText+"'");
-    if (fncRappel){
-      let result={};
-      result.code=(0==statut)?-1:statut;
-      result.erreur=(0==statut)?"Erreur réseau lors de la synchronisation":request.statusText;
-      fncRappel(result, null);
-    }
-    return;
+    AuthReqTags(url, strConfig, fncRappel);
+
+  } else {
+
+    ExecRequeteTags(url, strConfig, fncRappel);
   }
-  cm2DebugMsg("cm2ReqServiceTags envoie de la requete");
-  httpRequest.send(strConfig);
 }
 
 
@@ -671,3 +640,183 @@ function IsEtiquetteDefaut(cle){
     return false;
   return true;
 }
+
+
+
+/*
+* Vérifie et/ou demande le mot de passe utilisateur avant d'envoyer la requete pacome
+* appelle ExecRequeteTags si ok
+*/
+function AuthReqTags(url, strConfig, fncRappel){
+
+  let uid, mdp;
+
+  let login=PacomeAuthUtils.GetLoginPrincipal();
+
+  if (null==login && null==uid){
+    PacomeTrace("AuthReqTags pas de compte pour l'authentification");
+    fncRappel(null);
+    return;
+  }
+
+  uid=login.username;
+  mdp=login.password;
+
+  PacomeTrace("AuthReqTags GetLoginPrincipal uid:"+uid);
+
+  if (null==mdp || ""==mdp){
+
+    let mdpout={};
+
+    let ok=PacomeAuthUtils.PromptMdpRec(uid, mdpout);
+
+    if (!ok){
+      PacomeTrace("AuthReqTags pas de mot passe pour l'authentification");
+      fncRappel(null);
+      return;
+    }
+
+    mdp=mdpout.value;
+
+    // si ok le mot de passe est valide
+    // donc pas nécessaire de vérifier à nouveau
+    ExecRequeteTags(url, strConfig, fncRappel, uid, mdp);
+
+    return;
+  }
+
+  let retourVerif=function(code, message) {
+
+    PacomeTrace("AuthReqTags retourVerif code:"+code+" - message:"+message);
+
+    if (0==code || 0xFFFF==code) {
+
+      // mot de passe est valide
+      PacomeTrace("AuthReqTags retourVerif mot de passe est valide");
+
+      ExecRequeteTags(url, strConfig, fncRappel, uid, mdp);
+
+      return;
+
+    } else if (-1==code) {
+
+      // echec de vérification
+      PacomeTrace("AuthReqTags retourVerif erreur de vérification");
+      fncRappel(null);
+      return;
+
+    } else {
+
+      PacomeTrace("AuthReqTags retourVerif mot de passe non valide");
+
+      // saisie mdp
+      //le mot de passe n'est pas valide
+      let mdpout={};
+
+      PacomeTrace("AuthReqTags retourVerif saisie du mot de passe");
+      let ok=PacomeAuthUtils.PromptMdpRec(uid, mdpout);
+
+      if (ok){
+
+        mdp=mdpout.value;
+
+        ExecRequeteTags(url, strConfig, fncRappel, uid, mdp);
+
+        return;
+
+      } else {
+        // mot de passe non valide ou erreur => annulation
+        fncRappel(null);
+        return;
+      }
+    }
+  };
+
+  // on verifie le mdp passé en paramètre de AuthReqPacome
+  PacomeAuthUtils.VerifieMdp(uid, mdp, retourVerif);
+}
+
+
+
+/*
+* Exécute la requête pour la synchro des étiquettes
+*
+*/
+function ExecRequeteTags(url, strConfig, fncRappel, uid=null, mdp=null) {
+
+  try {
+
+    let httpRequest=new XMLHttpRequest();
+
+    httpRequest.open("POST", url, true);
+
+    httpRequest.setRequestHeader("Accept-Charset", "UTF-8");
+    httpRequest.setRequestHeader("Content-Type", "application/json");
+
+    // cas authentification
+    if (null!=uid && null!=mdp){
+
+      httpRequest.setRequestHeader("Authorization", "Basic "+btoa(uid+":"+mdp));
+    }
+
+    httpRequest.onload=function(aEvt) {
+
+      let request=aEvt.target;
+      let statut=request.status;
+
+      if (200==statut){
+
+        //extraire la reponse
+        let contentType=request.getResponseHeader('Content-Type');
+        if (null!=contentType &&
+            null!=httpRequest.responseText &&
+            0<httpRequest.responseText.length &&
+            0==contentType.indexOf('application/json')){
+          cm2DebugMsg("ExecRequeteTags onload responseText:'"+httpRequest.responseText+"'");
+          if (fncRappel){
+            let result={};
+            result.code=statut;
+            result.erreur="";
+            fncRappel(result, httpRequest.responseText);
+          }
+          return;
+        }
+
+      }
+      // erreur
+      cm2DebugMsg("ExecRequeteTags onload statut:'"+statut+"' - erreur:'"+request.statusText+"'");
+      if (fncRappel){
+        let result={};
+        result.code=statut;
+        result.erreur=request.statusText;
+        fncRappel(result, null);
+      }
+      return;
+    }
+
+    httpRequest.onerror=function(aEvt) {
+
+      let request=aEvt.target;
+      let statut=request.status;
+      cm2DebugMsg("ExecRequeteTags onerror statut:'"+statut+"' - erreur:'"+request.statusText+"'");
+      if (fncRappel){
+        let result={};
+        result.code=(0==statut)?-1:statut;
+        result.erreur=(0==statut)?"Erreur réseau lors de la synchronisation":request.statusText;
+        fncRappel(result, null);
+      }
+      return;
+    }
+    cm2DebugMsg("ExecRequeteTags envoie de la requete");
+    httpRequest.send(strConfig);
+
+  } catch(ex){
+    if (fncRappel){
+      let result={};
+      result.code=-1;
+      result.erreur="Erreur réseau lors de la synchronisation - exception:"+ex;
+      fncRappel(result, null);
+    }
+  }
+}
+
