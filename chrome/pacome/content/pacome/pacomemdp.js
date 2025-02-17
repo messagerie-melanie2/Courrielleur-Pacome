@@ -723,7 +723,7 @@ function InitChgMdp(){
   if (window.arguments[0].actuel &&
       ""!=window.arguments[0].actuel){
 
-    //#8810: Changement de mot de passe prérempli Pacome
+    //8738: pop-up de changement de mot de passe prérempli avec connexion cerbère et forcage du changement de mot de passe
     actuel.value="";//window.arguments[0].actuel;
     let nouveau=document.getElementById("pacomechgmdp.nouveau");
     nouveau.focus();
