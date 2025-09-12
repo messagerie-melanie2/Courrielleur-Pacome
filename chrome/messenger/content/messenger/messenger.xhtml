@@ -56,6 +56,7 @@
       defaultTabTitle="&defaultTabTitle.label;"
       windowtype="mail:3pane"
       macanimationtype="document"
+      windowsmica="true"
       screenX="10" screenY="10"
       scrolling="false"
       persist="screenX screenY width height sizemode"
@@ -64,6 +65,10 @@
       fullscreenbutton="true"
       calendar-deactivated="">
 <head>
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src chrome:; script-src chrome: resource: 'unsafe-inline'; style-src chrome: 'unsafe-inline'; img-src chrome: data: moz-icon: https://addons.thunderbird.net"
+  />
   <link rel="stylesheet" href="chrome://messenger/skin/mailWindow1.css" />
   <link rel="stylesheet" href="chrome://messenger/skin/tagColors.css" />
   <link
@@ -84,6 +89,7 @@
   <link rel="stylesheet" href="chrome://messenger/skin/panelUI.css" />
   <link rel="stylesheet" href="chrome://messenger/skin/contextMenu.css" />
   <link rel="stylesheet" href="chrome://messenger/skin/input-fields.css" />
+  <link rel="stylesheet" href="chrome://messenger/skin/inAppNotificationManager.css" />
   <link
     rel="stylesheet"
     href="chrome://messenger/skin/openpgp/inlineNotification.css"
@@ -102,6 +108,11 @@
     rel="stylesheet"
     href="chrome://calendar/skin/shared/dialogs/calendar-event-dialog.css"
   />
+  <link
+    rel="stylesheet"
+    href="chrome://messenger/skin/calendar/calendarDialog.css"
+  />
+
   <link rel="stylesheet" href="chrome://calendar/skin/today-pane.css" />
   <link rel="stylesheet" href="chrome://calendar/skin/calendar-unifinder.css" />
   <link rel="stylesheet" href="chrome://calendar/skin/calendar-task-tree.css" />
@@ -131,6 +142,7 @@
   <link rel="localization" href="messenger/openpgp/openpgp.ftl" />
   <link rel="localization" href="messenger/openpgp/openpgp-frontend.ftl" />
   <link rel="localization" href="messenger/openpgp/msgReadStatus.ftl"/>
+  <link rel="localization" href="calendar/calendar.ftl" />
   <link rel="localization" href="calendar/calendar-today-pane.ftl" />
   <link rel="localization" href="calendar/calendar-widgets.ftl" />
   <link rel="localization" href="calendar/calendar-context-menus.ftl" />
@@ -139,6 +151,7 @@
   <link rel="localization" href="messenger/chat.ftl" />
   <link rel="localization" href="messenger/messageheader/headerFields.ftl" />
   <link rel="localization" href="messenger/mailWidgets.ftl" />
+  <link rel="localization" href="messenger/inAppNotifications.ftl" />
   <link rel="localization" href="messenger/unifiedToolbar.ftl" />
   <link rel="localization" href="messenger/unifiedToolbarItems.ftl" />
 
@@ -147,7 +160,6 @@
   <script defer="defer" src="chrome://messenger/content/globalOverlay.js"></script>
   <script defer="defer" src="chrome://global/content/editMenuOverlay.js"></script>
   <script defer="defer" src="chrome://messenger/content/mailWindow.js"></script>
-  <script defer="defer" src="chrome://messenger/content/selectionsummaries.js"></script>
   <script defer="defer" src="chrome://messenger/content/messenger.js"></script>
   <script defer="defer" src="chrome://messenger/content/specialTabs.js"></script>
   <script defer="defer" src="chrome://messenger/content/spacesToolbar.js"></script>
@@ -258,12 +270,14 @@
 
   <!-- NEEDED FOR MIGRATION CHECK AT INSTALL -->
   <script defer="defer" src="chrome://calendar/content/calendar-migration.js"></script>
+
+  <!-- Customizable shortcuts -->
   <script defer="defer" src="chrome://messenger/content/shortcutsOverlay.js"></script>
 
   <script defer="defer" src="chrome://messenger/content/accountcreation/accountHub.js"></script>
-	
-	<!-- pour mise a jour pacome -->
-	<script defer="defer" src="chrome://pacome/content/pacomeMaj.js"></script>
+  
+  <!-- pour mise a jour pacome -->
+  <script defer="defer" src="chrome://pacome/content/pacomeMaj.js"></script>
 
   <!-- Unified toolbar -->
   <script type="module" defer="defer" src="chrome://messenger/content/unifiedtoolbar/unified-toolbar.mjs"></script>
@@ -644,7 +658,7 @@
   <command id="calendar_toggle_calendarsidebar_command" oncommand="togglePaneSplitter('calsidebar_splitter')"/>
   <command id="calendar_toggle_minimonthpane_command" oncommand="document.getElementById('minimonth-pane').togglePane(event)"/>
   <command id="calendar_toggle_calendarlist_command" oncommand="document.getElementById('calendar-list-pane').togglePane(event)"/>
-  <command id="calendar_task_filter_command" oncommand="taskViewUpdate(event.target.getAttribute('value'))"/>
+  <command id="calendar_task_filter_command" oncommand="taskViewUpdate(event.explicitOriginalTarget.getAttribute('value'))"/>
   <command id="calendar_toggle_filter_command" oncommand="document.getElementById('task-filter-pane').togglePane(event)"/>
   <command id="calendar_view_next_command" oncommand="goDoCommand('calendar_view_next_command')"/>
   <command id="calendar_view_today_command" oncommand="currentView().moveView()"/>
@@ -866,6 +880,7 @@
 <popupset id="mainPopupSet">
 
   <menupopup id="browserContext"
+             class="no-icon-menupopup"
              onpopupshowing="return browserContextOnShowing(event);"
              onpopuphiding="browserContextOnHiding(event);">
     <!-- Browser navigation -->
@@ -1188,7 +1203,7 @@
         <toolbarbutton id="appmenu_newMailAccountMenuItem"
                        class="subviewbutton subviewbutton-iconic"
                        data-l10n-id="appmenu-new-email-account"
-                       oncommand="openAccountSetupTab();"/>
+                       oncommand="openAccountSetup();"/>
         <toolbarbutton id="appmenu_calendar-new-calendar-menu-item"
                        class="subviewbutton subviewbutton-iconic"
                        data-l10n-id="appmenu-new-calendar"
@@ -1198,6 +1213,11 @@
                        data-l10n-id="appmenu-newab-panel"
                        closemenu="none"
                        oncommand="PanelUI.showSubView('appMenu-newabView', this)"/>
+        <toolbarbutton id="appmenu_newAccountHubAB"
+                       class="subviewbutton subviewbutton-iconic"
+                       data-l10n-id="appmenu-newab-panel"
+                       oncommand="openAccountHubABDialog()"
+                       hidden="true"/>
         <toolbarbutton id="appmenu_newIMAccountMenuItem"
                        class="subviewbutton subviewbutton-iconic"
                        data-l10n-id="appmenu-new-chat-account"
@@ -1504,6 +1524,10 @@
                        class="subviewbutton subviewbutton-iconic"
                        data-l10n-id="appmenu-tools-export"
                        oncommand="toExport();"/>
+        <toolbarbutton id="appmenu_exportmobile"
+                       class="subviewbutton subviewbutton-iconic"
+                       data-l10n-id="appmenu-export-for-mobile"
+                       oncommand="openOptionsDialog('paneQrExport');"/>
         <toolbarseparator id="importExportSeparator"/>
         <toolbarbutton id="appmenu_searchCmd"
                        class="subviewbutton subviewbutton-iconic"
@@ -1792,7 +1816,7 @@
     <popupnotificationcontent class="addon-webext-perm-notification-content" orient="vertical">
       <description id="addon-webext-perm-text" class="addon-webext-perm-text"/>
       <label id="addon-webext-perm-intro" class="addon-webext-perm-text"/>
-      <label id="addon-webext-perm-single-entry" class="addon-webext-perm-single-entry"/>
+      <label id ="addon-webext-perm-title-required" class="addon-webext-perm-title-required"/>
       <html:ul id="addon-webext-perm-list" class="addon-webext-perm-list"/>
       <description id="addon-webext-experiment-warning" class="addon-webext-experiment-warning"/>
       <hbox>
@@ -1924,6 +1948,164 @@
   </menupopup>
 </popupset>
 
+<!--
+  Include in app notifications first to make them as easy as possible to get to
+  when navigating via keyboard. This is important if they miss the instructions
+  for the key command to be able to find what was announced.
+-->
+
+<html:template id="inAppNotificationCloseButtonTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <img src="" data-l10n-id="in-app-notification-close-image" />
+</html:template>
+
+<html:template id="inAppNotificationContainerTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <div
+    class="in-app-notification-container"
+    tabindex="0"
+  >
+    <button is="in-app-notification-close-button"></button>
+    <img src="" alt="" class="icon" />
+    <div class="in-app-notification-content">
+      <h1 class="in-app-notification-heading"></h1>
+      <div class="in-app-notification-description-wrapper">
+        <p class="in-app-notification-description">
+        </p>
+      </div>
+      <a is="in-app-notification-button">
+        <span class="in-app-notification-cta"></span>
+      </a>
+    </div>
+  </div>
+  <span class="in-app-notification-instructions" data-l10n-id="in-app-notification-instructions"></span>
+</html:template>
+
+<html:template id="inAppNotificationTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <in-app-notification-container></in-app-notification-container>
+</html:template>
+
+<div class="in-app-notification-root" role="status"></div>
+
+<!-- Include the new calendar dialog. -->
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
+
+
+<html:template id="calendarDialogRowTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <div part="row">
+    <slot name="icon"></slot>
+    <slot name="label"></slot>
+    <slot name="content"></slot>
+  </div>
+</html:template>
+
+<html:template id="calendarDialogDateRowTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <calendar-dialog-row>
+    <img
+      src=""
+      slot="icon"
+      class="icon-date-time"
+      data-l10n-id="calendar-dialog-date-row-icon"
+    />
+    <div slot="label">
+      <span class="date-label"></span>
+      <img
+        src=""
+        class="icon-recurrence repeats"
+        data-l10n-id="calendar-dialog-date-row-recurring-icon"
+        hidden="hidden"
+      />
+    </div>
+  </calendar-dialog-row>
+</html:template>
+
+<html:template id="calendarDialogDescriptionRowTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <calendar-dialog-row>
+    <img
+      src=""
+      slot="icon"
+      class="icon-description"
+      data-l10n-id="calendar-dialog-description-row-icon"
+    />
+    <span
+      slot="label"
+      class="row-label"
+      data-l10n-id="calendar-dialog-description-label"
+    ></span>
+    <div slot="content"></div>
+  </calendar-dialog-row>
+</html:template>
+
+<html:template id="calendarDialogCategoriesTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <ul class="categories-list"></ul>
+  <span class="overflow-label" hidden="hidden"></span>
+</html:template>
+
+<html:template id="calendarDialogTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <div class="titlebar">
+    <button
+      class="button icon-button icon-only button-flat back-button"
+      data-l10n-id="calendar-dialog-back-button"
+    ></button>
+    <h2 class="calendar-dialog-title"></h2>
+    <button class="button icon-button icon-only button-flat close-button"
+            data-l10n-id="calendar-dialog-close-button">
+    </button>
+  </div>
+  <div class="content">
+    <calendar-dialog-subview-manager
+      default-subview="calendarDialogMainSubview"
+    >
+      <div id="calendarDialogMainSubview" hidden="hidden">
+        <calendar-dialog-date-row></calendar-dialog-date-row>
+        <calendar-dialog-row id="locationRow">
+          <img
+            src=""
+            slot="icon"
+            class="icon-location"
+            data-l10n-id="calendar-dialog-location-row-icon" />
+          <div slot="label">
+            <a
+              id="locationLink"
+              class="text-link"
+              href=""
+              hidden="hidden"
+            ></a>
+            <span id="locationText" hidden="hidden"></span>
+          </div>
+        </calendar-dialog-row>
+        <div id="descriptionRow" class="expanding-row">
+          <calendar-dialog-description-row
+            id="expandingDescription"
+          ></calendar-dialog-description-row>
+          <button
+            id="expandDescription"
+            class="button button-flat expand-button icon-button"
+          >
+            <img
+              src=""
+              class="icon-nav-right"
+              data-l10n-id="calendar-dialog-description-expand-icon"
+            />
+          </button>
+        </div>
+        <calendar-dialog-categories></calendar-dialog-categories>
+      </div>
+      <div
+        id="calendarDescriptionSubview"
+        hidden="hidden"
+      >
+        <calendar-dialog-description-row
+          id="expandedDescription"
+          type="full"
+        ></calendar-dialog-description-row>
+      </div>
+    </calendar-dialog-subview-manager>
+  </div>
+  <div class="footer"></div>
+</html:template>
+<div class="calendar-dialog-root"></div>
+
 
 <popupset id="calendar-popupset">
   <!-- Tooltips -->
@@ -1938,14 +2120,17 @@
   <tooltip id="itemTooltip"
           noautohide="true"/>
 
-  <menupopup id="agenda-menupopup">
+  <menupopup id="agenda-menupopup"
+             class="no-icon-menupopup">
     <menuitem label="&calendar.context.modifyorviewitem.label;"
               accesskey="&calendar.context.modifyorviewitem.accesskey;"
               command="agenda_edit_event_command"/>
     <menu id="agenda-context-menu-convert-menu"
+          class="no-icon-menupopup"
           label="&calendar.context.convertmenu.label;"
           accesskey="&calendar.context.convertmenu.accesskey.calendar;">
-      <menupopup id="agenda-context-menu-convert-menupopup">
+      <menupopup id="agenda-context-menu-convert-menupopup"
+                 class="no-icon-menupopup">
         <menuitem id="agenda-context-menu-convert-message-menuitem"
                   label="&calendar.context.convertmenu.message.label;"
                   accesskey="&calendar.context.convertmenu.message.accesskey;"
@@ -1978,7 +2163,8 @@
               value="ACCEPTED"
               name="agenda-context-attendance"
               scope="this-occurrence">
-          <menupopup id="agenda-context-menu-occurrence-accepted-menupopup">
+          <menupopup id="agenda-context-menu-occurrence-accepted-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="agenda-context-menu-attend-accept-menuitem"
                       scope="this-occurrence"
                       label="&calendar.context.attendance.send.label;"
@@ -1999,7 +2185,8 @@
               value="TENTATIVE"
               name="agenda-context-attendance"
               scope="this-occurrence">
-          <menupopup id="agenda-context-menu-occurrence-tentative-menupopup">
+          <menupopup id="agenda-context-menu-occurrence-tentative-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="agenda-context-menu-attend-tentative-menuitem"
                       scope="this-occurrence"
                       label="&calendar.context.attendance.send.label;"
@@ -2020,7 +2207,8 @@
               value="DECLINED"
               name="agenda-context-attendance"
               scope="this-occurrence">
-          <menupopup id="agenda-context-menu-occurrence-tentative-menupopup">
+          <menupopup id="agenda-context-menu-occurrence-tentative-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="agenda-context-menu-attend-declined-menuitem"
                       scope="this-occurrence"
                       label="&calendar.context.attendance.send.label;"
@@ -2055,7 +2243,8 @@
               value="ACCEPTED"
               name="agenda-context-attendance-all"
               scope="all-occurrences">
-          <menupopup id="agenda-context-menu-alloccurrences-accept-menupopup">
+          <menupopup id="agenda-context-menu-alloccurrences-accept-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="agenda-context-menu-attend-accept-all-menuitem"
                       scope="all-occurrences"
                       label="&calendar.context.attendance.send.label;"
@@ -2076,7 +2265,8 @@
               value="TENTATIVE"
               name="agenda-context-attendance-all"
               scope="all-occurrences">
-          <menupopup id="agenda-context-menu-alloccurrences-tentative-menupopup">
+          <menupopup id="agenda-context-menu-alloccurrences-tentative-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="agenda-context-menu-attend-tentative-all-menuitem"
                       scope="all-occurrences"
                       label="&calendar.context.attendance.send.label;"
@@ -2097,7 +2287,8 @@
               value="DECLINED"
               name="agenda-context-attendance-all"
               scope="all-occurrences">
-          <menupopup id="agenda-context-menu-alloccurrences-decline-menupopup">
+          <menupopup id="agenda-context-menu-alloccurrences-decline-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="agenda-context-menu-attend-declined-all-menuitem"
                       scope="all-occurrences"
                       label="&calendar.context.attendance.send.label;"
@@ -2127,7 +2318,8 @@
   </menupopup>
 
   <!-- CALENDAR LIST CONTEXT MENU -->
-  <menupopup id="list-calendars-context-menu">
+  <menupopup id="list-calendars-context-menu"
+             class="no-icon-menupopup">
     <menuitem id="list-calendars-context-togglevisible"
               class="needs-calendar"
               accesskeyshow="&calendar.context.showcalendar.accesskey;"
@@ -2184,6 +2376,7 @@
 
   <!-- CALENDAR ITEM CONTEXT MENU -->
   <menupopup id="calendar-item-context-menu"
+             class="no-icon-menupopup"
              onpopupshowing="return setupContextItemType(event, currentView().getSelectedItems());">
     <menuitem id="calendar-item-context-menu-view-menuitem"
               label="&calendar.context.modifyorviewitem.label;"
@@ -2223,7 +2416,8 @@
     <menu id="calendar-item-context-menu-convert-menu"
           label="&calendar.context.convertmenu.label;"
           accesskey="&calendar.context.convertmenu.accesskey.calendar;">
-      <menupopup id="calendar-item-context-menu-convert-menupopup">
+      <menupopup id="calendar-item-context-menu-convert-menupopup"
+                 class="no-icon-menupopup">
         <menuitem id="calendar-view-context-menu-convert-message-menuitem"
                   label="&calendar.context.convertmenu.message.label;"
                   accesskey="&calendar.context.convertmenu.message.accesskey;"
@@ -2262,7 +2456,8 @@
               value="ACCEPTED"
               name="calendar-item-context-attendance"
               scope="this-occurrence">
-          <menupopup id="calendar-item-context-menu-occurrence-accepted-menupopup">
+          <menupopup id="calendar-item-context-menu-occurrence-accepted-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="calendar-item-context-menu-attend-accept-menuitem"
                       scope="this-occurrence"
                       label="&calendar.context.attendance.send.label;"
@@ -2283,7 +2478,8 @@
               value="TENTATIVE"
               name="calendar-item-context-attendance"
               scope="this-occurrence">
-          <menupopup id="calendar-item-context-menu-occurrence-tentative-menupopup">
+          <menupopup id="calendar-item-context-menu-occurrence-tentative-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="calendar-item-context-menu-attend-tentative-menuitem"
                       scope="this-occurrence"
                       label="&calendar.context.attendance.send.label;"
@@ -2304,7 +2500,8 @@
               value="DECLINED"
               name="calendar-item-context-attendance"
               scope="this-occurrence">
-          <menupopup id="calendar-item-context-menu-occurrence-tentative-menupopup">
+          <menupopup id="calendar-item-context-menu-occurrence-tentative-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="calendar-item-context-menu-attend-declined-menuitem"
                       scope="this-occurrence"
                       label="&calendar.context.attendance.send.label;"
@@ -2339,7 +2536,8 @@
               value="ACCEPTED"
               name="calendar-item-context-attendance-all"
               scope="all-occurrences">
-          <menupopup id="calendar-item-context-menu-alloccurrences-accept-menupopup">
+          <menupopup id="calendar-item-context-menu-alloccurrences-accept-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="calendar-item-context-menu-attend-accept-all-menuitem"
                       scope="all-occurrences"
                       label="&calendar.context.attendance.send.label;"
@@ -2360,7 +2558,8 @@
               value="TENTATIVE"
               name="calendar-item-context-attendance-all"
               scope="all-occurrences">
-          <menupopup id="calendar-item-context-menu-alloccurrences-tentative-menupopup">
+          <menupopup id="calendar-item-context-menu-alloccurrences-tentative-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="calendar-item-context-menu-attend-tentative-all-menuitem"
                       scope="all-occurrences"
                       label="&calendar.context.attendance.send.label;"
@@ -2381,7 +2580,8 @@
               value="DECLINED"
               name="calendar-item-context-attendance-all"
               scope="all-occurrences">
-          <menupopup id="calendar-item-context-menu-alloccurrences-decline-menupopup">
+          <menupopup id="calendar-item-context-menu-alloccurrences-decline-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="calendar-item-context-menu-attend-declined-all-menuitem"
                       scope="all-occurrences"
                       label="&calendar.context.attendance.send.label;"
@@ -2411,7 +2611,8 @@
   </menupopup>
 
   <!-- CALENDAR VIEW CONTEXT MENU -->
-  <menupopup id="calendar-view-context-menu">
+  <menupopup id="calendar-view-context-menu"
+             class="no-icon-menupopup">
     <menuitem id="calendar-view-context-menu-newevent"
               label="&calendar.context.newevent.label;"
               command="calendar_new_event_context_command"
@@ -2449,8 +2650,9 @@
 
   <!-- TASK ITEM CONTEXT MENU -->
   <menupopup id="taskitem-context-menu"
-            onpopupshowing="changeContextMenuForTask(event);"
-            onpopuphiding="handleTaskContextMenuStateChange(event);">
+             class="no-icon-menupopup"
+             onpopupshowing="changeContextMenuForTask(event);"
+             onpopuphiding="handleTaskContextMenuStateChange(event);">
     <menuitem id="task-context-menu-modify"
               label="&calendar.context.modifyorviewtask.label;"
               accesskey="&calendar.context.modifyorviewtask.accesskey;"
@@ -2506,7 +2708,8 @@
           label="&calendar.context.postpone.label;"
           accesskey="&calendar.context.postpone.accesskey;"
           command="calendar_general-postpone_command">
-      <menupopup id="task-context-postpone-menupopup">
+      <menupopup id="task-context-postpone-menupopup"
+                 class="no-icon-menupopup">
         <menuitem id="task-context-postpone-1hour"
                   label="&calendar.context.postpone.1hour.label;"
                   accesskey="&calendar.context.postpone.1hour.accesskey;"
@@ -2531,7 +2734,8 @@
     <menu id="task-context-menu-convert"
           label="&calendar.context.convertmenu.label;"
           accesskey="&calendar.context.convertmenu.accesskey.calendar;">
-      <menupopup id="task-context-convert-menupopup">
+      <menupopup id="task-context-convert-menupopup"
+                 class="no-icon-menupopup">
         <menuitem id="calendar-context-converttomessage"
                   label="&calendar.context.convertmenu.message.label;"
                   accesskey="&calendar.context.convertmenu.message.accesskey;"
@@ -2563,7 +2767,8 @@
               value="ACCEPTED"
               name="task-context-attendance"
               scope="this-occurrence">
-          <menupopup id="task-context-menu-occurrence-accepted-menupopup">
+          <menupopup id="task-context-menu-occurrence-accepted-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="task-context-menu-attend-accept-menuitem"
                       scope="this-occurrence"
                       label="&calendar.context.attendance.send.label;"
@@ -2584,7 +2789,8 @@
               value="TENTATIVE"
               name="task-context-attendance"
               scope="this-occurrence">
-          <menupopup id="task-context-menu-occurrence-tentative-menupopup">
+          <menupopup id="task-context-menu-occurrence-tentative-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="task-context-menu-attend-tentative-menuitem"
                       scope="this-occurrence"
                       label="&calendar.context.attendance.send.label;"
@@ -2605,7 +2811,8 @@
               value="DECLINED"
               name="task-context-attendance"
               scope="this-occurrence">
-          <menupopup id="task-context-menu-occurrence-tentative-menupopup">
+          <menupopup id="task-context-menu-occurrence-tentative-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="task-context-menu-attend-declined-menuitem"
                       scope="this-occurrence"
                       label="&calendar.context.attendance.send.label;"
@@ -2626,7 +2833,8 @@
               value="IN-PROGRESS"
               name="task-context-attendance"
               scope="this-occurrence">
-          <menupopup id="task-context-menu-occurrence-inprogress-menupopup">
+          <menupopup id="task-context-menu-occurrence-inprogress-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="task-context-menu-attend-inprogress-menuitem"
                       scope="this-occurrence"
                       label="&calendar.context.attendance.send.label;"
@@ -2647,7 +2855,8 @@
               value="COMPLETED"
               name="task-context-attendance"
               scope="this-occurrence">
-          <menupopup id="task-context-menu-occurrence-completed-menupopup">
+          <menupopup id="task-context-menu-occurrence-completed-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="task-context-menu-attend-completed-menuitem"
                       scope="this-occurrence"
                       label="&calendar.context.attendance.send.label;"
@@ -2682,7 +2891,8 @@
               value="ACCEPTED"
               name="task-context-attendance-all"
               scope="all-occurrences">
-          <menupopup id="task-context-menu-alloccurrences-accept-menupopup">
+          <menupopup id="task-context-menu-alloccurrences-accept-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="task-context-menu-attend-accept-all-menuitem"
                       scope="all-occurrences"
                       label="&calendar.context.attendance.send.label;"
@@ -2703,7 +2913,8 @@
               value="TENTATIVE"
               name="task-context-attendance-all"
               scope="all-occurrences">
-          <menupopup id="task-context-menu-alloccurrences-tentative-menupopup">
+          <menupopup id="task-context-menu-alloccurrences-tentative-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="task-context-menu-attend-tentative-all-menuitem"
                       scope="all-occurrences"
                       label="&calendar.context.attendance.send.label;"
@@ -2724,7 +2935,8 @@
               value="DECLINED"
               name="task-context-attendance-all"
               scope="all-occurrences">
-          <menupopup id="task-context-menu-alloccurrences-decline-menupopup">
+          <menupopup id="task-context-menu-alloccurrences-decline-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="task-context-menu-attend-declined-all-menuitem"
                       scope="all-occurrences"
                       label="&calendar.context.attendance.send.label;"
@@ -2745,7 +2957,8 @@
               value="IN-PROGRESS"
               name="task-context-attendance-all"
               scope="all-occurrences">
-          <menupopup id="task-context-menu-alloccurrences-inprogress-menupopup">
+          <menupopup id="task-context-menu-alloccurrences-inprogress-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="task-context-menu-attend-inprogress-all-menuitem"
                       scope="all-occurrences"
                       label="&calendar.context.attendance.send.label;"
@@ -2766,7 +2979,8 @@
               value="COMPLETED"
               name="task-context-attendance-all"
               scope="all-occurrences">
-          <menupopup id="task-context-menu-alloccurrences-completed-menupopup">
+          <menupopup id="task-context-menu-alloccurrences-completed-menupopup"
+                     class="no-icon-menupopup">
             <menuitem id="task-context-menu-attend-completed-all-menuitem"
                       scope="all-occurrences"
                       label="&calendar.context.attendance.send.label;"
@@ -2852,7 +3066,8 @@
   </menupopup>
 
   <!-- TASKVIEW LINK CONTEXT MENU -->
-  <menupopup id="taskview-link-context-menu">
+  <menupopup id="taskview-link-context-menu"
+             class="no-icon-menupopup">
     <menuitem id="taskview-link-context-menu-copy"
               label="&calendar.copylink.label;"
               accesskey="&calendar.copylink.accesskey;"
@@ -3475,7 +3690,6 @@
   <span class="button-label"></span>
 </html:template>
 
-
 <popupset id="spacesToolbarPopupSet">
   <menupopup id="spacesContextMenu"
              class="no-icon-menupopup no-accel-menupopup">
@@ -3578,8 +3792,7 @@
   </button>
 
   <div class="spaces-toolbar-container spaces-toolbar-bottom-container">
-	
-    <!-- Bouton assistant Pacome -->
+	<!-- Bouton assistant Pacome -->
     <button id="assistantPacome"
             class="spaces-toolbar-button"
             tabindex="-1"
@@ -3590,7 +3803,7 @@
              style="cursor:pointer;"
              title="Assistant de paramétrage des comptes">P</label>
     </button>
-		
+  
     <!-- Settings button. -->
     <button id="settingsButton"
             data-l10n-id="spaces-toolbar-button-settings2"
@@ -3664,6 +3877,7 @@
     <toolbar id="toolbar-menubar"
              class="chromeclass-menubar themeable-full"
              type="menubar"
+             autohide="true"
              data-l10n-id="toolbar-context-menu-menu-bar"
              data-l10n-attrs="toolbarname"
              context="toolbar-context-menu"
@@ -3709,7 +3923,7 @@
           <menuseparator id="newAccountPopupMenuSeparator"/>
           <menuitem id="newMailAccountMenuItem"
                     data-l10n-id="file-new-email-account"
-                    oncommand="openAccountSetupTab();"/>
+                    oncommand="openAccountSetup();"/>
           <menuitem id="newIMAccountMenuItem"
                     label="&newIMAccountCmd.label;"
                     accesskey="&newIMAccountCmd.accesskey;"
@@ -4534,19 +4748,19 @@
                     name="viewFeedBodyHTMLGroup"
                     label="&bodyAllowHTML.label;"
                     accesskey="&bodyAllowHTML.accesskey;"
-                    oncommand="MsgFeedBodyRenderPrefs(false, 0, 0)"/>
+                    oncommand="MsgBodyAllowHTML()"/>
           <menuitem id="bodyFeedSummarySanitized"
                     type="radio"
                     name="viewFeedBodyHTMLGroup"
                     label="&bodySanitized.label;"
                     accesskey="&bodySanitized.accesskey;"
-                    oncommand="MsgFeedBodyRenderPrefs(false, 3, gDisallow_classes_no_html)"/>
+                    oncommand="MsgBodySanitized()"/>
           <menuitem id="bodyFeedSummaryAsPlaintext"
                     type="radio"
                     name="viewFeedBodyHTMLGroup"
                     label="&bodyAsPlaintext.label;"
                     accesskey="&bodyAsPlaintext.accesskey;"
-                    oncommand="MsgFeedBodyRenderPrefs(true, 1, gDisallow_classes_no_html)"/>
+                    oncommand="MsgBodyAsPlaintext()"/>
         </menupopup>
       </menu>
       <menuitem id="viewAttachmentsInlineMenuitem" label="&viewAttachmentsInlineCmd.label;" accesskey="&viewAttachmentsInlineCmd.accesskey;"
@@ -4668,8 +4882,8 @@
         <menupopup is="folder-menupopup" id="menu_GoFolderPopup"
                     showFileHereLabel="true"
                     showRecent="true"
-                    recentLabel="&contextMoveCopyMsgRecentMenu.label;"
-                    recentAccessKey="&contextMoveCopyMsgRecentMenu.accesskey;"
+                    recentLabel="&contextMoveCopyMsgRecentDestinationMenu.label;"
+                    recentAccessKey="&contextMoveCopyMsgRecentDestinationMenu.accesskey;"
                     showFavorites="true"
                     favoritesLabel="&contextMoveCopyMsgFavoritesMenu.label;"
                     favoritesAccessKey="&contextMoveCopyMsgFavoritesMenu.accesskey;"/>
@@ -5111,6 +5325,9 @@
     <menuitem id="menu_export" label="&exportCmd.label;"
               accesskey="&exportCmd.accesskey;"
               oncommand="toExport();"/>
+    <menuitem id="menu_exportmobile"
+              data-l10n-id="menu-export-for-mobile"
+              oncommand="openOptionsDialog('paneQrExport');"/>
     <menuitem id="manageKeysOpenPGP"
               data-l10n-id="openpgp-manage-keys-openpgp-cmd"
               oncommand="openKeyManager()"/>
@@ -5204,7 +5421,7 @@
         <arrowscrollbox id="tabmail-arrowscrollbox"
                         orient="horizontal"
                         flex="1"
-                        clicktoscroll="true"
+                        clicktoscroll=""
                         style="min-width: 1px;">
           <tab is="tabmail-tab" selected="true"
                class="tabmail-tab" crop="end"/>
@@ -5563,6 +5780,9 @@
             <box align="center">
               <menulist id="event-filter-menulist" value="P7D" persist="value">
                 <menupopup id="event-filter-menupopup" oncommand="refreshUnifinderFilterInterval()">
+                  <menuitem id="event-filter-past"
+                            value="past"
+                            data-l10n-id="calendar-event-listing-interval-past"/>
                   <menuitem id="event-filter-today"
                             value="today"
                             data-l10n-id="calendar-event-listing-interval-today"/>
@@ -5586,6 +5806,9 @@
                   <menuitem id="event-filter-next12Months"
                             value="next12Months"
                             data-l10n-id="calendar-event-listing-interval-next-12-months"/>
+                  <menuitem id="event-filter-future"
+                            value="future"
+                            data-l10n-id="calendar-event-listing-interval-future"/>
                   <menuitem id="event-filter-thisCalendarMonth"
                             value="thisCalendarMonth"
                             data-l10n-id="calendar-event-listing-interval-calendar-month"/>
@@ -5595,6 +5818,9 @@
                   <menuitem id="event-filter-currentview"
                             value="currentview"
                             data-l10n-id="calendar-event-listing-interval-current-view"/>
+                  <menuitem id="event-filter-all"
+                            value="all"
+                            data-l10n-id="calendar-event-listing-interval-all"/>
                 </menupopup>
               </menulist>
             </box>
@@ -5612,7 +5838,6 @@
           <tree id="unifinder-search-results-tree" flex="1"
                 onkeypress="unifinderKeyPress(event)"
                 _selectDelay="500"
-                persist="sort-active sort-direction"
                 enableColumnDrag="true">
             <treecols id="unifinder-search-results-tree-cols">
               <treecol id="unifinder-search-results-tree-col-title"
@@ -5627,6 +5852,7 @@
                        style="flex: 1 auto"
                        closemenu="none"
                        itemproperty="startDate"
+                       sortDirection="ascending"
                        data-l10n-id="calendar-event-listing-column-start-date"/>
               <splitter class="tree-splitter"/>
               <treecol id="unifinder-search-results-tree-col-enddate"
@@ -6763,6 +6989,7 @@
       <hbox class="statusbarpanel">
         <toolbarbutton id="offline-status" oncommand="MailOfflineMgr.toggleOfflineStatus();"/>
       </hbox>
+      <label id="urlText" class="statusbarpanel" value="" flex="2" collapsed="true" crop="end"/>
       <label id="statusText" class="statusbarpanel" value="&statusText.label;" flex="1" crop="end"/>
       <hbox id="statusbar-progresspanel" class="statusbarpanel statusbarpanel-progress" collapsed="true">
         <html:progress class="progressmeter-statusbar" id="statusbar-icon" value="0" max="100"/>
@@ -6876,17 +7103,996 @@
     </vbox>
   </stack>
 </html:template>
-
 <!--
   List of all the account creation templates. Don't load any JavaScript or
   CSS in here, those files are handled lazily in the controller and in the
   various shadowRoots of the views.
 -->
+
+<html:template
+  id="accountHubAddressBookAccountSelectTemplate"
+  xmlns="http://www.w3.org/1999/xhtml"
+>
+</html:template>
+
+<html:template
+  id="accountHubAddressBookLdapAccountFormTemplate"
+  xmlns="http://www.w3.org/1999/xhtml"
+>
+</html:template>
+
+<html:template
+  id="accountHubAddressBookLdapAdvancedFormTemplate"
+  xmlns="http://www.w3.org/1999/xhtml"
+>
+</html:template>
+
+<html:template
+  id="accountHubAddressBookOptionSelectTemplate"
+  xmlns="http://www.w3.org/1999/xhtml"
+>
+  <form id="optionSelectForm" class="account-hub-address-book-form" slot="content">
+    <div class="hub-body option-select-body">
+      <!-- TODO: Use grid instead of divs in button -->
+      <button id="syncExistingAccounts" class="account-hub-option-button">
+        <div class="option-icon">
+          <img
+            class="sync-icon"
+            data-l10n-id="address-book-sync-existing-icon"
+          />
+        </div>
+        <div class="option-content">
+          <span
+            class="option-title"
+            data-l10n-id="address-book-sync-existing">
+          </span>
+          <!-- PLACEHOLDER TEXT -->
+          <span class="option-data">5 address books from 2 accounts available</span>
+        </div>
+      </button>
+      <button id="addRemoteAddressBook" class="account-hub-option-button">
+        <div class="option-icon">
+          <img
+            class="remote-address-book-icon"
+            data-l10n-id="address-book-add-remote-icon"
+          />
+        </div>
+        <div class="option-content">
+          <span
+            class="option-title"
+            data-l10n-id="address-book-add-remote">
+          </span>
+          <span
+            class="option-data"
+            data-l10n-id="address-book-add-remote-description"
+          >
+          </span>
+        </div>
+      </button>
+      <button id="newLocalAddressBook" class="account-hub-option-button">
+        <div class="option-icon">
+          <img
+            class="local-address-book-icon"
+            data-l10n-id="address-book-add-local-icon"
+          />
+        </div>
+        <div class="option-content">
+          <span
+            class="option-title"
+            data-l10n-id="address-book-add-local">
+          </span>
+          <span
+            class="option-data"
+            data-l10n-id="address-book-add-local-description"
+          >
+          </span>
+        </div>
+      </button>
+      <button id="newLdapAddressBook" class="account-hub-option-button">
+        <div class="option-icon">
+          <img
+            class="ldap-address-book-icon"
+            data-l10n-id="address-book-add-ldap-icon"
+          />
+        </div>
+        <div class="option-content">
+          <span
+            class="option-title"
+            data-l10n-id="address-book-add-ldap">
+          </span>
+          <span
+            class="option-data"
+            data-l10n-id="address-book-add-ldap-description"
+          >
+          </span>
+        </div>
+      </button>
+    </div>
+  </form>
+</html:template>
+
+<html:template
+  id="accountHubAddressBookRemoteAccountFormTemplate"
+  xmlns="http://www.w3.org/1999/xhtml"
+>
+</html:template>
+
+<html:template
+  id="accountHubAddressBookSyncTemplate"
+  xmlns="http://www.w3.org/1999/xhtml"
+>
+</html:template>
+
+<html:template id="accountHubEmailAutoFormTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <form id="autoConfigEmailForm" class="account-hub-form" slot="content">
+    <div class="hub-body email-form-body">
+      <div class="input-control">
+        <input id="realName"
+               type="text"
+               class="input-field animated"
+               aria-invalid="false"
+               aria-errormessage="nameErrorMessage"
+               placeholder=""
+               required="required" />
+        <label for="realName"
+               class="animated"
+               data-l10n-id="account-hub-name-label"
+               data-l10n-attrs="accesskey">
+        </label>
+        <img src=""
+             data-l10n-id="account-setup-name-warning-icon"
+             alt=""
+             class="form-icon icon-danger input-warning" />
+        <img src=""
+             alt=""
+             class="form-icon icon-success input-success" />
+        <span id="nameErrorMessage"
+              class="input-error-message"
+              data-l10n-id="account-hub-name-error-text">
+        </span>
+      </div>
+
+      <div class="input-control">
+        <input id="email"
+               class="input-field animated"
+               aria-invalid="false"
+               aria-errormessage="emailErrorMessage"
+               type="email"
+               placeholder=""
+               required="required" />
+        <label for="email"
+               class="animated"
+               data-l10n-id="account-setup-email-label"
+               data-l10n-attrs="accesskey">
+        </label>
+        <img id="emailWarning"
+             src=""
+             data-l10n-id="account-setup-email-warning-icon"
+             alt=""
+             class="form-icon icon-danger input-warning" />
+        <img id="emailSuccess"
+             src=""
+             alt=""
+             class="form-icon icon-success input-success" />
+        <span id="emailErrorMessage"
+              class="input-error-message"
+              data-l10n-id="account-hub-email-error-text">
+        </span>
+      </div>
+    </div>
+    <button type="submit" hidden="hidden"></button>
+  </form>
+</html:template>
+
+<html:template id="accountHubEmailConfigFoundTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <div id="configFound" slot="content">
+    <form id="protocolForm" class="account-hub-form">
+      <div class="hub-body auto-config-body">
+        <div class="config-form-data">
+          <fieldset class="form-options">
+            <label id="imap" class="config-option">
+              <div class="config-title">
+                <input type="radio" name="config-type" value="imap" />
+                <span class="config-title-text">IMAP</span>
+                <span class="recommended" data-l10n-id="account-hub-result-recommended-label"></span>
+              </div>
+              <div class="config-text" data-l10n-id="account-hub-result-imap-description"></div>
+            </label>
+
+            <label id="pop3" class="config-option">
+              <div class="config-title">
+                <input type="radio" name="config-type" value="pop3" />
+                <span class="config-title-text">POP3</span>
+                <span class="recommended" data-l10n-id="account-hub-result-recommended-label"></span>
+              </div>
+              <div class="config-text" data-l10n-id="account-hub-result-pop-description"></div>
+            </label>
+
+            <label id="ews" class="config-option" hidden="hidden">
+              <div class="config-title">
+                <input type="radio" name="config-type" value="ews" />
+                <span class="config-title-text" data-l10n-id="account-hub-result-ews-shortname"></span>
+                <span class="recommended" data-l10n-id="account-hub-result-recommended-label"></span>
+              </div>
+              <div class="config-text" data-l10n-id="account-hub-result-ews-description"></div>
+            </label>
+
+            <label id="exchange" class="config-option" hidden="hidden">
+              <div class="config-title">
+                <input type="radio" name="config-type" value="exchange" />
+                <span class="config-title-text">Exchange</span>
+                <span class="recommended addon" data-l10n-id="account-hub-result-addon-label"></span>
+              </div>
+              <div class="config-text" data-l10n-id="account-hub-result-exchange-description"></div>
+            </label>
+          </fieldset>
+          <div id="configSelection" class="form-selection">
+            <div class="config-directions selection-grid">
+              <div class="config-detail" id="incomingConfigType">
+                <img src="chrome://messenger/skin/icons/new/normal/incoming.svg" alt="" />
+                <div class="config-item-data">
+                  <p id="incomingType"></p>
+                  <p id="incomingTypeText" data-l10n-id="account-hub-result-incoming-server-legend"></p>
+                </div>
+              </div>
+              <div class="config-detail" id="outgoingConfigType" hidden="hidden">
+                <img src="chrome://messenger/skin/icons/new/normal/outgoing.svg" alt="" />
+                <div class="config-item-data">
+                  <p id="outgoingType"></p>
+                  <p data-l10n-id="account-hub-result-outgoing-server-legend"></p>
+                </div>
+              </div>
+            </div>
+            <div class="selection-grid">
+              <div class="config-column" id="incomingConfig">
+                <!-- Host -->
+                <div class="config-detail">
+                  <img class="config-item-icon lighter" src="chrome://messenger/skin/icons/new/compact/globe.svg" />
+                  <div class="config-item-data">
+                    <p data-l10n-id="account-hub-result-hostname-label"></p>
+                    <p id="incomingHost"></p>
+                  </div>
+                </div>
+
+                <!-- Authentication -->
+                <div class="config-detail">
+                  <img class="config-item-icon" src="chrome://messenger/skin/icons/new/compact/key.svg" />
+                  <div class="config-item-data">
+                    <p data-l10n-id="account-hub-result-authentication-label"></p>
+                    <p id="incomingAuth"></p>
+                  </div>
+                </div>
+
+                <!-- Username -->
+                <div class="config-detail">
+                  <img class="config-item-icon" src="chrome://messenger/skin/icons/new/compact/account-settings.svg" />
+                  <div class="config-item-data">
+                    <p data-l10n-id="account-hub-result-username-label"></p>
+                    <p id="incomingUsername"></p>
+                  </div>
+                </div>
+
+                <!-- Install Add-on Text -->
+                <div id="owlExchangeDescription" class="owl-exchange-text" hidden="hidden">
+                  <p id="addonInfo"
+                     class="install-addon"
+                     data-l10n-id="account-hub-addon-install-needed">
+                    <a id="addonInstall"
+                       data-l10n-name="addon-install"
+                       class="link">
+                    </a>
+                  </p>
+                </div>
+              </div>
+              <div class="config-column" id="outgoingConfig" hidden="hidden">
+                <!-- Host -->
+                <div class="config-detail">
+                  <img class="config-item-icon" src="chrome://messenger/skin/icons/new/compact/globe.svg" />
+                  <div class="config-item-data">
+                    <p data-l10n-id="account-hub-result-hostname-label"></p>
+                    <p id="outgoingHost"></p>
+                  </div>
+                </div>
+
+                <!-- Authentication -->
+              <div class="config-detail">
+                  <img class="config-item-icon" src="chrome://messenger/skin/icons/new/compact/key.svg" />
+                  <div class="config-item-data">
+                    <p data-l10n-id="account-hub-result-authentication-label"></p>
+                    <p id="outgoingAuth"></p>
+                  </div>
+                </div>
+
+                <!-- Username -->
+                <div class="config-detail">
+                  <img class="config-item-icon" src="chrome://messenger/skin/icons/new/compact/account-settings.svg" />
+                  <div class="config-item-data">
+                    <p data-l10n-id="account-hub-result-username-label"></p>
+                    <p id="outgoingUsername"></p>
+                  </div>
+                </div>
+              </div>
+              <div class="custom-action-container">
+                <button id="editConfiguration"
+                        class="button link-button link-button-sm"
+                        type="button"
+                        data-l10n-id="account-hub-edit-configuration">
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button type="submit" hidden="hidden"></button>
+    </form>
+  </div>
+</html:template>
+
+<html:template id="accountHubIncomingEmailFormTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <form id="incomingEmailForm" class="account-hub-form" slot="content">
+    <div class="hub-body manual-form-body">
+      <div class="form-row">
+        <div>
+          <label for="incomingProtocol"
+                 data-l10n-id="account-hub-protocol-label"
+                 data-l10n-attrs="accesskey">
+          </label>
+          <div class="input-control">
+            <xul:menulist id="incomingProtocol"
+                          class="menulist"
+                          label="IMAP"
+                          value="1"
+                          flex="1">
+              <xul:menupopup id="incomingProtocolMenupopup"
+                             class="menupopup"
+                             position="after_start">
+                <xul:menuitem id="incomingProtocolIMAP"
+                              label="IMAP"
+                              value="1" />
+                <xul:menuitem id="incomingProtocolPOP3"
+                              label="POP3"
+                              value="2" />
+                <xul:menuitem id="incomingProtocolExchange"
+                              label="Exchange"
+                              value="3"
+                              hidden="hidden" />
+              </xul:menupopup>
+            </xul:menulist>
+          </div>
+        </div>
+
+        <div class="expanded">
+          <label for="incomingHostname"
+                 data-l10n-id="account-hub-result-hostname-label"
+                 class="option-label">
+          </label>
+          <div class="input-control">
+            <input id="incomingHostname"
+                   type="text"
+                   placeholder="mail.example.com"
+                   required="required"
+                   class="input-field manual-input"
+                   aria-invalid="false" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-danger input-warning" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-success input-success" />
+            <span id="incomingHostnameErrorMessage"
+                  class="input-error-message"
+                  data-l10n-id="account-hub-hostname-error-text">
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="incomingPort"
+                 data-l10n-id="account-hub-port-label"
+                 class="option-label">
+          </label>
+          <div class="input-control">
+            <input id="incomingPort"
+                   type="number"
+                   min="1"
+                   max="65535"
+                   placeholder="993"
+                   required="required"
+                   class="input-field number-input"
+                   aria-invalid="false" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-danger input-warning" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-success input-success" />
+            <span id="incomingPortErrorMessage"
+                  class="input-error-message"
+                  data-l10n-id="account-hub-port-error-text">
+            </span>
+          </div>
+        </div>
+
+        <div class="expanded">
+          <label for="incomingConnectionSecurity"
+                 data-l10n-id="account-hub-ssl-label"
+                 class="option-label">
+          </label>
+          <div class="input-control">
+            <xul:menulist id="incomingConnectionSecurity"
+                          class="menulist"
+                          value="0"
+                          aria-invalid="false"
+                          flex="1">
+              <xul:menupopup id="incomingConnectionSecurityMenupopup"
+                             class="menupopup"
+                             position="after_start">
+                <xul:menuitem id="incomingConnectionSecurityAutodetect"
+                              data-l10n-id="account-hub-ssl-autodetect-option"
+                              value="-1" />
+                <xul:menuitem id="incomingConnectionSecurityNoEncryption"
+                              data-l10n-id="account-hub-ssl-noencryption-option"
+                              value="0" />
+                <xul:menuitem id="incomingConnectionSecurityStartTtls"
+                              label="STARTTLS"
+                              value="2" />
+                <xul:menuitem id="incomingConnectionSecuritySslTls"
+                              label="SSL/TLS"
+                              value="3" />
+              </xul:menupopup>
+            </xul:menulist>
+            <p id="incomingSecurityWarning"
+               class="input-error-message security-warning"
+               data-l10n-id="account-hub-security-warning">
+              <span data-l10n-name="security-warning"></span>
+              <a id="moreInfoLink" data-l10n-name="faq-link"></a>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="form-row responsive-row">
+        <div>
+          <label for="incomingAuthMethod"
+                 data-l10n-id="account-hub-auth-label"
+                 class="option-label">
+          </label>
+          <div class="input-control">
+            <xul:menulist id="incomingAuthMethod"
+                          class="menulist"
+                          required="required"
+                          value="0"
+                          flex="1">
+              <xul:menupopup id="incomingAuthMenupopup"
+                             class="menupopup"
+                             position="after_start">
+                <xul:menuitem id="incomingAuthMethodAutodetect"
+                              data-l10n-id="account-hub-ssl-autodetect-option"
+                              value="0">
+                </xul:menuitem>
+                <xul:menuitem id="incomingAuthMethodCleartext"
+                              data-l10n-id="account-hub-ssl-cleartext-password-option"
+                              value="3">
+                </xul:menuitem>
+                <xul:menuitem id="incomingAuthMethodEncrypted"
+                              data-l10n-id="account-hub-ssl-encrypted-password-option"
+                              value="4">
+                </xul:menuitem>
+                <xul:menuitem id="incomingAuthMethodKerbos"
+                              label="Kerberos / GSSAPI"
+                              value="5">
+                </xul:menuitem>
+                <xul:menuitem id="incomingAuthMethodNtlm"
+                              label="NTLM"
+                              value="6">
+                </xul:menuitem>
+                <xul:menuitem id="incomingAuthMethodOAuth2"
+                              value="10"
+                              hidden="hidden"
+                              label="OAuth2">
+                </xul:menuitem>
+              </xul:menupopup>
+            </xul:menulist>
+          </div>
+        </div>
+
+        <div class="expanded">
+          <label for="incomingUsername"
+                 data-l10n-id="account-hub-result-username-label"
+                 class="option-label">
+          </label>
+          <div class="input-control">
+            <input id="incomingUsername"
+                   type="text"
+                   data-l10n-id="account-setup-email-input"
+                   required="required"
+                   class="username input-field manual-input"
+                   aria-invalid="false" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-danger input-warning" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-success input-success" />
+            <span id="incomingUsernameErrorMessage"
+                  class="input-error-message"
+                  data-l10n-id="account-hub-username-error-text">
+            </span>
+          </div>
+        </div>
+      </div>
+      <button id="advancedConfigurationIncoming"
+              class="button link-button link-button-sm align-self-end"
+              type="button"
+              data-l10n-id="account-setup-advanced-setup-button">
+      </button>
+    </div>
+    <button type="submit" hidden="hidden"></button>
+  </form>
+</html:template>
+
+<html:template id="accountHubOutgoingEmailFormTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <form id="outgoingEmailForm" class="account-hub-form" slot="content">
+    <div class="hub-body manual-form-body">
+      <div class="form-row">
+        <label for="outgoingProtocol">
+          <span data-l10n-id="account-hub-protocol-label"></span>
+          <div class="selected-option">
+            SMTP
+          </div>
+        </label>
+        <div class="expanded">
+          <label for="outgoingHostname"
+                 data-l10n-id="account-hub-result-hostname-label"
+                 class="option-label">
+          </label>
+          <div class="input-control">
+            <input id="outgoingHostname"
+                   type="text"
+                   placeholder="mail.example.com"
+                   required="required"
+                   class="input-field manual-input"
+                   aria-invalid="false" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-danger input-warning" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-success input-success" />
+            <span id="outgoingHostnameErrorMessage"
+                  class="input-error-message"
+                  data-l10n-id="account-hub-hostname-error-text">
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label for="outgoingPort"
+                 data-l10n-id="account-hub-port-label"
+                 class="option-label">
+          </label>
+          <div class="input-control">
+            <input id="outgoingPort"
+                   min="1"
+                   max="65535"
+                   type="number"
+                   placeholder="465"
+                   required="required"
+                   class="input-field number-input"
+                   aria-invalid="false" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-danger input-warning" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-success input-success" />
+            <span id="outgoingPortErrorMessage"
+                  class="input-error-message"
+                  data-l10n-id="account-hub-port-error-text">
+            </span>
+          </div>
+        </div>
+        <div class="expanded">
+          <label for="outgoingSsl"
+                 data-l10n-id="account-hub-ssl-label"
+                 class="option-label">
+          </label>
+          <div class="input-control">
+            <xul:menulist id="outgoingConnectionSecurity"
+                          class="menulist"
+                          value="0"
+                          aria-invalid="false"
+                          flex="1">
+                <xul:menupopup id="outgoingConnectionSecurityMenupopup"
+                               class="menupopup">
+                  <xul:menuitem id="outgoingConnectionSecurityAutodetect"
+                                data-l10n-id="account-hub-ssl-autodetect-option"
+                    value="-1" />
+                  <xul:menuitem id="outgoingConnectionSecurityNoEncryption"
+                                data-l10n-id="account-hub-ssl-noencryption-option"
+                                value="0" />
+                  <xul:menuitem id="outgoingConnectionSecurityStartTtls"
+                                label="STARTTLS"
+                                value="2" />
+                  <xul:menuitem id="outgoingConnectionSecuritySslTls"
+                                label="SSL/TLS"
+                                value="3" />
+                </xul:menupopup>
+            </xul:menulist>
+            <p id="outgoingSecurityWarning"
+               class="input-error-message security-warning"
+               data-l10n-id="account-hub-security-warning">
+              <span data-l10n-name="security-warning"></span>
+              <a id="moreInfoLink" data-l10n-name="faq-link"></a>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="form-row responsive-row">
+        <div>
+          <label for="outgoingAuthMethod"
+                 data-l10n-id="account-hub-auth-label"
+                 class="option-label">
+          </label>
+          <div class="input-control">
+            <xul:menulist id="outgoingAuthMethod"
+                          class="menulist"
+                          required="required"
+                          value="0"
+                          flex="1">
+              <xul:menupopup id="outgoingAuthMenupopup" class="menupopup">
+                <xul:menuitem id="outgoingAuthMethodAutodetect"
+                              data-l10n-id="account-hub-ssl-autodetect-option"
+                              value="0">
+                </xul:menuitem>
+                <xul:menuitem id="outgoingAuthMethodNone"
+                              data-l10n-id="account-hub-auth-no-authentication-option"
+                              value="1">
+                </xul:menuitem>
+                <xul:menuitem id="outgoingAuthMethodCleartext"
+                              data-l10n-id="account-hub-ssl-cleartext-password-option"
+                              value="3">
+                </xul:menuitem>
+                <xul:menuitem id="outgoingAuthMethodEncrypted"
+                              data-l10n-id="account-hub-ssl-encrypted-password-option"
+                              value="4">
+                </xul:menuitem>
+                <xul:menuitem id="outgoingAuthMethodKerbos"
+                              label="Kerberos / GSSAPI"
+                              value="5">
+                </xul:menuitem>
+                <xul:menuitem id="outgoingAuthMethodNtlm"
+                              label="NTLM"
+                              value="6">
+                </xul:menuitem>
+                <xul:menuitem id="outgoingAuthMethodOAuth2"
+                              value="10"
+                              hidden="hidden"
+                              label="OAuth2">
+                </xul:menuitem>
+              </xul:menupopup>
+            </xul:menulist>
+          </div>
+        </div>
+        <div class="expanded">
+          <label for="outgoingUsername"
+                 data-l10n-id="account-hub-result-username-label"
+                 class="option-label">
+          </label>
+          <div class="input-control">
+            <input id="outgoingUsername"
+                   type="text"
+                   data-l10n-id="account-setup-email-input"
+                   required="required"
+                   class="username input-field manual-input"
+                   aria-invalid="false" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-danger input-warning" />
+            <img src=""
+                 alt=""
+                 class="form-icon icon-success input-success" />
+            <span id="outgoingUsernameErrorMessage"
+                  class="input-error-message"
+                  data-l10n-id="account-hub-username-error-text">
+            </span>
+          </div>
+        </div>
+      </div>
+      <button id="advancedConfigurationOutgoing"
+              type="button"
+              class="button link-button link-button-sm align-self-end"
+              data-l10n-id="account-setup-advanced-setup-button">
+      </button>
+    </div>
+    <button type="submit" hidden="hidden"></button>
+  </form>
+</html:template>
+
+<html:template id="accountHubEmailPasswordFormTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <form id="passwordForm" class="account-hub-form" slot="content">
+    <div class="hub-body password-form-body">
+      <div class="input-control">
+        <input id="password"
+               type="password"
+               class="input-field animated"
+               placeholder=""
+               required="required" />
+        <label for="password"
+               class="animated"
+               data-l10n-id="account-setup-password-label"
+               data-l10n-attrs="accesskey">
+        </label>
+        <button id="passwordToggleButton"
+                type="button"
+                data-l10n-id="account-setup-password-toggle-show"
+                class="form-toggle-button"
+                aria-pressed="false">
+          <img src="" alt="" class="form-icon" />
+        </button>
+      </div>
+      <div class="remember-button-container">
+          <label class="toggle-container-with-text">
+            <input id="rememberPassword"
+                   class="check-button"
+                   type="checkbox" />
+            <span class="checkbox-label"
+                  data-l10n-id="account-setup-remember-password"
+                  data-l10n-attrs="accesskey">
+            </span>
+          </label>
+      </div>
+    </div>
+    <button type="submit" hidden="hidden"></button>
+  </form>
+</html:template>
+
+<html:template id="accountHubEmailSyncAccountsFormTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <form id="syncAccountsForm" class="account-hub-form" slot="content">
+    <div class="hub-body sync-accounts-form-body">
+      <div class="sync-accounts-container">
+        <fieldset id="addressBooks" class="sync-type-container">
+          <div class="sync-title">
+            <img src="" alt="" class="sync-icon address-book" />
+            <div class="sync-details">
+              <span class="title"
+                    data-l10n-id="account-setup-address-books-button">
+              </span>
+              <span id="selectedAddressBooks" class="subtitle"></span>
+              <button id="selectAllAddressBooks"
+                      type="button"
+                      class="button primary-button button-sm select-all"
+                      hidden="hidden">
+              </button>
+            </div>
+          </div>
+          <span id="noAddressBooks"
+             class="sync-option"
+             data-l10n-id="account-hub-no-address-books"
+             hidden="hidden">
+          </span>
+          <div id="addressBookAccountsContainer" class="sync-input-container"></div>
+        </fieldset>
+        <fieldset id="calendars" class="sync-type-container">
+          <div class="sync-title">
+            <img src="" alt="" class="sync-icon calendar" />
+            <div class="sync-details">
+              <span class="title"
+                    data-l10n-id="account-setup-calendars-button">
+              </span>
+              <span id="selectedCalendars" class="subtitle"></span>
+              <button id="selectAllCalendars"
+                      type="button"
+                      class="button primary-button button-sm select-all"
+                      hidden="hidden">
+              </button>
+            </div>
+          </div>
+          <span id="noCalendars"
+             class="sync-option"
+             data-l10n-id="account-hub-no-calendars"
+             hidden="hidden">
+          </span>
+          <div id="calendarAccountsContainer" class="sync-input-container"></div>
+        </fieldset>
+      </div>
+    </div>
+  </form>
+</html:template>
+
+<html:template id="accountHubEmailAddedSuccessTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <div class="account-hub-success-container" slot="content">
+    <div class="account-hub-success-illustration"></div>
+    <div
+      class="account-hub-success-links-title"
+      data-l10n-id="account-hub-email-added-success-links-title"
+    >
+    </div>
+    <div class="account-hub-link-container">
+      <button
+        id="accountHubEncryptionLink"
+        class="button link-button"
+        data-l10n-id="account-setup-encryption-button"
+      >
+      </button>
+      <button
+        id="accountHubSignatureLink"
+        class="button link-button"
+        data-l10n-id="account-hub-signature-link"
+      >
+      </button>
+    </div>
+  </div>
+</html:template>
+
+<html:template id="accountHubFooterTemplate" class="hub-footer" xmlns="http://www.w3.org/1999/xhtml">
+  <!-- Account Hub Footer -->
+  <footer id="accountHubFooter">
+    <menu id="accountHubFooterMenu" class="dialog-menu-container two-columns">
+      <li id="footerButtonsLeftColumn">
+        <button id="custom"
+                class="button secondary-button footer-button"
+                type="button"
+                disabled="disabled"
+                hidden="hidden">
+        </button>
+      </li>
+      <li id="footerButtonsRightColumn">
+        <button id="back"
+                type="button"
+                data-l10n-id="account-hub-email-back-button"
+                class="button secondary-button footer-button"
+                hidden="hidden">
+        </button>
+        <button id="forward"
+                data-l10n-id="account-hub-email-continue-button"
+                class="button primary-button footer-button"
+                disabled="disabled">
+        </button>
+      </li>
+    </menu>
+    <hr/>
+    <ul class="reset-list footer-links">
+      <li>
+        <a href="https://support.mozilla.org/products/thunderbird"
+           data-l10n-id="account-hub-support"
+           onclick="openLinkExternally(this.href);">
+        </a>
+      </li>
+      <li hidden="hidden">
+        <a id="hubReleaseNotes"
+           href=""
+           data-l10n-id="account-hub-release-notes"
+           onclick="openLinkExternally(this.href)">
+        </a>
+      </li>
+      <li>
+        <a href="https://www.thunderbird.net/donate/?utm_source=thunderbird_account_hub&amp;utm_medium=referral&amp;utm_content=hub_footer"
+           data-l10n-id="account-hub-donate"
+           onclick="openLinkExternally(this.href);">
+        </a>
+      </li>
+    </ul>
+  </footer>
+</html:template>
+
+<html:template id="accountHubHeaderTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <header id="accountHubHeader" class="hub-header">
+    <div id="brandingHeader" class="branding-header" hidden="hidden">
+      <img src="chrome://branding/content/logo-gradient.svg" alt="" />
+      <h1>
+        <span class="branding-header-name" data-l10n-id="account-hub-brand"></span>
+        <span class="branding-header-title" data-l10n-id="account-hub-title"></span>
+      </h1>
+      <button id="closeButton"
+              class="button button-flat button-round icon-button icon-only modal-close-button"
+              type="button">
+        <img class="icon-close-lg" src="" alt="" />
+      </button>
+    </div>
+    <!-- Title Text for Email Setup -->
+    <h1 id="accountHubHeaderTitle"
+        class="sub-view-title">
+      <slot name="title"></slot>
+    </h1>
+    <details id="emailFormNotification" class="notification-bar">
+      <summary id="emailFormNotificationSummary"
+               class="notification-title-container">
+        <img class="form-icon icon-warning"
+             src=""
+             alt=""/>
+        <img class="form-icon icon-success"
+             src=""
+             alt="" />
+        <img class="form-icon icon-info"
+             src=""
+             alt="" />
+        <img class="form-icon icon-danger"
+             src=""
+             alt="" />
+        <p id="emailFormNotificationTitle" class="notification-title">
+          <span class="localized-title"></span>
+          <span class="raw-title"></span>
+        </p>
+        <div id="emailFormNotificationToggle">
+          <span data-l10n-id="account-hub-notification-show-more"></span>
+          <span data-l10n-id="account-hub-notification-show-less"></span>
+        </div>
+      </summary>
+      <p id="emailFormNotificationText" class="notification-text">
+        <span class="localized-description"></span>
+        <span class="raw-description"></span>
+      </p>
+    </details>
+  </header>
+</html:template>
+
+
+<html:template id="accountHubHeaderTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <header id="accountHubHeader" class="hub-header">
+    <div id="brandingHeader" class="branding-header" hidden="hidden">
+      <img src="chrome://branding/content/logo-gradient.svg" alt="" />
+      <h1>
+        <span class="branding-header-name" data-l10n-id="account-hub-brand"></span>
+        <span class="branding-header-title" data-l10n-id="account-hub-title"></span>
+      </h1>
+      <button id="closeButton"
+              class="button button-flat button-round icon-button icon-only modal-close-button"
+              type="button">
+        <img class="icon-close-lg" src="" alt="" />
+      </button>
+    </div>
+    <!-- Title Text for Email Setup -->
+    <h1 id="accountHubHeaderTitle"
+        class="sub-view-title">
+      <slot name="title"></slot>
+    </h1>
+    <details id="emailFormNotification" class="notification-bar">
+      <summary id="emailFormNotificationSummary"
+               class="notification-title-container">
+        <img class="form-icon icon-warning"
+             src=""
+             alt=""/>
+        <img class="form-icon icon-success"
+             src=""
+             alt="" />
+        <img class="form-icon icon-info"
+             src=""
+             alt="" />
+        <img class="form-icon icon-danger"
+             src=""
+             alt="" />
+        <p id="emailFormNotificationTitle" class="notification-title">
+          <span class="localized-title"></span>
+          <span class="raw-title"></span>
+        </p>
+        <div id="emailFormNotificationToggle">
+          <span data-l10n-id="account-hub-notification-show-more"></span>
+          <span data-l10n-id="account-hub-notification-show-less"></span>
+        </div>
+      </summary>
+      <p id="emailFormNotificationText" class="notification-text">
+        <span class="localized-description"></span>
+        <span class="raw-description"></span>
+      </p>
+    </details>
+  </header>
+</html:template>
+
+<html:template id="accountHubStepTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <account-hub-header>
+    <span id="title" slot="title">
+    </span>
+    <span id="subheader" slot="subheader">
+    </span>
+  </account-hub-header>
+  <div class="account-hub-grid">
+      <slot name="content"></slot>
+  </div>
+</html:template>
 <html:template id="accountHubDialog" xmlns="http://www.w3.org/1999/xhtml">
   <dialog class="account-hub-dialog">
-    <button id="closeButton" type="button">
-      <img src="" alt="" />
-    </button>
   </dialog>
 </html:template>
 
@@ -6903,10 +8109,12 @@
       <h1>
         <span
           class="start-header-brand-name"
-          data-l10n-id="account-hub-brand"></span>
+          data-l10n-id="account-hub-brand"
+        ></span>
         <span
           class="start-header-title"
-          data-l10n-id="account-hub-title"></span>
+          data-l10n-id="account-hub-title"
+        ></span>
       </h1>
     </div>
   </header>
@@ -6920,528 +8128,147 @@
       <li>
         <a
           id="hubReleaseNotes"
-          data-l10n-id="account-hub-release-notes"></a>
+          data-l10n-id="account-hub-release-notes"
+        ></a>
       </li>
       <li>
         <a
           href="https://support.mozilla.org/products/thunderbird"
           data-l10n-id="account-hub-support"
-          onclick="openLinkExternally(this.href);"></a>
+          onclick="openLinkExternally(this.href);"
+        ></a>
       </li>
       <li>
         <a
           href="https://www.thunderbird.net/donate/?utm_source=thunderbird_account_hub&amp;utm_medium=referral&amp;utm_content=hub_footer"
           data-l10n-id="account-hub-donate"
-          onclick="openLinkExternally(this.href);"></a>
+          onclick="openLinkExternally(this.href);"
+        ></a>
       </li>
     </ul>
   </footer>
 </html:template>
 
 <html:template id="accountHubEmailSetup" xmlns="http://www.w3.org/1999/xhtml">
-  <!-- Email/Password Form Subview -->
-  <form id="emailFormSubview" class="account-hub-form">
-    <header id="emailFormHeader" class="hub-header">
-      <h1 class="sub-view-title" data-l10n-id="account-hub-add-email-title"></h1>
-      <details id="emailFormNotification" class="notification-bar">
-        <summary id="emailFormNotificationSummary" class="notification-title-container">
-          <img
-            class="form-icon notification-icon warning-icon"
-            src=""
-            alt="" />
-          <p id="emailFormNotificationTitle" class="notification-title"></p>
-          <div id="emailFormNotificationToggle">
-            <span data-l10n-id="account-hub-notification-show-more"></span>
-            <span data-l10n-id="account-hub-notification-show-less"></span>
-          </div>
-        </summary>
-        <p id="emailFormNotificationText" class="notification-text"></p>
-      </details>
-    </header>
+  <email-auto-form
+    id="emailAutoConfigSubview"
+    title-id="account-hub-email-setup-header"
+    class="account-hub-step"
+  >
+  </email-auto-form>
+  <email-manual-incoming-form
+    id="emailIncomingConfigSubview"
+    title-id="account-hub-email-setup-incoming"
+    class="account-hub-step"
+    hidden="hidden"
+  >
+  </email-manual-incoming-form>
+  <email-manual-outgoing-form
+    id="emailOutgoingConfigSubview"
+    title-id="account-hub-email-setup-outgoing"
+    class="account-hub-step"
+    hidden="hidden"
+  >
+  </email-manual-outgoing-form>
+  <email-config-found
+    id="emailConfigFoundSubview"
+    title-id="account-hub-email-config-found"
+    class="account-hub-step"
+    hidden="hidden"
+  >
+  </email-config-found>
+  <email-password-form
+    id="emailPasswordSubview"
+    title-id="account-hub-email-enter-password"
+    class="account-hub-step"
+    hidden="hidden"
+  >
+  </email-password-form>
+  <email-sync-accounts-form
+    id="emailSyncAccountsSubview"
+    title-id="account-hub-email-sync-accounts"
+    class="account-hub-step"
+    hidden="hidden"
+  >
+  </email-sync-accounts-form>
+  <email-added-success
+    id="emailAddedSuccessSubview"
+    class="account-hub-step"
+    hidden="hidden"
+  >
+  </email-added-success>
 
-    <div class="hub-body">
-      <label
-          for="realName"
-          data-l10n-id="account-setup-name-label"
-          data-l10n-attrs="accesskey">
-      </label>
-      <div class="input-control">
-        <input
-          id="realName"
-          type="text"
-          class="input-field"
-          data-l10n-id="account-setup-name-input"
-          required="required" />
-        <img
-          src="chrome://messenger/skin/icons/new/compact/info.svg"
-          data-l10n-id="account-setup-name-info-icon"
-          alt=""
-          class="form-icon" />
-        <img
-          src="chrome://messenger/skin/icons/new/compact/warning.svg"
-          data-l10n-id="account-setup-name-warning-icon"
-          alt=""
-          class="form-icon icon-warning" />
-      </div>
+  <account-hub-footer id="emailFooter" class="hub-footer">
+  </account-hub-footer>
 
-      <label
-        for="email"
-        data-l10n-id="account-setup-email-label"
-        data-l10n-attrs="accesskey">
-      </label>
-      <div class="input-control">
-        <input
-          id="email"
-          type="email"
-          data-l10n-id="account-setup-email-input"
-          class="input-field"
-          required="required" />
-        <img
-          id="emailInfo"
-          src="chrome://messenger/skin/icons/new/compact/info.svg"
-          data-l10n-id="account-setup-email-info-icon"
-          alt=""
-          class="form-icon" />
-        <img
-          id="emailWarning"
-          src="chrome://messenger/skin/icons/new/compact/warning.svg"
-          data-l10n-id="account-setup-email-warning-icon"
-          alt=""
-          class="form-icon icon-warning" />
-      </div>
-
-      <label
-        for="password"
-        data-l10n-id="account-setup-password-label"
-        data-l10n-attrs="accesskey">
-      </label>
-      <div class="input-control">
-        <!-- Leave the placeholder empty for CSS visibility toggle of the
-            adjacent button. -->
-        <input
-          id="password"
-          type="password"
-          class="input-field"
-          placeholder="" />
-        <button
-          id="passwordToggleButton"
-          type="button"
-          data-l10n-id="account-setup-password-toggle-show"
-          class="form-toggle-button"
-          aria-pressed="false">
-          <img src="" alt="" class="form-icon" />
-        </button>
-      </div>
-
-      <div class="remember-button-container">
-        <label class="toggle-container-with-text">
-          <input id="rememberPassword" type="checkbox" checked="checked" />
-          <span
-            data-l10n-id="account-setup-remember-password"
-            data-l10n-attrs="accesskey">
-          </span>
-        </label>
-      </div>
-    </div>
-
-    <footer id="accountHubEmailFooter" class="hub-footer">
-      <menu id="accountHubEmailFooterMenu" class="dialog-menu-container two-columns">
-        <li id="footerButtonsLeftColumn">
-          <button
-            id="emailCancelButton"
-            type="button"
-            data-l10n-id="account-hub-email-cancel-button"
-            hidden="hidden"></button>
-          <button
-            id="emailGoBackButton"
-            type="button"
-            data-l10n-id="account-hub-email-back-button"
-            hidden="hidden"></button>
-          <button
-            id="emailRetestButton" type="button"
-            data-l10n-id="account-hub-email-retest-button"
-            hidden="hidden"> </button>
-        </li>
-        <li id="footerButtonsCenterColumn" hidden="hidden">
-          <button
-            id="emailFinishButton" type="button"
-            data-l10n-id="account-hub-email-finish-button"
-            class="primary"
-            hidden="hidden"></button>
-        </li>
-        <li id="footerButtonsRightColumn">
-          <button
-            id="emailManuallyConfigureButton"
-            hidden="hidden"
-            class="button link-button"
-            data-l10n-id="account-hub-email-manually-configure-button"></button>
-          <button
-            id="emailContinueButton" type="submit"
-            data-l10n-id="account-hub-email-continue-button"
-            class="primary"
-            disabled="disabled"
-            hidden="hidden"></button>
-        </li>
-      </menu>
-    </footer>
-  </form>
-
-  <!-- Manual Config Email Form Subview -->
-  <form
-    id="manualConfigureEmailFormSubview"
-    class="account-hub-form"
-    hidden="hidden">
-    <header id="manualConfigureEmailFormHeader" class="hub-header">
-      <h1
-        class="sub-view-title"
-        data-l10n-id="account-hub-manually-configure-email-title">
-      </h1>
-    </header>
-
-    <div class="hub-body flex-direction-row">
-      <div class="hub-body-column">
-        <div>
-          <legend data-l10n-id="account-hub-incoming-server-legend"></legend>
-        </div>
-        <label
-          for="incomingProtocol"
-          data-l10n-id="account-hub-protocol-label"
-          data-l10n-attrs="accesskey">
-        </label>
-        <div class="input-control">
-          <xul:menulist
-            id="incomingProtocol"
-            class="menulist"
-            label="IMAP"
-            value="1"
-            flex="1">
-            <xul:menupopup id="incomingProtocolMenupopup" class="menupopup">
-              <xul:menuitem
-                id="incomingProtocolIMAP"
-                label="IMAP"
-                value="1" />
-              <xul:menuitem
-                id="incomingProtocolPOP3"
-                label="POP3"
-                value="2" />
-              <xul:menuitem
-                id="incomingProtocolExchange"
-                label="Exchange"
-                value="3"
-                hidden="hidden" />
-            </xul:menupopup>
-          </xul:menulist>
-        </div>
-
-        <label
-          for="incomingHostname"
-          data-l10n-id="account-hub-hostname-label"
-          class="option-label">
-        </label>
-        <div class="input-control">
-          <input
-            id="incomingHostname"
-            type="text"
-            placeholder="mail.example.com"
-            required="required"
-            class="input-field" />
-        </div>
-
-        <label
-          for="incomingPort"
-          data-l10n-id="account-hub-port-label"
-          class="option-label">
-        </label>
-        <div class="input-control">
-          <input
-            id="incomingPort"
-            type="number"
-            min="1" max="65535"
-            placeholder="993"
-            required="required"
-            class="input-field" />
-        </div>
-
-        <label
-          for="incomingConnectionSecurity"
-          data-l10n-id="account-hub-ssl-label"
-          class="option-label">
-        </label>
-        <div class="input-control">
-          <xul:menulist
-            id="incomingConnectionSecurity"
-            class="menulist"
-            value="0"
-            flex="1">
-            <xul:menupopup
-              id="incomingConnectionSecurityMenupopup"
-              class="menupopup">
-              <xul:menuitem
-                id="incomingConnectionSecurityAutodetect"
-                data-l10n-id="account-hub-ssl-autodetect-option"
-                value="-1" />
-              <xul:menuitem
-                id="incomingConnectionSecurityNonEncryption"
-                data-l10n-id="account-hub-ssl-noencryption-option"
-                value="0" />
-              <xul:menuitem
-                id="incomingConnectionSecurityStartTtls"
-                label="STARTTLS"
-                value="2" />
-              <xul:menuitem
-                id="incomingConnectionSecuritySslTls"
-                label="SSL/TLS"
-                value="3" />
-            </xul:menupopup>
-          </xul:menulist>
-        </div>
-
-        <label
-          for="incomingAuthMethod"
-          data-l10n-id="account-hub-auth-label"
-          class="option-label">
-        </label>
-        <div class="input-control">
-          <xul:menulist
-            id="incomingAuthMethod"
-            class="menulist"
-            required="required"
-            value="0"
-            flex="1">
-            <xul:menupopup id="incomingAuthMenupopup" class="menupopup">
-              <xul:menuitem
-                id="incomingAuthMethodAutodetect"
-                data-l10n-id="account-hub-ssl-autodetect-option"
-                value="0">
-              </xul:menuitem>
-              <xul:menuitem
-                id="incomingAuthMethodCleartext"
-                data-l10n-id="account-hub-ssl-cleartext-password-option"
-                value="3">
-              </xul:menuitem>
-              <xul:menuitem
-                id="incomingAuthMethodEncrypted"
-                data-l10n-id="account-hub-ssl-encrypted-password-option"
-                value="4">
-              </xul:menuitem>
-              <xul:menuitem
-                id="incomingAuthMethodKerbos"
-                label="Kerberos / GSSAPI"
-                value="5">
-              </xul:menuitem>
-              <xul:menuitem
-                id="incomingAuthMethodNtlm"
-                label="NTLM"
-                value="6">
-              </xul:menuitem>
-              <xul:menuitem
-                id="incomingAuthMethodOAuth2"
-                value="10"
-                hidden="hidden"
-                label="OAuth2">
-              </xul:menuitem>
-            </xul:menupopup>
-          </xul:menulist>
-        </div>
-
-        <label
-          for="incomingUsername"
-          data-l10n-id="account-hub-username-label"
-          class="option-label">
-        </label>
-        <div class="input-control">
-          <input
-            id="incomingUsername"
-            type="text"
-            data-l10n-id="account-setup-email-input"
-            required="required"
-            class="username input-field" />
-        </div>
-      </div>
-      <div class="hub-body-column">
-        <div>
-          <legend data-l10n-id="account-hub-outgoing-server-legend"></legend>
-        </div>
-        <label
-          for="outgoingHostname"
-          data-l10n-id="account-hub-hostname-label"
-          class="option-label">
-        </label>
-        <div class="input-control">
-          <input
-            id="outgoingHostname"
-            type="text"
-            placeholder="mail.example.com"
-            required="required"
-            class="input-field" />
-        </div>
-
-        <label
-          for="outgoingPort"
-          data-l10n-id="account-hub-port-label"
-          class="option-label">
-        </label>
-        <div class="input-control">
-          <input
-            id="outgoingPort"
-            min="1"
-            max="65535"
-            type="number"
-            placeholder="465"
-            required="required"
-            class="input-field" />
-        </div>
-
-        <label for="outgoingSsl" data-l10n-id="account-hub-ssl-label" class="option-label">
-        </label>
-        <div class="input-control">
-          <xul:menulist
-            id="outgoingConnectionSecurity"
-            class="menulist"
-            value="0"
-            flex="1">
-            <xul:menupopup
-              id="outgoingConnectionSecurityMenupopup"
-              class="menupopup">
-              <xul:menuitem
-                id="outgoingConnectionSecurityAutodetect"
-                data-l10n-id="account-hub-ssl-autodetect-option"
-                value="-1" />
-              <xul:menuitem
-                id="outgoingConnectionSecurityNonEncryption"
-                data-l10n-id="account-hub-ssl-noencryption-option"
-                value="0" />
-              <xul:menuitem
-                id="outgoingConnectionSecurityStartTtls"
-                label="STARTTLS"
-                value="2" />
-              <xul:menuitem
-                id="outgoingConnectionSecuritySslTls"
-                label="SSL/TLS"
-                value="3" />
-            </xul:menupopup>
-          </xul:menulist>
-        </div>
-
-        <label
-          for="outgoingAuthMethod"
-          data-l10n-id="account-hub-auth-label"
-          class="option-label">
-        </label>
-        <div class="input-control">
-          <xul:menulist
-            id="outgoingAuthMethod"
-            class="menulist"
-            required="required"
-            value="0"
-            flex="1">
-            <xul:menupopup
-              id="outgoingAuthMenupopup"
-              class="menupopup">
-              <xul:menuitem
-                id="outgoingAuthMethodAutodetect"
-                data-l10n-id="account-hub-ssl-autodetect-option"
-                value="0">
-              </xul:menuitem>
-              <xul:menuitem
-                id="outgoingAuthMethodNone"
-                data-l10n-id="account-hub-auth-no-authentication-option"
-                value="1">
-              </xul:menuitem>
-              <xul:menuitem
-                id="outgoingAuthMethodCleartext"
-                data-l10n-id="account-hub-ssl-cleartext-password-option"
-                value="3">
-              </xul:menuitem>
-              <xul:menuitem
-                id="outgoingAuthMethodEncrypted"
-                data-l10n-id="account-hub-ssl-encrypted-password-option"
-                value="4">
-              </xul:menuitem>
-              <xul:menuitem
-                id="outgoingAuthMethodKerbos"
-                label="Kerberos / GSSAPI"
-                value="5">
-              </xul:menuitem>
-              <xul:menuitem
-                id="outgoingAuthMethodNtlm"
-                label="NTLM"
-                value="6">
-              </xul:menuitem>
-              <xul:menuitem
-                id="outgoingAuthMethodOAuth2"
-                value="10"
-                hidden="hidden"
-                label="OAuth2">
-              </xul:menuitem>
-            </xul:menupopup>
-          </xul:menulist>
-        </div>
-
-        <label
-          for="outgoingUsername"
-          data-l10n-id="account-hub-username-label"
-          class="option-label">
-        </label>
-        <div class="input-control">
-          <input
-            id="outgoingUsername"
-            type="text"
-            data-l10n-id="account-setup-email-input"
-            required="required"
-            class="username input-field" />
-        </div>
-      </div>
-    </div>
-  </form>
-
-  <!-- Account Hub Email Added Subview -->
-  <div id="emailAddedSubview" class="account-hub-grid" hidden="hidden">
-    <header class="hub-header">
-      <h1
-        id="accountAddedTitle"
-        class="sub-view-title"
-        data-l10n-id="account-hub-email-account-added-title">
-      </h1>
-      <p id="accountAddedSubheader" class="sub-view-subheader">
-      </p>
-    </header>
-
-    <div class="hub-body">
+  <div id="loadingOverlay">
+    <div class="loader-outside">
+      <div class="loader-inside"></div>
     </div>
   </div>
+</html:template>
 
-  <!-- Account Hub Email Loading Subview -->
-  <div id="emailLoadingSubview" class="account-hub-grid" hidden="hidden">
-    <header class="hub-header">
-      <h1
-          id="lookupEmailConfigurationTitle"
-          class="sub-view-title"
-          data-l10n-id="account-hub-lookup-email-configuration-title"
-          hidden="hidden">
-      </h1>
-      <h1
-        id="addingAccountTitle"
-        class="sub-view-title"
-        data-l10n-id="account-hub-adding-account-title">
-      </h1>
-      <p
-          id="lookupEmailConfigurationSubheader"
-          class="sub-view-subheader"
-          data-l10n-id="account-hub-lookup-email-configuration-subheader"
-          hidden="hidden">
-      </p>
-      <p
-        id="addingAccountSubheader"
-        class="sub-view-subheader"
-        data-l10n-id="account-hub-adding-account-subheader">
-      </p>
+<html:template
+  id="accountHubAddressBookSetup"
+  xmlns="http://www.w3.org/1999/xhtml"
+>
+  <address-book-option-select
+    id="addressBookOptionSelectSubview"
+    class="account-hub-step"
+    title-id="account-hub-add-address-book"
+  >
+  </address-book-option-select>
+  <address-book-account-select id="addressBookAccountSelectSubview" hidden="hidden">
+  </address-book-account-select>
+  <address-book-remote-account-form
+    id="addressBookRemoteAccountFormSubview"
+    hidden="hidden"
+  >
+  </address-book-remote-account-form>
+  <address-book-ldap-account-form
+    id="addressBookLdapAccountFormSubview"
+    hidden="hidden"
+  >
+  </address-book-ldap-account-form>
+  <address-book-ldap-advanced-form
+    id="addressBookLdapAdvancedFormSubview"
+    hidden="hidden"
+  >
+  </address-book-ldap-advanced-form>
+  <address-book-sync id="addressBookSyncSubview" hidden="hidden">
+  </address-book-sync>
+
+  <account-hub-footer id="addressBookFooter" class="hub-footer">
+  </account-hub-footer>
+</html:template>
+
+
+<html:template id="shortcutRowTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <!-- TODO: This is temporary data for visualization. It will be replaced by slots -->
+  <div class="content-area">
+    Go to Mail Space
+  </div>
+  <div class="action-area kbd-container">
+    <kbd>Alt</kbd> + <kbd>1</kbd>
+  </div>
+</html:template>
+
+<html:template id="shortcutsContainerTemplate" xmlns="http://www.w3.org/1999/xhtml">
+  <dialog>
+    <header>
+      <h1>Customizable Shortcuts</h1>
+      <button id="close"
+              type="button"
+              data-l10n-id="shortcuts-close-button-title"
+              class="button button-flat button-round icon-button icon-only modal-close-button">
+        <img class="icon-close-lg" src="" alt="" />
+      </button>
     </header>
 
-    <div class="hub-body">
-      <img id="hubLoader" class="icon" role="presentation" />
-    </div>
-  </div>
+    <main></main>
+
+    <footer></footer>
+  </dialog>
 </html:template>
 </html:body>
 </html>

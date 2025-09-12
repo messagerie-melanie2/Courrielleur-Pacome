@@ -80,6 +80,7 @@ override chrome://global/content/aboutSupport.xhtml chrome://messenger/content/a
 override chrome://global/content/buildconfig.html chrome://messenger/content/buildconfig.html
 override chrome://global/content/commonDialog.xhtml chrome://messenger/content/commonDialog.xhtml
 override chrome://global/content/license.html chrome://messenger/content/license.html
+override chrome://global/locale/appstrings.properties chrome://messenger/locale/appstrings.properties
 override chrome://messagebody/skin/abPrint.css chrome://messenger/skin/shared/abPrint.css
 override chrome://messagebody/skin/messageBody.css chrome://messenger/skin/messageBody.css
 override chrome://mozapps/content/profile/profileDowngrade.js chrome://messenger/content/profileDowngrade.js
