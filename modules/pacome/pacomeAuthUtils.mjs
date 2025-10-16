@@ -77,7 +77,7 @@ export const PacomeAuthUtils = {
       compte=MailServices.accounts.defaultAccount;
     } catch(ex) {}
 
-    if (null!=compte && null!=compte.incomingServer && null!=compte.incomingServer.getCharValue("pacome.confid"))
+    if (null!=compte && null!=compte.incomingServer && null!=compte.incomingServer.getStringValue("pacome.confid"))
       return compte;
 
     for (compte of MailServices.accounts.accounts) {
@@ -86,7 +86,7 @@ export const PacomeAuthUtils = {
       if ("imap"!=compte.incomingServer.type && "pop3"!=compte.incomingServer.type)
         continue;
 
-      const confId=compte.incomingServer.getCharValue("pacome.confid");
+      const confId=compte.incomingServer.getStringValue("pacome.confid");
       if (null==confId || ""==confId) continue;
 
       return compte;

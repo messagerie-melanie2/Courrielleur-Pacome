@@ -379,7 +379,7 @@ export const PacomeParam={
 
         if ( ("imap"==cprinc.incomingServer.type ||
             "pop3"==cprinc.incomingServer.type) &&
-            (null!=cprinc.incomingServer.getCharValue("pacome.confid")) ) {
+            (null!=cprinc.incomingServer.getStringValue("pacome.confid")) ) {
           let uid=PacomeUtils.GetUidReduit(cprinc.incomingServer.username);
           this.PacomeTrace("ListeIdentifiants identifiant principal:"+uid);
           uids.push(uid);
@@ -392,7 +392,7 @@ export const PacomeParam={
         //test boite pacome
         if ("imap"!=compte.incomingServer.type && "pop3"!=compte.incomingServer.type)
           continue;
-        let confid=compte.incomingServer.getCharValue("pacome.confid", "");
+        let confid=compte.incomingServer.getStringValue("pacome.confid", "");
         if (""==confid) continue;
         //uid
         const uid=PacomeUtils.GetUidReduit(compte.incomingServer.username);
@@ -598,7 +598,7 @@ export const PacomeParam={
       const nom=compte.incomingServer.username;
       if (uid==nom){
         //verifie compte pacome
-        const cfg=compte.incomingServer.getCharValue("pacome.confid", "");
+        const cfg=compte.incomingServer.getStringValue("pacome.confid", "");
         if (cfg==confid){
           //suppression effective
           this.PacomeTrace("SupprimeBoite suppression du compte uid:"+uid+" - confid:"+confid);
@@ -1090,7 +1090,7 @@ export const PacomeParam={
 
       const prettyName=compte.incomingServer.prettyName;
       if (libelle==prettyName && "rss"==compte.incomingServer.type){
-        const cfg=compte.incomingServer.getCharValue("pacome.confid", "");
+        const cfg=compte.incomingServer.getStringValue("pacome.confid", "");
         if ("flux"==cfg){
           this.PacomeTrace("GetCompteFlux compte flux existe");
           return compte;
