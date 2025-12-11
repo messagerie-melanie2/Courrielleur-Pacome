@@ -1,82 +1,81 @@
-
-.assistant-pacome{
-	 max-width: 500px;
+.assistant-pacome {
+	max-width: 500px;
 }
 
-.assistant-pages{
+.assistant-pages {
 
 	margin: 0 4rem 3em;
 }
 
-.assistant-entete{
+.assistant-entete {
 	max-width: 600px;
-  display: flex;
-  flex-direction: column;
-  flex-wrap: wrap;
-	margin-bottom:0;
-	height:120px;
+	display: flex;
+	flex-direction: column;
+	flex-wrap: wrap;
+	margin-bottom: 0;
+	height: 120px;
 	margin: 2em 4rem 0;
 }
 
 
 .assistant-contenu {
-  flex: 1;
+	flex: 1;
 	max-width: 500px;
-	height:200px;
-	
+	height: 200px;
+
 	/*border: solid lightgray 1px;*/
-	padding-left:8px;
+	padding-left: 8px;
 }
 
 .assistant-masque {
 	visibility: collapse;
 }
 
-.assistant-boutons{
+.assistant-boutons {
 	align-items: flex-end;
 	display: flex;
 	flex-direction: column;
 	max-width: 500px;
-  padding: 0;
+	padding: 0;
 }
 
 
-.assistant-listes{
-	
-	max-height:200px;
+.assistant-listes {
+
+	max-height: 200px;
 	overflow-x: hidden;
-  overflow-y: auto;
+	overflow-y: auto;
 
 	/*background-color:#E4EFFC;*/
-	border-top:solid lightgrey 1px;
-	border-right:solid lightgrey 1px;
-	border-left:solid lightgrey 1px;
+	border-top: solid lightgrey 1px;
+	border-right: solid lightgrey 1px;
+	border-left: solid lightgrey 1px;
 }
 
 
 .elemUI {
 
-	display:grid;
-	grid-template-columns:70% 30%;
-	
-	border-bottom:solid lightgrey 1px;
+	display: grid;
+	grid-template-columns: 70% 30%;
+
+	border-bottom: solid lightgrey 1px;
 }
 
-.elemUI select{
+.elemUI select {
 
-	margin:0;
+	margin: 0;
 	padding-top: 0;
 	padding-bottom: 0;
 }
 
 
 
-.sablier{
+.sablier {
 
 	cursor: wait !important;
 }
 
-.pas-sablier{
+.pas-sablier {
 
 	cursor: auto;
 }
@@ -84,36 +83,44 @@
 
 
 
-.pacomeauth{
-	width:400px;
-	height:300px;
+.pacomeauth {
+	width: 400px;
+	height: 240px;
 }
 
-.pacomeauth-lib{
-		
-	display:grid;
-	grid-template-columns:30% 70%;
+.pacomeauth-lib {
+
+	display: grid;
+	grid-template-columns: 30% 70%;
 }
 
-.pacomeauth-lib > label{
-	
+.pacomeauth-lib>label {
+
 	/*width:100px;*/
 }
 
-.pacomeauth-lib > input{
-	grid-column:2;
+.pacomeauth-lib>input {
+	grid-column: 2;
 }
 
-.pacomeauth-boutons{
-	
-	margin:10px 5px;
-	padding:0;
+.pacomeauth-boutons {
+
+	margin: 10px 5px;
+	padding: 0;
 }
 
-#pacome-auth-mdp{
-	padding-top:10px;
+#pacome-auth-mdp {
+	padding-top: 10px;
 }
 
+.pacomeauth-checkbox {
+	grid-column: 2;
+	display: flex;
+	align-items: center;
+	padding-top: 10px;
+}
 
-
-
+.pacomeauth-checkbox>label {
+	margin-left: 5px;
+	white-space: nowrap;
+}

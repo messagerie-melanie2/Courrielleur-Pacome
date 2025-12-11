@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
- 
+
 const { PacomeAuthUtils, NON_MELANIE2, MSG_MELANIE2, APP_MELANIE2 } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeAuthUtils.mjs");
 
 
@@ -84,8 +84,8 @@ runnablePrompter.prototype = {
         // Log the error for extension devs and others to pick up.
         console.error(
           "runnablePrompter:run: consumer.onPrompt* reported an exception: " +
-            ex +
-            "\n"
+          ex +
+          "\n"
         );
       }
     }
@@ -185,7 +185,7 @@ MsgAsyncPrompter.prototype = {
  * @implements {nsIAuthPrompt}
  */
 export class MsgAuthPrompt {
-  QueryInterface = ChromeUtils.generateQI(["nsIAuthPrompt"]);
+  QueryInterface = ChromeUtils.generateQI(["nsIAuthPrompt", "nsIAuthPrompt2"]);
 
   static l10n = new Localization(["messenger/msgAuthPrompt.ftl"], true);
 
@@ -353,34 +353,65 @@ export class MsgAuthPrompt {
 
     username = decodeURIComponent(username);
 
-		// cas authentification pacome
-		if (origin && PacomeAuthUtils.TestServeurMelanie2(origin)!=NON_MELANIE2) {
-			Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptPassword cas authentification pacome origin:"+origin);
+    // cas authentification pacome
+    if (origin && PacomeAuthUtils.TestServeurMelanie2(origin) != NON_MELANIE2) {
+      Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptPassword cas authentification pacome origin:" + origin);
 
-			// rechercher login existant
-			let loging2=PacomeAuthUtils.findLogins(origin, null, realm);
-			if (loging2.length){
-				//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm login pacome present");
-				aPassword.value=loging2[0].password;
+      // rechercher login existant
+      let loging2 = PacomeAuthUtils.findLogins(origin, null, null);
+      // Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword findLogins result count: " + loging2.length);
+
+      if (loging2.length) {
+        //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm login pacome present");
+        aPassword.value = loging2[0].password;
+
+        // Ensure persistence with the correct Realm (added for promptPassword)
+        try {
+          let checkUsername = loging2[0].username || username;
+          let specificLogins = Services.logins.findLogins(origin, null, realm || "");
+          let match = specificLogins.find(l => l.username == checkUsername);
+
+          // Log what we are doing
+          // Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword checking persistence for realm: " + (realm || "NULL") + " username: " + checkUsername + " match: " + (match ? "YES" : "NO"));
+
+          if (!match && checkUsername) {
+            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword saving login for correct realm: " + (realm || ""));
+            const newLogin = new LoginInfo(
+              origin,
+              null,
+              realm || "",
+              checkUsername,
+              aPassword.value,
+              null,
+              null
+            );
+            Services.logins.addLoginAsync(newLogin);
+          }
+        } catch (ex) {
+          Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword error saving realm login: " + ex);
+        }
+
         return true;
-			}
+      }
 
-			// demande mdp
-			let outmdp={};
-			let ok=PacomeAuthUtils.PromptPacomeMdp(null, username, outmdp);
+      // demande mdp
+      let outmdp = {};
+      let ok = PacomeAuthUtils.PromptPacomeMdp(null, username, outmdp, checkBox);
 
-			// retour infos
-			if (ok) {
-				//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm utilisation login pacome");
-				// mettre à jour tous les comptes
-				PacomeAuthUtils.modifyMdpPacome(username, outmdp.value);
+      // retour infos
+      if (ok) {
+        //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm utilisation login pacome");
+        PacomeAuthUtils.modifyMdpPacome(username, outmdp.value, checkBox.value);
 
-				aPassword.value=outmdp.value;
+        // Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword checkBox.value: " + checkBox.value);
+
+
+        aPassword.value = outmdp.value;
         return true;
-			}
-			
-			return false;
-		}
+      }
+
+      return false;
+    }
 
     // If origin is null, we can't save this login.
     if (origin) {
@@ -480,6 +511,11 @@ export class MsgAuthPrompt {
    * @returns {boolean} true for OK, false for Cancel.
    */
   promptAuth(channel, level, authInfo, checkboxLabel, checkValue) {
+    // nsIAuthPrompt2 calls this with 3 arguments. Initialize optional args.
+    if (!checkValue) {
+      checkValue = { value: false };
+    }
+
     const title = lazy.dialogsBundle.formatStringFromName(
       "PromptUsernameAndPassword3",
       [lazy.brandFullName]
@@ -493,62 +529,94 @@ export class MsgAuthPrompt {
     const password = { value: authInfo.password || "" };
 
 
-		// cas authentification pacome
-		// authentification proxy AMANDE? ou authentification melanie2
-    if (null!=channel && null!=channel.URI &&
-				(PacomeAuthUtils.isAuthProxyAmande(channel, authInfo) ||
-        APP_MELANIE2==PacomeAuthUtils.TestServeurMelanie2(channel.URI.host)) ) {
+    // cas authentification pacome
+    // authentification proxy AMANDE? ou authentification melanie2
+    if (null != channel && null != channel.URI &&
+      (PacomeAuthUtils.isAuthProxyAmande(channel, authInfo) ||
+        PacomeAuthUtils.TestServeurMelanie2(channel.URI.host) != NON_MELANIE2)) {
       //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth cas authentification pacome uri:"+channel.URI.spec);
 
-			// rechercher login existant
-			let loging=PacomeAuthUtils.findLogins(null, channel.URI.host, null);
-			if (loging.length){
-				//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth login pacome present");
-				authInfo.username = loging[0].username;
-				authInfo.password = loging[0].password;
-				checkValue.value=false;
+      // rechercher login existant
+
+
+      // rechercher login existant
+      let origin = this._getFormattedOrigin(channel.URI);
+      // Services.console.logStringMessage("MsgAsyncPrompter.jsm promptAuth checking findLogins for origin: " + origin);
+      let loging = PacomeAuthUtils.findLogins(origin, channel.URI.host, null);
+      // Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth findLogins result count: " + loging.length);
+
+      if (loging.length) {
+        //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth login pacome present");
+        authInfo.username = loging[0].username;
+        authInfo.password = loging[0].password;
+        checkValue.value = false;
+
+        // Ensure persistence with the correct Realm
+        try {
+          let specificLogins = Services.logins.findLogins(origin, null, authInfo.realm || "");
+          let match = specificLogins.find(l => l.username == authInfo.username);
+          if (!match) {
+            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptAuth saving login for correct realm: " + (authInfo.realm || ""));
+            const newLogin = new LoginInfo(
+              origin,
+              null,
+              authInfo.realm || "",
+              authInfo.username,
+              authInfo.password,
+              null,
+              null
+            );
+            Services.logins.addLoginAsync(newLogin);
+          }
+        } catch (ex) {
+          Services.console.logStringMessage("MsgAsyncPrompter.jsm promptAuth error saving realm login: " + ex);
+        }
+
         return true;
-			}
+      }
 
-			let mdp=new Object();
+      let mdp = new Object();
 
-			// cas agenda : rechercher uid
-			let uid=PacomeAuthUtils.GetUidAgenda(channel.URI.spec);
+      // cas agenda : rechercher uid
+      let uid = PacomeAuthUtils.GetUidAgenda(channel.URI.spec);
 
-			if (null==uid || ""==uid) {
+      if (null == uid || "" == uid) {
 
-				//authentification pacome avec le compte principal
-				let compte=PacomeAuthUtils.GetComptePrincipal();
-				if (null!=compte) {
-					uid=PacomeAuthUtils.GetUidReduit(compte.incomingServer.username);
-				}
-				else {
-					// le compte principal devrait exister
-					//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth authentification "+channel.URI.host+" - pas de compte principal!");
-					return false;
-				}
-			}
-			else //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth GetUidAgenda uid:"+uid);
+        //authentification pacome avec le compte principal
+        let compte = PacomeAuthUtils.GetComptePrincipal();
+        if (null != compte) {
+          uid = PacomeAuthUtils.GetUidReduit(compte.incomingServer.username);
+        }
+        else {
+          // le compte principal devrait exister
+          //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth authentification "+channel.URI.host+" - pas de compte principal!");
+          return false;
+        }
+      }
+      else //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm promptAuth GetUidAgenda uid:"+uid);
 
-			//demande mot de passe
-			Services.console.logStringMessage("***  MsgAsyncPrompter.jsm authentification Pacome host:"+channel.URI.host);
-			let res=PacomeAuthUtils.PromptPacomeMdp(null, uid, mdp);
+        //demande mot de passe
+        Services.console.logStringMessage("***  MsgAsyncPrompter.jsm authentification Pacome host:" + channel.URI.host);
+      let res = PacomeAuthUtils.PromptPacomeMdp(null, uid, mdp, checkValue);
 
-			if (res!=1) {
-				//Services.console.logStringMessage("***  MsgAsyncPrompter.jsm echec authentification pacome ou annulation");
-				return false;
-			}
+      if (res != 1) {
+        //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm echec authentification pacome ou annulation");
+        return false;
+      }
 
-			// mettre à jour tous les comptes
-			PacomeAuthUtils.modifyMdpPacome(uid, mdp.value);
+      // mettre à jour tous les comptes
+      PacomeAuthUtils.modifyMdpPacome(uid, mdp.value, checkValue.value);
 
-			authInfo.username=uid;
-			authInfo.password=mdp.value;
-			checkValue.value=false;
+      // Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth checkValue.value: " + checkValue.value);
 
-			return true;
+
+      authInfo.username = uid;
+      authInfo.password = mdp.value;
+      checkValue.value = false;
+
+      return true;
     }
-		
+
     const ok = nsIPrompt_promptUsernameAndPassword(
       title,
       text,

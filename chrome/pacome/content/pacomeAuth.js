@@ -22,57 +22,61 @@ const { PacomeAuthUtils } = ChromeUtils.importESModule("resource:///modules/paco
 */
 window.addEventListener("load", () => {
 
-	PacomeUtils.PacomeTrace("PacomeAuth load");
+  PacomeUtils.PacomeTrace("PacomeAuth load");
 
-	const dialog=document.getElementById("pacomeauth");
+  const dialog = document.getElementById("pacomeauth");
 
   //identifiant
-  if (null==window.arguments || null==window.arguments[0] ||
-			null==window.arguments[0].uid) {
-		Services.prompt.alert(window, "Erreur", PacomeUtils.MessageFromId("PacomeAuthErreurInit"));
-		FermePacomeAuth();
+  if (null == window.arguments || null == window.arguments[0] ||
+    null == window.arguments[0].uid) {
+    Services.prompt.alert(window, "Erreur", PacomeUtils.MessageFromId("PacomeAuthErreurInit"));
+    FermePacomeAuth();
     return;
   }
 
-	//annulation par défaut
-  window.arguments[0].res=0;
-  window.arguments[0].mdp="";
+  //annulation par défaut
+  window.arguments[0].res = 0;
+  window.arguments[0].mdp = "";
 
-  const uid=window.arguments[0].uid;
+  const uid = window.arguments[0].uid;
 
-  document.getElementById("uid").value=uid;
+  document.getElementById("uid").value = uid;
 
-	const btValider=document.getElementById("boutonValider");
-  btValider.setAttribute("disabled",true);
-	btValider.addEventListener("keydown", toucheEnter);
+  if (window.arguments[0].memomdp) {
+    document.getElementById("memomdp").checked = true;
+  }
 
-	const mdpCtrl=document.getElementById("mdp");
-	mdpCtrl.addEventListener("keydown", toucheEnter);
+  const btValider = document.getElementById("boutonValider");
+  btValider.setAttribute("disabled", true);
+  btValider.addEventListener("keydown", toucheEnter);
 
-	// tests
-	//document.getElementById("uid").value="Prenom.NOM";
+  const mdpCtrl = document.getElementById("mdp");
+  mdpCtrl.addEventListener("keydown", toucheEnter);
 
-	dialog.showModal();
+  // tests
+  //document.getElementById("uid").value="Prenom.NOM";
+
+  dialog.showModal();
 });
 
 
 // appel ValiderAuth si mdp et touche enter
 function toucheEnter(aEvent) {
-	
-  if (aEvent.keyCode == aEvent.DOM_VK_ESCAPE){
+
+  if (aEvent.keyCode == aEvent.DOM_VK_ESCAPE) {
     FermePacomeAuth();
     return;
   }
 
-	if (aEvent.keyCode != aEvent.DOM_VK_RETURN)
-		return;
+  if (aEvent.keyCode != aEvent.DOM_VK_RETURN)
+    return;
 
-	// valider mdp ?
-	PacomeUtils.PacomeTrace("PacomeAuth DOM_VK_RETURN");
-	const btValider=document.getElementById("boutonValider");
-	if (!btValider.hasAttribute("disabled")){
-		ValiderAuth();
-	}
+  // valider mdp ?
+  PacomeUtils.PacomeTrace("PacomeAuth DOM_VK_RETURN");
+  const btValider = document.getElementById("boutonValider");
+  if (!btValider.hasAttribute("disabled")) {
+    ValiderAuth();
+  }
 }
 
 
@@ -93,31 +97,31 @@ function toucheEnter(aEvent) {
 */
 function ValiderAuth() {
 
-	PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth");
+  PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth");
 
   // identifiant + mot de passe saisi
-	const uid=document.getElementById("uid").value;
-  const mdp=document.getElementById("mdp").value;
+  const uid = document.getElementById("uid").value;
+  const mdp = document.getElementById("mdp").value;
 
   EcritLog("Verification du mot de passe pour l'identifiant:", uid);
 
-  let msgReq="";
+  let msgReq = "";
 
   //désactiver le bouton valider pour éviter deuxième appel
-  const btValider=document.getElementById("boutonValider");
-  btValider.setAttribute("disabled",true);
+  const btValider = document.getElementById("boutonValider");
+  btValider.setAttribute("disabled", true);
   btValider.focus();
 
-	document.getElementById("mdp").setAttribute("disabled",true);
-	
-	const url=Services.prefs.getCharPref(PACOME_URL_VERIFMDP, "");
-	if (url==""){
-		EcritLog("url serveur de verification de mot de passe non definie", "");
-		
-		window.arguments[0].res=-1;
-    window.arguments[0].mdp="";
-		return;
-	}
+  document.getElementById("mdp").setAttribute("disabled", true);
+
+  const url = Services.prefs.getCharPref(PACOME_URL_VERIFMDP, "");
+  if (url == "") {
+    EcritLog("url serveur de verification de mot de passe non definie", "");
+
+    window.arguments[0].res = -1;
+    window.arguments[0].mdp = "";
+    return;
+  }
 
   setBoutonAnnuler(false);
 
@@ -126,240 +130,251 @@ function ValiderAuth() {
 
   EcritLog("url serveur de verification de mot de passe", url);
 
-  const httpRequest=new XMLHttpRequest();
+  const httpRequest = new XMLHttpRequest();
 
-  let param="op=verifmdp&uid="+encodeURIComponent(uid);
-  param+="&mdp="+encodeURIComponent(mdp);
-  param+="&extver="+encodeURIComponent(PacomeUtils.version);
+  let param = "op=verifmdp&uid=" + encodeURIComponent(uid);
+  param += "&mdp=" + encodeURIComponent(mdp);
+  param += "&extver=" + encodeURIComponent(PacomeUtils.version);
 
   //Bug mantis 0004135: Traces incontournables avec uid et version du courrielleur
-  const cm2ver=Services.prefs.getCharPref("courrielleur.version", "");
-  param+="&cm2ver="+cm2ver;
+  const cm2ver = Services.prefs.getCharPref("courrielleur.version", "");
+  param += "&cm2ver=" + cm2ver;
   //org
-  const org=GetOrgForUid(uid);
-  param+="&org="+org;
+  const org = GetOrgForUid(uid);
+  param += "&org=" + org;
 
 
-  httpRequest.onreadystatechange=function() {
+  httpRequest.onreadystatechange = function () {
 
-    switch(httpRequest.readyState) {
-    case 4:
-      let statut=0;
-      try{
-        statut=httpRequest.status;
-      }
-      catch(ex1) {
-        //statut=0;
-        //v1.1.1
-        let req=httpRequest.channel.QueryInterface(Components.interfaces.nsIRequest);
-        statut=req.status;
-      }
-
-      passablier();
-
-      PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth statut:"+statut);
-
-      if(statut !=200) {
-
-        EcritLog("code de reponse du serveur", statut);
-
-        //v1.1.1
-        if (0==statut) {
-          msgReq=PacomeUtils.MessageFromId("PacomeAuthErreurSrv")+"\nStatut:"+statut;
+    switch (httpRequest.readyState) {
+      case 4:
+        let statut = 0;
+        try {
+          statut = httpRequest.status;
         }
-        else{
-          try{
-            //v1.11
-            msgReq=PacomeUtils.MessageFromId("pacomesrverr-"+statut);
-          }
-          catch(ex1) {
-            msgReq=PacomeUtils.MessageFromId("PacomeAuthErreurSrv")+"\nStatut:"+statut;
-          }
+        catch (ex1) {
+          //statut=0;
+          //v1.1.1
+          let req = httpRequest.channel.QueryInterface(Components.interfaces.nsIRequest);
+          statut = req.status;
         }
 
-        //Traiter erreur spécifique
-        //erreur du serveur PacomeMdpErreurSrv
-				const res=MsgAuthErreurSrv(msgReq);
+        passablier();
 
-        PacomeUtils.PacomeTrace("PacomeAuth MsgAuthErreurSrv res="+res);
+        PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth statut:" + statut);
 
-        //v2.4: 1->continuer
-        if (1==res) {
+        if (statut != 200) {
 
-          //passage en mode déconnecté
-					PacomeUtils.PacomeTrace("erreur du serveur - passage en mode deconnecte", msgReq);
-          EcritLog("erreur du serveur - passage en mode deconnecte", msgReq);
-          PacomeUtils.passerHorsLigne();
-          //annulation
-          window.arguments[0].res=-1;
-          window.arguments[0].mdp="";
+          EcritLog("code de reponse du serveur", statut);
+
+          //v1.1.1
+          if (0 == statut) {
+            msgReq = PacomeUtils.MessageFromId("PacomeAuthErreurSrv") + "\nStatut:" + statut;
+          }
+          else {
+            try {
+              //v1.11
+              msgReq = PacomeUtils.MessageFromId("pacomesrverr-" + statut);
+            }
+            catch (ex1) {
+              msgReq = PacomeUtils.MessageFromId("PacomeAuthErreurSrv") + "\nStatut:" + statut;
+            }
+          }
+
+          //Traiter erreur spécifique
+          //erreur du serveur PacomeMdpErreurSrv
+          const res = MsgAuthErreurSrv(msgReq);
+
+          PacomeUtils.PacomeTrace("PacomeAuth MsgAuthErreurSrv res=" + res);
+
+          //v2.4: 1->continuer
+          if (1 == res) {
+
+            //passage en mode déconnecté
+            PacomeUtils.PacomeTrace("erreur du serveur - passage en mode deconnecte", msgReq);
+            EcritLog("erreur du serveur - passage en mode deconnecte", msgReq);
+            PacomeUtils.passerHorsLigne();
+            //annulation
+            window.arguments[0].res = -1;
+            window.arguments[0].mdp = "";
+
+          } else {
+
+            // bouton continuer
+            PacomeUtils.PacomeTrace("erreur du serveur - mot de passe force", msgReq);
+            EcritLog("erreur du serveur - mot de passe force", msgReq);
+
+            window.arguments[0].res = 1;
+            window.arguments[0].mdp = mdp;
+          }
+
+          FermePacomeAuth();
+          return;
 
         } else {
 
-					// bouton continuer
-					PacomeUtils.PacomeTrace("erreur du serveur - mot de passe force", msgReq);
-          EcritLog("erreur du serveur - mot de passe force", msgReq);
+          const reponse = httpRequest.responseText;
+          PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth reponse='" + reponse + "'");
 
-          window.arguments[0].res=1;
-          window.arguments[0].mdp=mdp;
-        }
+          //reponse='code=0;message=;versionsconfigs=std1:2-2+std2:2-2+par1:2-2;openhours=7:30-20:30-Mon/Tue/Wed;comptesflux=Informations Mélanie2:4-4;'
+          //analyser le code retour
+          //0 si succès
+          //0xFFFF : vérification ok mais le mot de passe doit changer (texte dans g_msgReq)
+          //autre : mot de passe non valide -> continuer saisie
+          let code = -1;
+          let re;
+          let message = "";
+          msgReq = PacomeUtils.MessageFromId("PacomeAuthErreurSrv");
 
-        FermePacomeAuth();
-        return;
-
-      } else{
-
-        const reponse=httpRequest.responseText;
-        PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth reponse='"+reponse+"'");
-
-        //reponse='code=0;message=;versionsconfigs=std1:2-2+std2:2-2+par1:2-2;openhours=7:30-20:30-Mon/Tue/Wed;comptesflux=Informations Mélanie2:4-4;'
-        //analyser le code retour
-        //0 si succès
-        //0xFFFF : vérification ok mais le mot de passe doit changer (texte dans g_msgReq)
-        //autre : mot de passe non valide -> continuer saisie
-        let code=-1;
-				let re;
-        let message="";
-        msgReq=PacomeUtils.MessageFromId("PacomeAuthErreurSrv");
-
-        const tab=reponse.split(";");
-        if (0<tab.length) {
-          res=tab[0].split("=");
-          if (res[0]=="code")
-            code=res[1];
-        }
-        if (1<tab.length) {
-          res=tab[1].split("=");
-          if (res[0]=="message")
-            message=res[1];
-        }
-
-				 PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth code retourné:"+code);
-				 PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth message retourné:"+message);
-
-        //tests
-        //code=0xFFFF;
-        //message="Test le mot de passe doit changé";
-
-        //cas mot de passe valide
-        if (0==code || 0xFFFF==code) {
-
-          // PacomeSetOpenHours(reponse);
-          let argchg=Array();
-
-          if (0xFFFF==code) {
-
-            //le mot de passe doit changer
-            PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth le mot de passe doit changer");
-
-            EcritLog("le mot de passe doit changer", "");
-            //si l'utilisateur change le mot de passe, le nouveau mot de passe est retourné dans argchg["nouveau"]
-            argchg["uid"]=uid;
-            argchg["actuel"]=mdp;
-            argchg["mineqpassworddoitchanger"]=message;
-
-            window.openDialog("chrome://pacome/content/pacomechgmdp.xul","","chrome,modal,centerscreen,titlebar",argchg);
-
-            if (null!=argchg["nouveau"]) {
-              EcritLog("le mot de passe a chang\u00e9", "");
-              mdp=argchg["nouveau"];
-            }
-
+          const tab = reponse.split(";");
+          if (0 < tab.length) {
+            res = tab[0].split("=");
+            if (res[0] == "code")
+              code = res[1];
+          }
+          if (1 < tab.length) {
+            res = tab[1].split("=");
+            if (res[0] == "message")
+              message = res[1];
           }
 
-          window.arguments[0].res=1;
-          window.arguments[0].mdp=mdp;
+          PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth code retourné:" + code);
+          PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth message retourné:" + message);
 
-          FermePacomeAuth();
+          //tests
+          //code=0xFFFF;
+          //message="Test le mot de passe doit changé";
 
-          return;
+          //cas mot de passe valide
+          if (0 == code || 0xFFFF == code) {
 
-        }  else {
+            // PacomeSetOpenHours(reponse);
+            let argchg = Array();
 
-          EcritLog("mot de passe non valide code:", code);
+            if (0xFFFF == code) {
 
-          //le mot de passe n'est pas valide ou erreur
-          //mot de passe non valide
-          if (49==code) {
+              //le mot de passe doit changer
+              PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth le mot de passe doit changer");
 
-						let msgUser=PacomeUtils.MessageFromId("PacomeAuthNonValide");
+              EcritLog("le mot de passe doit changer", "");
+              //si l'utilisateur change le mot de passe, le nouveau mot de passe est retourné dans argchg["nouveau"]
+              argchg["uid"] = uid;
+              argchg["actuel"] = mdp;
+              argchg["mineqpassworddoitchanger"] = message;
 
-            // cas mot de passe aurait du etre changé (mantis 5393)
-            if (message.startsWith("GRILLED : ")) {
-							
-							msgUser += " - " + message.substr(10);
+              window.openDialog("chrome://pacome/content/pacomechgmdp.xul", "", "chrome,modal,centerscreen,titlebar", argchg);
 
-							MsgAuthErreurSrv(msgUser);
+              if (null != argchg["nouveau"]) {
+                EcritLog("le mot de passe a chang\u00e9", "");
+                mdp = argchg["nouveau"];
+              }
 
-							PacomeUtils.passerHorsLigne();
+            }
 
-							//annulation
-							window.arguments[0].res=-1;
-							window.arguments[0].mdp="";
-
-							FermePacomeAuth();
-							return;
-						} 
-						else {
-							PacomeUtils.PacomeTrace("PacomeAuth PacomeAuthNonValide");
-							Services.prompt.alert(window, PacomeUtils.MessageFromId("PacomeAuthNonValide"), msgReq+" (code "+code+")");							
-						}
-
-          } else if (-1==code) {
-
-						const res=MsgAuthErreurSrv(PacomeUtils.MessageFromId("PacomeAuthErreurSrvLib"));
-
-						PacomeUtils.PacomeTrace("PacomeAuth MsgAuthErreurSrv res="+res);
-
-            //v2.4: 1->continuer
-            if (1==res) {
-
-              //passage en mode déconnecté
-							PacomeUtils.PacomeTrace("erreur du serveur - passage en mode deconnecte", "");
-              EcritLog("erreur du serveur - passage en mode deconnecte", "");
-              PacomeUtils.passerHorsLigne();
-              //annulation
-              window.arguments[0].res=-1;
-              window.arguments[0].mdp="";
-
+            window.arguments[0].res = 1;
+            window.arguments[0].mdp = mdp;
+            if (document.getElementById("memomdp").checked) {
+              window.arguments[0].memomdp = true;
             } else {
-
-							// bouton continuer
-							PacomeUtils.PacomeTrace("erreur du serveur - mot de passe force", "");
-              EcritLog("erreur du serveur - mot de passe force", "");
-
-              window.arguments[0].res=1;
-              window.arguments[0].mdp=mdp;
+              window.arguments[0].memomdp = false;
             }
 
             FermePacomeAuth();
+
             return;
 
           } else {
 
-						PacomeUtils.PacomeTrace("PacomeAuth PacomeAuthNonValide");
-						Services.prompt.alert(window, PacomeUtils.MessageFromId("PacomeAuthNonValide"), msgReq+" (code "+code+")");
+            EcritLog("mot de passe non valide code:", code);
+
+            //le mot de passe n'est pas valide ou erreur
+            //mot de passe non valide
+            if (49 == code) {
+
+              let msgUser = PacomeUtils.MessageFromId("PacomeAuthNonValide");
+
+              // cas mot de passe aurait du etre changé (mantis 5393)
+              if (message.startsWith("GRILLED : ")) {
+
+                msgUser += " - " + message.substr(10);
+
+                MsgAuthErreurSrv(msgUser);
+
+                PacomeUtils.passerHorsLigne();
+
+                //annulation
+                window.arguments[0].res = -1;
+                window.arguments[0].mdp = "";
+
+                FermePacomeAuth();
+                return;
+              }
+              else {
+                PacomeUtils.PacomeTrace("PacomeAuth PacomeAuthNonValide");
+                Services.prompt.alert(window, PacomeUtils.MessageFromId("PacomeAuthNonValide"), msgReq + " (code " + code + ")");
+              }
+
+            } else if (-1 == code) {
+
+              const res = MsgAuthErreurSrv(PacomeUtils.MessageFromId("PacomeAuthErreurSrvLib"));
+
+              PacomeUtils.PacomeTrace("PacomeAuth MsgAuthErreurSrv res=" + res);
+
+              //v2.4: 1->continuer
+              if (1 == res) {
+
+                //passage en mode déconnecté
+                PacomeUtils.PacomeTrace("erreur du serveur - passage en mode deconnecte", "");
+                EcritLog("erreur du serveur - passage en mode deconnecte", "");
+                PacomeUtils.passerHorsLigne();
+                //annulation
+                window.arguments[0].res = -1;
+                window.arguments[0].mdp = "";
+
+              } else {
+
+                // bouton continuer
+                PacomeUtils.PacomeTrace("erreur du serveur - mot de passe force", "");
+                EcritLog("erreur du serveur - mot de passe force", "");
+
+                window.arguments[0].res = 1;
+                window.arguments[0].res = 1;
+                window.arguments[0].mdp = mdp;
+                if (document.getElementById("memomdp").checked) {
+                  window.arguments[0].memomdp = true;
+                } else {
+                  window.arguments[0].memomdp = false;
+                }
+              }
+
+              FermePacomeAuth();
+              return;
+
+            } else {
+
+              PacomeUtils.PacomeTrace("PacomeAuth PacomeAuthNonValide");
+              Services.prompt.alert(window, PacomeUtils.MessageFromId("PacomeAuthNonValide"), msgReq + " (code " + code + ")");
+            }
+
+            const btValider = document.getElementById("boutonValider");
+            btValider.removeAttribute("disabled");
+
+            const txtuid = document.getElementById("mdp");
+            txtuid.removeAttribute("disabled");
+            txtuid.value = "";
+            txtuid.focus();
           }
 
-          const btValider=document.getElementById("boutonValider");
-          btValider.removeAttribute("disabled");
-
-          const txtuid=document.getElementById("mdp");
-					txtuid.removeAttribute("disabled");
-          txtuid.value="";
-          txtuid.focus();
+          setBoutonAnnuler(true);
         }
-
-        setBoutonAnnuler(true);
-      }
-      break;
+        break;
     }
   };
 
 
   httpRequest.open("POST", url, true, null, null);
 
-  httpRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded;charset=ISO-8859-1");
+  httpRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=ISO-8859-1");
 
   httpRequest.send(param);
 }
@@ -367,58 +382,58 @@ function ValiderAuth() {
 
 function FermePacomeAuth() {
 
-	PacomeUtils.PacomeTrace("PacomeAuth FermePacomeAuth");
+  PacomeUtils.PacomeTrace("PacomeAuth FermePacomeAuth");
 
-	const dialog=document.getElementById("pacomeauth");
-	dialog.close();
-	window.close();
+  const dialog = document.getElementById("pacomeauth");
+  dialog.close();
+  window.close();
 }
 
 
 function Annuler() {
 
-	PacomeUtils.PacomeTrace("PacomeAuth Annuler");
+  PacomeUtils.PacomeTrace("PacomeAuth Annuler");
 
-	window.arguments[0].res=0;
-  window.arguments[0].mdp="";
+  window.arguments[0].res = 0;
+  window.arguments[0].mdp = "";
 
-	FermePacomeAuth();
+  FermePacomeAuth();
 }
 
 
 function EcritLog(message, donnees) {
 
-	PacomeUtils.EcritLog(PACOME_LOGS_AUTH, message, donnees);
+  PacomeUtils.EcritLog(PACOME_LOGS_AUTH, message, donnees);
 }
 
 
 function sablier() {
-	document.body.classList.remove("passablier");
-	document.body.classList.add("sablier");
+  document.body.classList.remove("passablier");
+  document.body.classList.add("sablier");
 }
 
 function passablier() {
-	document.body.classList.remove("sablier");
-	document.body.classList.add("passablier");
+  document.body.classList.remove("sablier");
+  document.body.classList.add("passablier");
 }
 
 function setBoutonAnnuler(etat) {
 
-  const bt=document.getElementById("boutonAnnuler");
-  bt.disabled=!etat;
+  const bt = document.getElementById("boutonAnnuler");
+  bt.disabled = !etat;
 }
 
 
 // organisation à partir de l'identifiant
 function GetOrgForUid(uid) {
 
-	for (const identity of MailServices.accounts.allIdentities) {
-		const pref="mail.identity."+identity.key+".identityName";
-    const uid_pref=Services.prefs.getCharPref(pref, "");
-    if (uid_pref==uid) {
+  for (const identity of MailServices.accounts.allIdentities) {
+    const pref = "mail.identity." + identity.key + ".identityName";
+    const uid_pref = Services.prefs.getCharPref(pref, "");
+    if (uid_pref == uid) {
       return identity.organization;
     }
-	}
+  }
 
   return "";
 }
@@ -426,14 +441,14 @@ function GetOrgForUid(uid) {
 // saisie dans le champ mdp
 function saisieMdp() {
 
-	const saisie=document.getElementById("mdp").value;
+  const saisie = document.getElementById("mdp").value;
 
-	const btValider=document.getElementById("boutonValider");
+  const btValider = document.getElementById("boutonValider");
 
-	if (saisie.length)
-		btValider.removeAttribute("disabled");
-	else
-		btValider.setAttribute("disabled", true);
+  if (saisie.length)
+    btValider.removeAttribute("disabled");
+  else
+    btValider.setAttribute("disabled", true);
 
 }
 
@@ -441,19 +456,19 @@ function saisieMdp() {
 // affichage erreur de vérification de mot de passe
 function MsgAuthErreurSrv(msgReq) {
 
-	PacomeUtils.PacomeTrace("PacomeAuth MsgAuthErreurSrv:"+msgReq);
+  PacomeUtils.PacomeTrace("PacomeAuth MsgAuthErreurSrv:" + msgReq);
 
-	let checkbox = { value: false };
+  let checkbox = { value: false };
 
-	const choix=Services.prompt.confirmEx(window,
-																				PacomeUtils.MessageFromId("PacomeAuthErreurSrvTitre"),
-																				msgReq,
-																				Services.prompt.BUTTON_TITLE_IS_STRING * Services.prompt.BUTTON_POS_0 +
-																				Services.prompt.BUTTON_TITLE_IS_STRING * Services.prompt.BUTTON_POS_1,
-																				"Continuer", "Hors ligne",
-																				null,
-																				null,
-																				checkbox);
+  const choix = Services.prompt.confirmEx(window,
+    PacomeUtils.MessageFromId("PacomeAuthErreurSrvTitre"),
+    msgReq,
+    Services.prompt.BUTTON_TITLE_IS_STRING * Services.prompt.BUTTON_POS_0 +
+    Services.prompt.BUTTON_TITLE_IS_STRING * Services.prompt.BUTTON_POS_1,
+    "Continuer", "Hors ligne",
+    null,
+    null,
+    checkbox);
 
-	return choix;
+  return choix;
 }

@@ -10,35 +10,35 @@ const { PacomeUtils, PACOME_SEP_UID } = ChromeUtils.importESModule("resource:///
 
 
 //pas un serveur melanie2
-export const NON_MELANIE2=0;
+export const NON_MELANIE2 = 0;
 //serveur de messagerie melanie2
-export const MSG_MELANIE2=1;
+export const MSG_MELANIE2 = 1;
 //serveur d'application melanie2
-export const APP_MELANIE2=2;
+export const APP_MELANIE2 = 2;
 
 
-const PACOME_PREF_PROXY_AMANDE="courrielleur.proxy.amande";
+const PACOME_PREF_PROXY_AMANDE = "courrielleur.proxy.amande";
 
-const urlPacomeAuth="chrome://pacome/content/pacomeAuth.xhtml";
+const urlPacomeAuth = "chrome://pacome/content/pacomeAuth.xhtml";
 
 
 export const PacomeAuthUtils = {
 
-  _regServeursMel2 : null,
-  _regServeursAppM2 : null,
-  _ExpProxyAmande : null,
+  _regServeursMel2: null,
+  _regServeursAppM2: null,
+  _ExpProxyAmande: null,
+  _lastSavedPassword: null,
 
   Init() {
-    try
-    {
-      if (this._regServeursMel2==null){
-        let policies=Services.policies.getExtensionPolicy("pacome");
-        this._regServeursMel2=policies.regServeursMel2;
-        this._regServeursAppM2=policies.regServeursAppM2;
-        this._ExpProxyAmande=policies.ExpProxyAmande;
+    try {
+      if (this._regServeursMel2 == null) {
+        let policies = Services.policies.getExtensionPolicy("pacome");
+        this._regServeursMel2 = policies.regServeursMel2;
+        this._regServeursAppM2 = policies.regServeursAppM2;
+        this._ExpProxyAmande = policies.ExpProxyAmande;
       }
     }
-    catch{}
+    catch { }
   },
 
   // test si origin est du type melanie2
@@ -46,16 +46,16 @@ export const PacomeAuthUtils = {
   // origin : imap:// https://serveur/card.php serveur2 etc...
   TestServeurMelanie2(origin) {
 
-    this.logMsg("TestServeurMelanie2 origin:"+origin);
+    this.logMsg("TestServeurMelanie2 origin:" + origin);
 
-    if (null==origin || ""==origin) return NON_MELANIE2;
+    if (null == origin || "" == origin) return NON_MELANIE2;
 
     //start width imap://, pop3:// smtp:// https://
     //extraire hostname
-    const srv=this.extraitServeur(origin);
-    this.logMsg("TestServeurMelanie2 extraitServeur:"+srv);
+    const srv = this.extraitServeur(origin);
+    this.logMsg("TestServeurMelanie2 extraitServeur:" + srv);
 
-    if (null==srv) return NON_MELANIE2;
+    if (null == srv) return NON_MELANIE2;
 
     //tester serveur de messagerie
     if (srv.match(this._regServeursMel2)) return MSG_MELANIE2;
@@ -71,23 +71,23 @@ export const PacomeAuthUtils = {
   //Sinon parcours de comptes de messagerie et prise en compte du premier compte pacome trouvé.
   GetComptePrincipal() {
 
-    let compte=null;
+    let compte = null;
 
     try {
-      compte=MailServices.accounts.defaultAccount;
-    } catch(ex) {}
+      compte = MailServices.accounts.defaultAccount;
+    } catch (ex) { }
 
-    if (null!=compte && null!=compte.incomingServer && null!=compte.incomingServer.getStringValue("pacome.confid"))
+    if (null != compte && null != compte.incomingServer && null != compte.incomingServer.getStringValue("pacome.confid"))
       return compte;
 
     for (compte of MailServices.accounts.accounts) {
 
       //test boite pacome
-      if ("imap"!=compte.incomingServer.type && "pop3"!=compte.incomingServer.type)
+      if ("imap" != compte.incomingServer.type && "pop3" != compte.incomingServer.type)
         continue;
 
-      const confId=compte.incomingServer.getStringValue("pacome.confid");
-      if (null==confId || ""==confId) continue;
+      const confId = compte.incomingServer.getStringValue("pacome.confid");
+      if (null == confId || "" == confId) continue;
 
       return compte;
     }
@@ -100,11 +100,11 @@ export const PacomeAuthUtils = {
   // sinon null
   GetUidComptePrincipal() {
 
-    const compte=this.GetComptePrincipal();
+    const compte = this.GetComptePrincipal();
 
-    if (null==compte || null==compte.incomingServer) return null;
+    if (null == compte || null == compte.incomingServer) return null;
 
-    const uid=compte.incomingServer.username;
+    const uid = compte.incomingServer.username;
 
     return this.GetUidReduit(uid);
   },
@@ -112,7 +112,7 @@ export const PacomeAuthUtils = {
   // retourne uid réduit de uid (partie à gauche de .-.)
   GetUidReduit(uid) {
 
-    if (null==uid) return uid;
+    if (null == uid) return uid;
 
     return uid.split(PACOME_SEP_UID)[0];
   },
@@ -120,13 +120,13 @@ export const PacomeAuthUtils = {
   // test si hostname est dans melanie2 (courrier, agenda, etc)
   isMelanie2Host(hostname) {
 
-    this.logMsg("isMelanie2Host hostname:"+hostname);
+    this.logMsg("isMelanie2Host hostname:" + hostname);
 
-    if (null==hostname || ""==hostname) return false;
+    if (null == hostname || "" == hostname) return false;
 
-    const srvm2=this.TestServeurMelanie2(hostname);
+    const srvm2 = this.TestServeurMelanie2(hostname);
 
-    if (NON_MELANIE2!=srvm2) return true;
+    if (NON_MELANIE2 != srvm2) return true;
 
     return false;
   },
@@ -135,13 +135,13 @@ export const PacomeAuthUtils = {
   // origin : imap:// https://serveur/card.php serveur2 etc...
   extraitServeur(origin) {
 
-    if (null==origin || ""==origin) return null;
+    if (null == origin || "" == origin) return null;
 
-    const r=/((.*):\/\/)?([^\/:]+)/;
+    const r = /((.*):\/\/)?([^\/:]+)/;
 
-    const m=origin.match(r);
+    const m = origin.match(r);
 
-    if (!m || 4!=m.length) return null;
+    if (!m || 4 != m.length) return null;
 
     return m[3];
   },
@@ -152,37 +152,37 @@ export const PacomeAuthUtils = {
   // sinon retour null
   GetUidAgenda(urlagenda) {
 
-    this.logMsg("GetUidAgenda urlagenda:"+urlagenda);
+    this.logMsg("GetUidAgenda urlagenda:" + urlagenda);
 
-    if (null==urlagenda || ""==urlagenda) return null;
+    if (null == urlagenda || "" == urlagenda) return null;
 
     for (const agenda of cal.manager.getCalendars()) {
 
       if (agenda.getProperty("pacome")) {
 
-        let caluri=agenda.getProperty("uri");
+        let caluri = agenda.getProperty("uri");
 
-        if (0==urlagenda.indexOf(caluri)||
-            0==caluri.indexOf(urlagenda)) {
+        if (0 == urlagenda.indexOf(caluri) ||
+          0 == caluri.indexOf(urlagenda)) {
 
           //imip.identity.key
-          let ident=agenda.getProperty("imip.identity.key");
+          let ident = agenda.getProperty("imip.identity.key");
 
           try {
 
-            if (null==ident || ""==ident) {
+            if (null == ident || "" == ident) {
               // prendre identite par defaut
-              ident=MailServices.accounts.defaultAccount.defaultIdentity;
+              ident = MailServices.accounts.defaultAccount.defaultIdentity;
             }
 
-            if (null==ident || ""==ident) break;
+            if (null == ident || "" == ident) break;
 
-            let pref="mail.identity."+ident.key+".identityName";
-            let uid=Services.prefs.getCharPref(pref);
+            let pref = "mail.identity." + ident.key + ".identityName";
+            let uid = Services.prefs.getCharPref(pref);
 
             return uid;
 
-          } catch(ex) {
+          } catch (ex) {
             continue;
           }
         }
@@ -197,11 +197,11 @@ export const PacomeAuthUtils = {
   // return true si ok
   isHostProxyAmande(origin) {
 
-    this.logMsg("isHostProxyAmande origin:"+origin);
+    this.logMsg("isHostProxyAmande origin:" + origin);
 
-    if (null==origin || ""==origin) return false;
+    if (null == origin || "" == origin) return false;
 
-    const serveur=this.extraitServeur(origin);
+    const serveur = this.extraitServeur(origin);
 
     return serveur.match(this.regProxyAmande);
   },
@@ -215,21 +215,21 @@ export const PacomeAuthUtils = {
     this.logMsg("isAuthProxyAmande");
 
     if (aChannel instanceof Ci.nsIProxiedChannel &&
-        authInfo instanceof Ci.nsIAuthInformation) {
+      authInfo instanceof Ci.nsIAuthInformation) {
 
-      const flags=authInfo.flags;
+      const flags = authInfo.flags;
 
       if (!(Ci.nsIAuthInformation.AUTH_PROXY & flags)) return false;
 
-      if (null==aChannel.proxyInfo) return false;
+      if (null == aChannel.proxyInfo) return false;
 
-      const host=aChannel.proxyInfo.host;
-      const scheme=authInfo.authenticationScheme;
-      const realm=authInfo.realm;
+      const host = aChannel.proxyInfo.host;
+      const scheme = authInfo.authenticationScheme;
+      const realm = authInfo.realm;
 
       return (this.isHostProxyAmande(host) &&
-              "digest"==scheme.toLowerCase() &&
-              "AMANDE"==realm);
+        "digest" == scheme.toLowerCase() &&
+        "AMANDE" == realm);
 
     }
     return false;
@@ -240,15 +240,15 @@ export const PacomeAuthUtils = {
 
     try {
 
-      const val=Services.prefs.getCharPref(PACOME_PREF_PROXY_AMANDE, "");
+      const val = Services.prefs.getCharPref(PACOME_PREF_PROXY_AMANDE, "");
 
-      if (""==val) return this._ExpProxyAmande;
+      if ("" == val) return this._ExpProxyAmande;
 
-      const exp=new RegExp(val+"$");
+      const exp = new RegExp(val + "$");
 
       return exp;
 
-    } catch(ex) {}
+    } catch (ex) { }
 
     return this._ExpProxyAmande;
   },
@@ -258,20 +258,23 @@ export const PacomeAuthUtils = {
   // aParent : window parente
   // username : identifiant
   // outmdp : objet pour retour mdp
+  // checkBox : objet pour retour case à cocher (optionnel)
   // retourn true si OK, sinon false
-  PromptPacomeMdp(aParent, username, outmdp) {
+  PromptPacomeMdp(aParent, username, outmdp, checkBox) {
 
-    this.logMsg("PromptPacomeMdp username:"+username);
+    this.logMsg("PromptPacomeMdp username:" + username);
     if (Services.io.offline) return false;
 
-    if (null==aParent || null==aParent.openDialog)
-      aParent=Services.wm.getMostRecentWindow("mail:3pane");
+    if (null == aParent || null == aParent.openDialog)
+      aParent = Services.wm.getMostRecentWindow("mail:3pane");
 
     const args = { uid: this.GetUidReduit(username), };
+    if (checkBox) {
+      args.memomdp = checkBox.value;
+    }
     args.wrappedJSObject = args;
 
-    try
-    {
+    try {
       const dg = aParent.openDialog(
         // -----
         // aUrl: The url which will be loaded into the new window. Must already be escaped, if applicable. It can be null.
@@ -281,7 +284,7 @@ export const PacomeAuthUtils = {
         "_blank",
         // -----
         // aFeatures: Window features from JS window.open. It can be null.
-        "centerscreen,chrome,modal,titlebar,width=400,height=220",
+        "centerscreen,chrome,modal,titlebar,width=400,height=240",
         // -----
         // aArguments: Extra argument(s) to the new window, to be attached as the arguments property. An nsISupportsArray will be unwound into multiple arguments (but not recursively!). It can be null.
         args,
@@ -294,41 +297,46 @@ export const PacomeAuthUtils = {
     }
 
     // 0005099: Action en cas de non-saisie de mot de passe au démarrage
-    if (0==args.res && ""==args.mdp) {
+    if (0 == args.res && "" == args.mdp) {
       this.PacomeTrace("PromptPacomeMdp non-saisie de mot de passe => offline");
-      Services.io.offline=true;
+      Services.io.offline = true;
       return false;
     }
 
-    if (outmdp && null!=args.mdp) outmdp.value=args.mdp;
+    if (outmdp && null != args.mdp) outmdp.value = args.mdp;
 
-    this.PacomeTrace("PromptPacomeMdp res:"+args.res);
-    return (1==args.res);
+    if (checkBox && null != args.memomdp) {
+      checkBox.value = args.memomdp;
+      this.PacomeTrace("PromptPacomeMdp args.memomdp: " + args.memomdp);
+    }
+
+    this.PacomeTrace("PromptPacomeMdp res:" + args.res);
+    return (1 == args.res);
   },
 
   // version melanie2 de storage-json.sys.mjs searchLogins
   searchLogins(matchData) {
 
     this.logMsg("searchLogins");
-    let pacome=0, username="", origin="";
+    let pacome = 0, username = "", origin = "";
 
     for (const field in matchData) {
 
       const wantedValue = matchData[field];
 
       switch (field) {
-         case "pacome": pacome=wantedValue;
-                        break;
-         case "username": username=wantedValue;
-                        break;
-         case "origin": origin=wantedValue;
-                        break;
+        case "pacome": pacome = wantedValue;
+          break;
+        case "username": username = wantedValue;
+          break;
+        case "origin": origin = wantedValue;
+          break;
       }
     }
-    this.logMsg("searchLogins username:"+username);
-    this.logMsg("searchLogins origin:"+origin);
+    this.logMsg("searchLogins username:" + username);
+    this.logMsg("searchLogins origin:" + origin);
 
-    if (0==pacome || NON_MELANIE2==this.TestServeurMelanie2(origin)) {
+    if (0 == pacome || NON_MELANIE2 == this.TestServeurMelanie2(origin)) {
       return [];
     }
 
@@ -338,21 +346,22 @@ export const PacomeAuthUtils = {
     //Lors d'une demande d'authentification avec un identifiant <uid0>,
     //si <uid0> se trouve être la partie droite d'un compte de balp <uid1.-.uid0>
     //et que <uid1> existe comme compte supportant authentification M2 alors utiliser le mdp de <uid1> pour <uid0>
-    let logins=[];
-    const srvname=this.extraitServeur(origin);
-    const uidreduit=this.GetUidReduit(username);
+    let logins = [];
+    const srvname = this.extraitServeur(origin);
+    const uidreduit = this.GetUidReduit(username);
 
     for (const serveur of MailServices.accounts.allServers) {
 
-      if (("imap"==serveur.type || "pop3"==serveur.type) &&
-          null!=serveur.password && ""!=serveur.password &&
-          MSG_MELANIE2==this.TestServeurMelanie2(serveur.hostName)) {
+      if (("imap" == serveur.type || "pop3" == serveur.type) &&
+        null != serveur.password && "" != serveur.password &&
+        MSG_MELANIE2 == this.TestServeurMelanie2(serveur.hostName)) {
 
         //test sur uid reduit
-        if (uidreduit==this.GetUidReduit(serveur.username)) {
+        if (uidreduit == this.GetUidReduit(serveur.username)) {
 
-          this.logMsg("searchLogins login.init srvname:"+srvname);
-          let login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
+          this.logMsg("searchLogins login.init srvname:" + srvname);
+          let login = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
+
           login.init(srvname, null, null, username, serveur.password, null, null);
           logins.push(login);
           //retourne le premier trouve
@@ -360,21 +369,21 @@ export const PacomeAuthUtils = {
 
         } else {
           //mantis 4171
-          const compos=serveur.username.split(/\.-\./);
-          if (2==compos.length) {
-            const user=compos[0];
-            const partage=compos[1];
+          const compos = serveur.username.split(/\.-\./);
+          if (2 == compos.length) {
+            const user = compos[0];
+            const partage = compos[1];
 
             //ici pas uidreduit mais username presente
-            if (partage==username) {
+            if (partage == username) {
               for (const serveur of MailServices.accounts.allServers) {
                 if (serveur &&
-                    ("imap"==serveur.type || "pop3"==serveur.type) &&
-                    null!=serveur.password && ""!=serveur.password &&
-                    MSG_MELANIE2==this.TestServeurMelanie2(serveur.hostName)) {
+                  ("imap" == serveur.type || "pop3" == serveur.type) &&
+                  null != serveur.password && "" != serveur.password &&
+                  MSG_MELANIE2 == this.TestServeurMelanie2(serveur.hostName)) {
 
-                  this.logMsg("searchLogins login.init srvname:"+srvname);
-                  let login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
+                  this.logMsg("searchLogins login.init srvname:" + srvname);
+                  let login = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
                   login.init(srvname, null, null, username, serveur.password, null, null);
                   logins.push(login);
                   break;
@@ -386,106 +395,135 @@ export const PacomeAuthUtils = {
       }
     }
 
-    this.logMsg("searchLogins logins.length:"+logins.length);
+    this.logMsg("searchLogins logins.length:" + logins.length);
     return logins;
   },
 
   // version melanie2 de storage-json.sys.mjs findLogins
   findLogins: function (origin, formSubmitURL, httpRealm) {
 
-    let typeSrv=NON_MELANIE2;
+    let typeSrv = NON_MELANIE2;
 
-    if (origin){
-      this.logMsg("findLogins origin:"+origin);
-      typeSrv=this.TestServeurMelanie2(origin);
+    if (origin) {
+      this.logMsg("findLogins origin:" + origin);
+      typeSrv = this.TestServeurMelanie2(origin);
     }
-    else{
-      this.logMsg("findLogins formSubmitURL:"+formSubmitURL);
-      typeSrv=this.TestServeurMelanie2(formSubmitURL);
+    else {
+      this.logMsg("findLogins formSubmitURL:" + formSubmitURL);
+      typeSrv = this.TestServeurMelanie2(formSubmitURL);
     }
 
-    if (NON_MELANIE2==typeSrv) {
+    if (NON_MELANIE2 == typeSrv) {
       return [];
     }
 
     //gestion pacome
     //origin : protocole://serveur
-    let logins=[];
+    let logins = [];
 
-    if (MSG_MELANIE2==typeSrv) {
+
+
+    if (MSG_MELANIE2 == typeSrv) {
 
       this.logMsg("findLogins recherche dans les comptes de messagerie");
 
-      const _this=this;
+      const _this = this;
 
       function addlogins(srv) {
 
-        const nb=logins.length;
-        let i=0;
-        for (;i<nb;i++) {
-          if (logins[i].username==srv.username)
+        const nb = logins.length;
+        let i = 0;
+        for (; i < nb; i++) {
+          if (logins[i].username == srv.username)
             break;
         }
-        if (i==nb && null!=srv.password && ""!=srv.password) {
-          let srvname;
-          if (srv instanceof Ci.nsISmtpServer)
-            srvname=srv.hostname;
-          else
-            srvname=srv.hostName;
+        if (i == nb) {
+          let password = srv.password;
+          // Check cache
+          if (_this._lastSavedPassword && _this.GetUidReduit(srv.username) == _this._lastSavedPassword.uid) {
+            _this.logMsg("addlogins using _lastSavedPassword for " + srv.username);
+            password = _this._lastSavedPassword.mdp;
+          }
 
-          _this.logMsg("findLogins login.init srvname:"+srvname);
+          if (null != password && "" != password) {
+            let srvname;
+            if (srv instanceof Ci.nsISmtpServer)
+              srvname = srv.hostname;
+            else
+              srvname = srv.hostName;
 
-          const login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
-          login.init(srvname, null, null, srv.username, srv.password, null, null);
-          logins.push(login);
+            _this.logMsg("findLogins login.init srvname:" + srvname);
+
+            const login = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
+            login.init(srvname, null, null, srv.username, password, null, null);
+            logins.push(login);
+          }
         }
       };
 
-      let srvname=this.extraitServeur(origin);
+      let srvname = this.extraitServeur(origin);
 
       // pop/imap
       for (const serveur of MailServices.accounts.allServers) {
 
-        if ((serveur.type=="imap" || serveur.type=="pop3") &&
-            this.isMelanie2Host(serveur.hostName) &&
-            srvname==serveur.hostName) {
+        if ((serveur.type == "imap" || serveur.type == "pop3") &&
+          this.isMelanie2Host(serveur.hostName) &&
+          srvname == serveur.hostName) {
 
-           addlogins(serveur);
+          addlogins(serveur);
         }
       }
       // smtp
       for (let serveur of MailServices.outgoingServer.servers) {
 
-        if (serveur.type!="smtp") continue;
+        if (serveur.type != "smtp") continue;
 
         serveur = serveur.QueryInterface(Ci.nsISmtpServer);
 
         if (this.isMelanie2Host(serveur.hostname) &&
-            srvname==serveur.hostName)
+          srvname == serveur.hostName)
           addlogins(serveur);
       }
 
-    } else if (APP_MELANIE2==typeSrv) {
+      // Check Services.logins if origin is available
+      if (origin) {
+        try {
+          let standardLogins = Services.logins.findLogins(origin, null, httpRealm);
+          for (let login of standardLogins) {
+            // Avoid duplicates if possible, though simple push is consistent with existing code
+            logins.push(login);
+          }
+        } catch (ex) {
+          this.logMsg("findLogins Services.logins error: " + ex);
+        }
+      }
+
+    } else if (APP_MELANIE2 == typeSrv) {
 
       //v3.4 - cas agenda : rechercher uid
-      if (formSubmitURL && ""!=formSubmitURL) {
+      if (formSubmitURL && "" != formSubmitURL) {
 
         this.logMsg("findLogins recherche dans agenda");
 
-        const uid=this.GetUidAgenda(formSubmitURL);
+        const uid = this.GetUidAgenda(formSubmitURL);
 
-        if (uid && ""!=uid) {
+        if (uid && "" != uid) {
 
           //rechercher compte mail
           for (const serveur of MailServices.accounts.allServers) {
 
-            if (serveur.username==uid &&
-                (serveur.type=="imap" || serveur.type=="pop3") &&
-                this.isMelanie2Host(serveur.hostName) ) {
+            if (serveur.username == uid &&
+              (serveur.type == "imap" || serveur.type == "pop3") &&
+              this.isMelanie2Host(serveur.hostName)) {
 
-              if (serveur.password && ""!=serveur.password) {
-                const login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
-                login.init(origin, null, null, uid, serveur.password, null, null);
+              let password = serveur.password;
+              if (this._lastSavedPassword && this.GetUidReduit(serveur.username) == this._lastSavedPassword.uid) {
+                password = this._lastSavedPassword.mdp;
+              }
+
+              if (password && "" != password) {
+                const login = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
+                login.init(origin, null, null, uid, password, null, null);
                 logins.push(login);
               }
 
@@ -497,64 +535,138 @@ export const PacomeAuthUtils = {
 
       this.logMsg("findLogins prendre compte principal");
 
-      const compte=this.GetComptePrincipal();
-      if (null==compte || null==compte.incomingServer ||
-          null==compte.incomingServer.password || ""==compte.incomingServer.password) {
+      const compte = this.GetComptePrincipal();
+      if (null == compte || null == compte.incomingServer ||
+        null == compte.incomingServer.password || "" == compte.incomingServer.password) {
 
         return logins;
       }
-      const login=Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
+      const login = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
 
       login.init(origin, null, null, this.GetUidReduit(compte.incomingServer.username),
-                  compte.incomingServer.password, null, null);
+        compte.incomingServer.password, null, null);
       logins.push(login);
     }
 
-    this.logMsg("findLogins logins.length:"+logins.length);
+    this.logMsg("findLogins logins.length:" + logins.length);
+    if (logins.length > 0) {
+      this.logMsg("findLogins found login for user: " + logins[0].username);
+    }
     return logins;
   },
+
 
   //Modification du mot de passe pour les comptes Pacome
   // pour tous les comptes Pacome sur la base de uid réduit identique
   // si mdp null => mot de passe réinitialise.
-  modifyMdpPacome: function(uid, mdp) {
+  modifyMdpPacome: function (uid, mdp, saveToManager = true) {
 
-    this.logMsg("modifyMdpPacome uid:"+uid);
+    this.logMsg("modifyMdpPacome uid:" + uid + " saveToManager:" + saveToManager);
 
 
-    const uidReduit=this.GetUidReduit(uid);
+    const uidReduit = this.GetUidReduit(uid);
+
+    // Cache the password immediately
+    this._lastSavedPassword = {
+      uid: uidReduit,
+      username: uid,
+      mdp: mdp,
+      time: Date.now()
+    };
 
     //serveurs entrants
     for (const serveur of MailServices.accounts.allServers) {
 
-      if ((serveur.type=="imap" || serveur.type=="pop3") &&
-          this.isMelanie2Host(serveur.hostName)) {
+      if ((serveur.type == "imap" || serveur.type == "pop3") &&
+        this.isMelanie2Host(serveur.hostName)) {
 
-        const uid2=this.GetUidReduit(serveur.username);
-        if (uidReduit!=uid2)
+        const uid2 = this.GetUidReduit(serveur.username);
+        if (uidReduit != uid2)
           continue;
 
-        this.logMsg("modifyMdpPacome mise à jour mot de passe serveur entrant pour:"+serveur.username);
-        serveur.password=mdp;
+        this.logMsg("modifyMdpPacome mise à jour mot de passe serveur entrant pour:" + serveur.username);
+        serveur.password = mdp;
+
+        // Force save to Login Manager
+        this.logMsg("modifyMdpPacome checking mdp for incoming: " + (mdp ? "present" : "missing"));
+        if (mdp && saveToManager) {
+          this.logMsg("modifyMdpPacome calling saveLoginAsync for incoming");
+          // Fix: usage of serverURI includes username (imap://user@host), but Password Manager expects scheme://host
+          let origin = serveur.type + "://" + serveur.hostName;
+          this.saveLoginAsync(origin, null, serveur.username, mdp);
+        }
       }
     }
 
     //serveurs sortants
     for (let serveur of MailServices.outgoingServer.servers) {
 
-      if (serveur.type!="smtp") continue;
+      if (serveur.type != "smtp") continue;
 
       serveur = serveur.QueryInterface(Ci.nsISmtpServer);
 
       if (this.isMelanie2Host(serveur.hostname)) {
 
-        const uid2=this.GetUidReduit(serveur.username);
-        if (uidReduit!=uid2)
+        const uid2 = this.GetUidReduit(serveur.username);
+        if (uidReduit != uid2)
           continue;
 
-        this.logMsg("modifyMdpPacome mise à jour mot de passe serveur sortant pour:"+serveur.username);
-        serveur.password=mdp;
+        this.logMsg("modifyMdpPacome mise à jour mot de passe serveur sortant pour:" + serveur.username);
+        serveur.password = mdp;
+
+        // Force save to Login Manager
+        this.logMsg("modifyMdpPacome checking mdp for outgoing: " + (mdp ? "present" : "missing"));
+        if (mdp && saveToManager) {
+          this.logMsg("modifyMdpPacome calling saveLoginAsync for outgoing");
+          this.saveLoginAsync("smtp://" + serveur.hostname, null, serveur.username, mdp);
+        }
       }
+    }
+  },
+
+  // Helper to asynchronously save login
+  saveLoginAsync: function (origin, realm, username, mdp) {
+    this.logMsg("saveLoginAsync origin:" + origin + " username:" + username);
+    try {
+      // findLogins is typically synchronous
+      let logins = Services.logins.findLogins(origin, null, realm);
+      let found = false;
+      for (let login of logins) {
+        if (login.username == username) {
+          found = true;
+          if (login.password != mdp) {
+            this.logMsg("saveLoginAsync updating existing login");
+            let newLogin = login.clone();
+            newLogin.password = mdp;
+            // Trying modifyLoginAsync, capturing error if it doesn't exist
+            if (Services.logins.modifyLoginAsync) {
+              Services.logins.modifyLoginAsync(login, newLogin).catch(e => {
+                this.logMsg("saveLoginAsync modifyLoginAsync error: " + e);
+              });
+            } else {
+              // Fallback attempt: remove then add (if modifyLogin is missing)
+              this.logMsg("saveLoginAsync modifyLoginAsync missing, using remove+addAsync");
+              Services.logins.removeLogin(login);
+              Services.logins.addLoginAsync(newLogin);
+            }
+          } else {
+            this.logMsg("saveLoginAsync login already exists and matches");
+          }
+          break;
+        }
+      }
+
+      if (!found) {
+        this.logMsg("saveLoginAsync creating new login");
+        let newLogin = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
+        // Fix: realm must be non-null (empty string for wildcard/none)
+        newLogin.init(origin, null, realm || "", username, mdp, null, null);
+        Services.logins.addLoginAsync(newLogin).catch(e => {
+          this.logMsg("saveLoginAsync addLoginAsync error: " + e);
+        });
+      }
+    } catch (e) {
+      this.logMsg("saveLoginAsync error: " + e);
     }
   },
 
@@ -563,25 +675,25 @@ export const PacomeAuthUtils = {
 
     //serveurs entrants
     for (const serveur of MailServices.accounts.allServers) {
-      if ((serveur.type=="imap" || serveur.type=="pop3") &&
-          this.isMelanie2Host(serveur.hostName)) {
+      if ((serveur.type == "imap" || serveur.type == "pop3") &&
+        this.isMelanie2Host(serveur.hostName)) {
 
-        this.logMsg("removeAllLogins reinitialisation mot de passe serveur entrant pour:"+serveur.username);
-        serveur.password=null;
+        this.logMsg("removeAllLogins reinitialisation mot de passe serveur entrant pour:" + serveur.username);
+        serveur.password = null;
       }
     }
 
     //serveurs sortants
     for (const serveur of MailServices.outgoingServer.servers) {
 
-      if (serveur.type!="smtp") continue;
+      if (serveur.type != "smtp") continue;
 
       serveur = serveur.QueryInterface(Ci.nsISmtpServer);
 
       if (this.isMelanie2Host(serveur.hostname)) {
 
-        this.logMsg("removeAllLogins reinitialisation mot de passe serveur sortant pour:"+serveur.username);
-        serveur.password=null;
+        this.logMsg("removeAllLogins reinitialisation mot de passe serveur sortant pour:" + serveur.username);
+        serveur.password = null;
       }
     }
   },
@@ -595,6 +707,7 @@ export const PacomeAuthUtils = {
   logMsg(msg) {
     // décommenter pour debug
     PacomeUtils.PacomeTrace(msg);
+    // Services.console.logStringMessage("PACOME_DEBUG: " + msg);
   },
 
 }
