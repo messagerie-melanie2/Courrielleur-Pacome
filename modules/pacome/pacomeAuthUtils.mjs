@@ -461,14 +461,14 @@ export const PacomeAuthUtils = {
         }
       };
 
-      let srvname = this.extraitServeur(origin);
+      let parsedSrvName = this.extraitServeur(origin);
 
       // pop/imap
       for (const serveur of MailServices.accounts.allServers) {
 
         if ((serveur.type == "imap" || serveur.type == "pop3") &&
           this.isMelanie2Host(serveur.hostName) &&
-          srvname == serveur.hostName) {
+          parsedSrvName == serveur.hostName) {
 
           addlogins(serveur);
         }
@@ -481,18 +481,51 @@ export const PacomeAuthUtils = {
         serveur = serveur.QueryInterface(Ci.nsISmtpServer);
 
         if (this.isMelanie2Host(serveur.hostname) &&
-          srvname == serveur.hostName)
+          parsedSrvName == serveur.hostName)
           addlogins(serveur);
       }
 
       // Check Services.logins if origin is available
       if (origin) {
         try {
+          // 1. Standard search (Wildcard/Specific Realm passed in arg)
           let standardLogins = Services.logins.findLogins(origin, null, httpRealm);
           for (let login of standardLogins) {
-            // Avoid duplicates if possible, though simple push is consistent with existing code
             logins.push(login);
           }
+
+          // 2. Unified Realm Search (Fix for Shared Passwords)
+          // We need to know which Unified Realm to look for.
+          // We find it by looking at the servers associated with this origin.
+          let realmsToCheck = new Set();
+
+          const collectRealm = (serveur) => {
+            if (this.isMelanie2Host(serveur.hostName) || (serveur.hostname && this.isMelanie2Host(serveur.hostname))) {
+              let srvHost = serveur.hostName || serveur.hostname;
+              if (srvHost == parsedSrvName && serveur.username) {
+                let r = this.GetUidReduit(serveur.username);
+                if (r) realmsToCheck.add(r);
+              }
+            }
+          };
+
+          for (const s of MailServices.accounts.allServers) {
+            if (s.type == "imap" || s.type == "pop3") collectRealm(s);
+          }
+          for (let s of MailServices.outgoingServer.servers) {
+            if (s.type == "smtp") collectRealm(s.QueryInterface(Ci.nsISmtpServer));
+          }
+
+          for (let uRealm of realmsToCheck) {
+            let unifiedLogins = Services.logins.findLogins(origin, null, uRealm);
+            for (let login of unifiedLogins) {
+              // Avoid duplicates
+              if (!logins.some(l => l.username == login.username && l.password == login.password)) {
+                logins.push(login);
+              }
+            }
+          }
+
         } catch (ex) {
           this.logMsg("findLogins Services.logins error: " + ex);
         }
@@ -559,9 +592,9 @@ export const PacomeAuthUtils = {
   //Modification du mot de passe pour les comptes Pacome
   // pour tous les comptes Pacome sur la base de uid réduit identique
   // si mdp null => mot de passe réinitialise.
-  modifyMdpPacome: function (uid, mdp, saveToManager = true) {
+  modifyMdpPacome: function (uid, mdp, saveToManager = true, realm = null) {
 
-    this.logMsg("modifyMdpPacome uid:" + uid + " saveToManager:" + saveToManager);
+    this.logMsg("modifyMdpPacome uid:" + uid + " saveToManager:" + saveToManager + " realm:" + realm);
 
 
     const uidReduit = this.GetUidReduit(uid);
@@ -572,6 +605,20 @@ export const PacomeAuthUtils = {
       username: uid,
       mdp: mdp,
       time: Date.now()
+    };
+
+    // Deduplication set: "origin|realm|username"
+    const processedLogins = new Set();
+
+    // Helper to request save only if not processed
+    const requestSave = (origin, realm, username, mdp) => {
+      const key = origin + "|" + (realm || "NULL") + "|" + username;
+      if (!processedLogins.has(key)) {
+        processedLogins.add(key);
+        this.saveLoginAsync(origin, realm, username, mdp);
+      } else {
+        this.logMsg("modifyMdpPacome skipping duplicate save for key: " + key);
+      }
     };
 
     //serveurs entrants
@@ -590,10 +637,16 @@ export const PacomeAuthUtils = {
         // Force save to Login Manager
         this.logMsg("modifyMdpPacome checking mdp for incoming: " + (mdp ? "present" : "missing"));
         if (mdp && saveToManager) {
-          this.logMsg("modifyMdpPacome calling saveLoginAsync for incoming");
+          this.logMsg("modifyMdpPacome calling requestSave for incoming");
           // Fix: usage of serverURI includes username (imap://user@host), but Password Manager expects scheme://host
           let origin = serveur.type + "://" + serveur.hostName;
-          this.saveLoginAsync(origin, null, serveur.username, mdp);
+
+          // CAS 1: Update ANY existing login for this origin/user (wildcard realm)
+          requestSave(origin, null, serveur.username, mdp);
+
+          // CAS 2: Ensure "Master" login exists with Unified Realm (based on user id)
+          // This allows different accounts to share the login if they look for this realm
+          requestSave(origin, uidReduit, serveur.username, mdp);
         }
       }
     }
@@ -617,8 +670,13 @@ export const PacomeAuthUtils = {
         // Force save to Login Manager
         this.logMsg("modifyMdpPacome checking mdp for outgoing: " + (mdp ? "present" : "missing"));
         if (mdp && saveToManager) {
-          this.logMsg("modifyMdpPacome calling saveLoginAsync for outgoing");
-          this.saveLoginAsync("smtp://" + serveur.hostname, null, serveur.username, mdp);
+          this.logMsg("modifyMdpPacome calling requestSave for outgoing");
+
+          // CAS 1: Update ANY existing login (wildcard realm)
+          requestSave("smtp://" + serveur.hostname, null, serveur.username, mdp);
+
+          // CAS 2: Ensure "Master" login with Unified Realm
+          requestSave("smtp://" + serveur.hostname, uidReduit, serveur.username, mdp);
         }
       }
     }
@@ -630,6 +688,7 @@ export const PacomeAuthUtils = {
     try {
       // findLogins is typically synchronous
       let logins = Services.logins.findLogins(origin, null, realm);
+
       let found = false;
       for (let login of logins) {
         if (login.username == username) {
@@ -640,8 +699,10 @@ export const PacomeAuthUtils = {
             newLogin.password = mdp;
             // Trying modifyLoginAsync, capturing error if it doesn't exist
             if (Services.logins.modifyLoginAsync) {
-              Services.logins.modifyLoginAsync(login, newLogin).catch(e => {
+              Services.logins.modifyLoginAsync(login, newLogin).then(() => {
+              }).catch(e => {
                 this.logMsg("saveLoginAsync modifyLoginAsync error: " + e);
+                console.error("PacomeAuthUtils saveLoginAsync modifyLoginAsync error:", e);
               });
             } else {
               // Fallback attempt: remove then add (if modifyLogin is missing)
@@ -661,12 +722,25 @@ export const PacomeAuthUtils = {
         let newLogin = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
         // Fix: realm must be non-null (empty string for wildcard/none)
         newLogin.init(origin, null, realm || "", username, mdp, null, null);
-        Services.logins.addLoginAsync(newLogin).catch(e => {
+        Services.logins.addLoginAsync(newLogin).then(() => {
+        }).catch(e => {
+          // Robustness: Ignore "This login already exists" error, as it implies race condition success or pre-existence
+          if (e.message && e.message.includes("This login already exists")) {
+            this.logMsg("saveLoginAsync addLoginAsync race condition ignored: " + e);
+            return;
+          } else if (e.result == Cr.NS_ERROR_FAILURE) {
+            // Sometimes error message is not propagated, but result code is failure.
+            // We assume duplicate/race here too if it failed to add.
+            this.logMsg("saveLoginAsync addLoginAsync failed (possibly exists): " + e);
+            return;
+          }
           this.logMsg("saveLoginAsync addLoginAsync error: " + e);
+          console.error("PacomeAuthUtils saveLoginAsync addLoginAsync error:", e);
         });
       }
     } catch (e) {
       this.logMsg("saveLoginAsync error: " + e);
+      console.error("PacomeAuthUtils saveLoginAsync error:", e);
     }
   },
 

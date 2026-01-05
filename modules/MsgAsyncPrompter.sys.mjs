@@ -368,18 +368,22 @@ export class MsgAuthPrompt {
         // Ensure persistence with the correct Realm (added for promptPassword)
         try {
           let checkUsername = loging2[0].username || username;
-          let specificLogins = Services.logins.findLogins(origin, null, realm || "");
+          // Use Unified Realm (uidReduit) as preferred realm
+          let unifiedRealm = PacomeAuthUtils.GetUidReduit(checkUsername);
+
+          let specificLogins = Services.logins.findLogins(origin, null, unifiedRealm || "");
+
           let match = specificLogins.find(l => l.username == checkUsername);
 
           // Log what we are doing
           // Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword checking persistence for realm: " + (realm || "NULL") + " username: " + checkUsername + " match: " + (match ? "YES" : "NO"));
 
           if (!match && checkUsername) {
-            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword saving login for correct realm: " + (realm || ""));
+            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword saving login for Unified Realm: " + (unifiedRealm || ""));
             const newLogin = new LoginInfo(
               origin,
               null,
-              realm || "",
+              unifiedRealm || "",
               checkUsername,
               aPassword.value,
               null,
@@ -401,7 +405,8 @@ export class MsgAuthPrompt {
       // retour infos
       if (ok) {
         //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm utilisation login pacome");
-        PacomeAuthUtils.modifyMdpPacome(username, outmdp.value, checkBox.value);
+        //Services.console.logStringMessage("***  MsgAsyncPrompter.jsm utilisation login pacome");
+        PacomeAuthUtils.modifyMdpPacome(username, outmdp.value, checkBox.value, realm);
 
         // Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptPassword checkBox.value: " + checkBox.value);
 
@@ -553,14 +558,16 @@ export class MsgAuthPrompt {
 
         // Ensure persistence with the correct Realm
         try {
-          let specificLogins = Services.logins.findLogins(origin, null, authInfo.realm || "");
+          let unifiedRealm = PacomeAuthUtils.GetUidReduit(authInfo.username);
+
+          let specificLogins = Services.logins.findLogins(origin, null, unifiedRealm || "");
           let match = specificLogins.find(l => l.username == authInfo.username);
           if (!match) {
-            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptAuth saving login for correct realm: " + (authInfo.realm || ""));
+            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptAuth saving login for Unified Realm: " + (unifiedRealm || ""));
             const newLogin = new LoginInfo(
               origin,
               null,
-              authInfo.realm || "",
+              unifiedRealm || "",
               authInfo.username,
               authInfo.password,
               null,
@@ -605,7 +612,8 @@ export class MsgAuthPrompt {
       }
 
       // mettre à jour tous les comptes
-      PacomeAuthUtils.modifyMdpPacome(uid, mdp.value, checkValue.value);
+      // mettre à jour tous les comptes
+      PacomeAuthUtils.modifyMdpPacome(uid, mdp.value, checkValue.value, authInfo.realm);
 
       // Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth checkValue.value: " + checkValue.value);
 
