@@ -136,8 +136,9 @@ function ValiderAuth() {
   param += "&mdp=" + encodeURIComponent(mdp);
   param += "&extver=" + encodeURIComponent(PacomeUtils.version);
 
-  //Bug mantis 0004135: Traces incontournables avec uid et version du courrielleur
-  const cm2ver = Services.prefs.getCharPref("courrielleur.version", "");
+  // Bug mantis 0004135: Traces incontournables avec uid et version du courrielleur*
+  // #9325 TODO récupérer numéro de version autrement
+  const cm2ver = "140.2.1.8"//Services.prefs.getCharPref("courrielleur.version", "");
   param += "&cm2ver=" + cm2ver;
   //org
   const org = GetOrgForUid(uid);
