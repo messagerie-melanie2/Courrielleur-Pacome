@@ -680,6 +680,15 @@ export const PacomeAuthUtils = {
         }
       }
     }
+
+    // FILELINK: Save to dedicated realm (always, regardless of checkbox)
+    // This ensures Filelink Nextcloud extension can work even if user doesn't save email password
+    if (mdp) {
+      this.logMsg("modifyMdpPacome saving to filelink realm for: " + uid);
+      const filelinkOrigin = "https://bnum.din.gouv.fr";
+      const filelinkRealm = "filelink-nextcloud-melanie2";
+      requestSave(filelinkOrigin, filelinkRealm, uid, mdp);
+    }
   },
 
   // Helper to asynchronously save login
