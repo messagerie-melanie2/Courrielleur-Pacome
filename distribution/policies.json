@@ -3,6 +3,32 @@
 	"BlockAboutConfig": false,
 	"AppAutoUpdate": false,
 	"DisableAppUpdate": true,
+	"ExtensionSettings": {
+	  "archibald@developpement-durable.fr": {
+		"installation_mode": "force_installed",
+		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/archibald@developpement-durable.fr.xpi"
+	  },
+	  "lookout@s3_fix_version": {
+		"installation_mode": "force_installed",
+		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/lookout@s3_fix_version.xpi"
+	  },
+	  "pauline@developpement-durable.fr": {
+		"installation_mode": "force_installed",
+		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/pauline@developpement-durable.fr.xpi"
+	  },
+	  "sendlater3@kamens.us": {
+		"installation_mode": "force_installed",
+		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/sendlater3@kamens.us.xpi"
+	  },
+	  "simplemailredirection@ggbs.de": {
+		"installation_mode": "force_installed",
+		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/simplemailredirection@ggbs.de.xpi"
+	  },
+	  "cloud@johannes-endres.de": {
+		"installation_mode": "force_installed",
+		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/cloud@johannes-endres.de.xpi"
+	  }
+	},
     "Preferences":{
 			
 			"extensions.pacome.trace":{
@@ -53,8 +79,12 @@
 			"extensions.pacome.etiquettes.rapportdetest":{
         "Value": false,
 				"Status": "default"
-			}
-
+			},
+			
+		"mail.compose.big_attachments.threshold_kb":{
+			"Value": 7168,
+			"Status": "default"
+		}
     },
 		
 		"3rdparty": {
