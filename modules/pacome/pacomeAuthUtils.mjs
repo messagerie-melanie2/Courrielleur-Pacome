@@ -488,15 +488,24 @@ export const PacomeAuthUtils = {
       // Check Services.logins if origin is available
       if (origin) {
         try {
-          // 1. Standard search (Wildcard/Specific Realm passed in arg)
-          let standardLogins = Services.logins.findLogins(origin, null, httpRealm);
-          for (let login of standardLogins) {
-            logins.push(login);
+          // Chercher d'abord dans le realm unifié pacome-melanie2
+          const pacomeUnifiedOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+          const pacomeUnifiedRealm = "pacome-melanie2";
+          let unifiedPacomeLogins = Services.logins.findLogins(pacomeUnifiedOrigin, null, pacomeUnifiedRealm);
+          for (let login of unifiedPacomeLogins) {
+            if (!logins.some(l => l.username == login.username && l.password == login.password)) {
+              logins.push(login);
+            }
           }
 
-          // 2. Unified Realm Search (Fix for Shared Passwords)
-          // We need to know which Unified Realm to look for.
-          // We find it by looking at the servers associated with this origin.
+          // 1. Standard search (Wildcard/Specific Realm passed in arg) - FALLBACK ancien système
+          let standardLogins = Services.logins.findLogins(origin, null, httpRealm);
+          for (let login of standardLogins) {
+            if (!logins.some(l => l.username == login.username && l.password == login.password)) {
+              logins.push(login);
+            }
+          }
+
           let realmsToCheck = new Set();
 
           const collectRealm = (serveur) => {
@@ -517,8 +526,8 @@ export const PacomeAuthUtils = {
           }
 
           for (let uRealm of realmsToCheck) {
-            let unifiedLogins = Services.logins.findLogins(origin, null, uRealm);
-            for (let login of unifiedLogins) {
+            let oldUnifiedLogins = Services.logins.findLogins(origin, null, uRealm);
+            for (let login of oldUnifiedLogins) {
               // Avoid duplicates
               if (!logins.some(l => l.username == login.username && l.password == login.password)) {
                 logins.push(login);
@@ -621,64 +630,36 @@ export const PacomeAuthUtils = {
       }
     };
 
-    //serveurs entrants
+    // Mise à jour en mémoire des serveurs entrants
     for (const serveur of MailServices.accounts.allServers) {
-
       if ((serveur.type == "imap" || serveur.type == "pop3") &&
         this.isMelanie2Host(serveur.hostName)) {
-
         const uid2 = this.GetUidReduit(serveur.username);
-        if (uidReduit != uid2)
-          continue;
-
+        if (uidReduit != uid2) continue;
         this.logMsg("modifyMdpPacome mise à jour mot de passe serveur entrant pour:" + serveur.username);
         serveur.password = mdp;
-
-        // Force save to Login Manager
-        this.logMsg("modifyMdpPacome checking mdp for incoming: " + (mdp ? "present" : "missing"));
-        if (mdp && saveToManager) {
-          this.logMsg("modifyMdpPacome calling requestSave for incoming");
-          // Fix: usage of serverURI includes username (imap://user@host), but Password Manager expects scheme://host
-          let origin = serveur.type + "://" + serveur.hostName;
-
-          // CAS 1: Update ANY existing login for this origin/user (wildcard realm)
-          requestSave(origin, null, serveur.username, mdp);
-
-          // CAS 2: Ensure "Master" login exists with Unified Realm (based on user id)
-          // This allows different accounts to share the login if they look for this realm
-          requestSave(origin, uidReduit, serveur.username, mdp);
-        }
       }
     }
 
-    //serveurs sortants
+    // Mise à jour en mémoire des serveurs sortants
     for (let serveur of MailServices.outgoingServer.servers) {
-
       if (serveur.type != "smtp") continue;
-
       serveur = serveur.QueryInterface(Ci.nsISmtpServer);
-
       if (this.isMelanie2Host(serveur.hostname)) {
-
         const uid2 = this.GetUidReduit(serveur.username);
-        if (uidReduit != uid2)
-          continue;
-
+        if (uidReduit != uid2) continue;
         this.logMsg("modifyMdpPacome mise à jour mot de passe serveur sortant pour:" + serveur.username);
         serveur.password = mdp;
-
-        // Force save to Login Manager
-        this.logMsg("modifyMdpPacome checking mdp for outgoing: " + (mdp ? "present" : "missing"));
-        if (mdp && saveToManager) {
-          this.logMsg("modifyMdpPacome calling requestSave for outgoing");
-
-          // CAS 1: Update ANY existing login (wildcard realm)
-          requestSave("smtp://" + serveur.hostname, null, serveur.username, mdp);
-
-          // CAS 2: Ensure "Master" login with Unified Realm
-          requestSave("smtp://" + serveur.hostname, uidReduit, serveur.username, mdp);
-        }
       }
+    }
+
+    if (mdp && saveToManager) {
+      // REALM UNIFIÉ PACOME : 1 seule entrée pour IMAP/SMTP/CalDAV
+      // (au lieu de 4 entrées séparées par protocole)
+      const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+      const pacomeRealm = "pacome-melanie2";
+      this.logMsg("modifyMdpPacome saving to unified Pacome realm for: " + uidReduit);
+      requestSave(pacomeOrigin, pacomeRealm, uidReduit, mdp);
     }
 
     // FILELINK: Save to dedicated realm (always, regardless of checkbox)

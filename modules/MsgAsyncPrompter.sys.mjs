@@ -368,23 +368,21 @@ export class MsgAuthPrompt {
         // Ensure persistence with the correct Realm (added for promptPassword)
         try {
           let checkUsername = loging2[0].username || username;
-          // Use Unified Realm (uidReduit) as preferred realm
-          let unifiedRealm = PacomeAuthUtils.GetUidReduit(checkUsername);
+          // Use unified Pacome realm
+          const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+          const pacomeRealm = "pacome-melanie2";
+          let uidReduit = PacomeAuthUtils.GetUidReduit(checkUsername);
 
-          let specificLogins = Services.logins.findLogins(origin, null, unifiedRealm || "");
+          let specificLogins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
+          let match = specificLogins.find(l => l.username == uidReduit);
 
-          let match = specificLogins.find(l => l.username == checkUsername);
-
-          // Log what we are doing
-          // Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword checking persistence for realm: " + (realm || "NULL") + " username: " + checkUsername + " match: " + (match ? "YES" : "NO"));
-
-          if (!match && checkUsername) {
-            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword saving login for Unified Realm: " + (unifiedRealm || ""));
+          if (!match && uidReduit) {
+            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword saving login for unified Pacome realm");
             const newLogin = new LoginInfo(
-              origin,
+              pacomeOrigin,
               null,
-              unifiedRealm || "",
-              checkUsername,
+              pacomeRealm,
+              uidReduit,
               aPassword.value,
               null,
               null
@@ -558,17 +556,20 @@ export class MsgAuthPrompt {
 
         // Ensure persistence with the correct Realm
         try {
-          let unifiedRealm = PacomeAuthUtils.GetUidReduit(authInfo.username);
+          let uidReduit = PacomeAuthUtils.GetUidReduit(authInfo.username);
+          // Use unified Pacome realm
+          const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+          const pacomeRealm = "pacome-melanie2";
 
-          let specificLogins = Services.logins.findLogins(origin, null, unifiedRealm || "");
-          let match = specificLogins.find(l => l.username == authInfo.username);
-          if (!match) {
-            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptAuth saving login for Unified Realm: " + (unifiedRealm || ""));
+          let specificLogins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
+          let match = specificLogins.find(l => l.username == uidReduit);
+          if (!match && uidReduit) {
+            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptAuth saving login for unified Pacome realm");
             const newLogin = new LoginInfo(
-              origin,
+              pacomeOrigin,
               null,
-              unifiedRealm || "",
-              authInfo.username,
+              pacomeRealm,
+              uidReduit,
               authInfo.password,
               null,
               null
