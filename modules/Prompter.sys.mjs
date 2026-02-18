@@ -952,7 +952,7 @@ ChromeUtils.defineLazyGetter(InternalPromptUtils, "ellipsis", function () {
       "intl.ellipsis",
       Ci.nsIPrefLocalizedString
     ).data;
-  } catch (e) {}
+  } catch (e) { }
   return ellipsis;
 });
 
@@ -1685,58 +1685,58 @@ class ModalPrompter {
     let userParam = this.async ? username : { value: username };
     let passParam = this.async ? password : { value: password };
 
-		// cas authentification pacome
-		// authentification proxy AMANDE? ou authentification melanie2
-    if (null!=channel && null!=channel.URI &&
-				(PacomeAuthUtils.isAuthProxyAmande(channel, authInfo) ||
-        APP_MELANIE2==PacomeAuthUtils.TestServeurMelanie2(channel.URI.host)) ) {
+    // cas authentification pacome
+    // authentification proxy AMANDE? ou authentification melanie2
+    if (null != channel && null != channel.URI &&
+      (PacomeAuthUtils.isAuthProxyAmande(channel, authInfo) ||
+        APP_MELANIE2 == PacomeAuthUtils.TestServeurMelanie2(channel.URI.host))) {
       Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth authentification melanie2");
 
-			// rechercher login existant
-			let loging=PacomeAuthUtils.findLogins(null, channel.URI.host, null);
-			if (loging.length){
-				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth login pacome present");
-				authInfo.username = loging[0].username;
-				authInfo.password = loging[0].password;
+      // rechercher login existant
+      let loging = PacomeAuthUtils.findLogins(null, channel.URI.host, null);
+      if (loging.length && !(authInfo.flags & Ci.nsIAuthInformation.AUTH_FAILED)) {
+        Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth login pacome present");
+        authInfo.username = loging[0].username;
+        authInfo.password = loging[0].password;
         return true;
-			}
+      }
 
-			let mdp=new Object();
+      let mdp = new Object();
 
-			// cas agenda : rechercher uid
-			let uid=PacomeAuthUtils.GetUidAgenda(channel.URI.spec);
+      // cas agenda : rechercher uid
+      let uid = PacomeAuthUtils.GetUidAgenda(channel.URI.spec);
 
-			if (null==uid || ""==uid) {
+      if (null == uid || "" == uid) {
 
-				//authentification pacome avec le compte principal
-				let compte=PacomeAuthUtils.GetComptePrincipal();
-				if (null!=compte) {
-					uid=PacomeAuthUtils.GetUidReduit(compte.incomingServer.username);
-				}
-				else {
-					// le compte principal devrait exister
-					Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth authentification "+channel.URI.host+" - pas de compte principal!");
-					return false;
-				}
-			}
-			else Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth GetUidAgenda uid:"+uid);
+        //authentification pacome avec le compte principal
+        let compte = PacomeAuthUtils.GetComptePrincipal();
+        if (null != compte) {
+          uid = PacomeAuthUtils.GetUidReduit(compte.incomingServer.username);
+        }
+        else {
+          // le compte principal devrait exister
+          Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth authentification " + channel.URI.host + " - pas de compte principal!");
+          return false;
+        }
+      }
+      else Services.console.logStringMessage("*** MsgAsyncPrompter.jsm promptAuth GetUidAgenda uid:" + uid);
 
-			//demande mot de passe
-			Services.console.logStringMessage("*** MsgAsyncPrompter.jsm authentification "+channel.URI.host+" - demande mot de passe");
-			let res=PacomeAuthUtils.PromptPacomeMdp(this._window, uid, mdp);
+      //demande mot de passe
+      Services.console.logStringMessage("*** MsgAsyncPrompter.jsm authentification " + channel.URI.host + " - demande mot de passe");
+      let res = PacomeAuthUtils.PromptPacomeMdp(this._window, uid, mdp);
 
-			if (res!=1) {
-				Services.console.logStringMessage("*** MsgAsyncPrompter.jsm echec authentification pacome ou annulation");
-				return false;
-			}
+      if (res != 1) {
+        Services.console.logStringMessage("*** MsgAsyncPrompter.jsm echec authentification pacome ou annulation");
+        return false;
+      }
 
-			// mettre à jour tous les comptes
-			PacomeAuthUtils.modifyMdpPacome(uid, mdp.value);
+      // mettre à jour tous les comptes
+      PacomeAuthUtils.modifyMdpPacome(uid, mdp.value);
 
-			authInfo.username=uid;
-			authInfo.password=mdp.value;
+      authInfo.username = uid;
+      authInfo.password = mdp.value;
 
-			return true;
+      return true;
     }
 
     let result;
@@ -1806,7 +1806,7 @@ XPCOMUtils.defineLazyPreferenceGetter(
   MODAL_TYPE_WINDOW
 );
 
-export function AuthPromptAdapterFactory() {}
+export function AuthPromptAdapterFactory() { }
 AuthPromptAdapterFactory.prototype = {
   classID: Components.ID("{6e134924-6c3a-4d86-81ac-69432dd971dc}"),
   QueryInterface: ChromeUtils.generateQI(["nsIAuthPromptAdapterFactory"]),
