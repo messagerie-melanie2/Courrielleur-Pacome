@@ -255,19 +255,23 @@ function ValiderAuth() {
             if (0xFFFF == code) {
 
               //le mot de passe doit changer
-              PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth le mot de passe doit changer");
+              PacomeUtils.PacomeTrace("PacomeAuth ValiderAuth le mot de passe doit changer (code 0xFFFF)");
+              EcritLog("Mot de passe valide mais doit etre change (code 0xFFFF)", message);
 
-              EcritLog("le mot de passe doit changer", "");
               //si l'utilisateur change le mot de passe, le nouveau mot de passe est retourné dans argchg["nouveau"]
               argchg["uid"] = uid;
               argchg["actuel"] = mdp;
               argchg["mineqpassworddoitchanger"] = message;
 
-              window.openDialog("chrome://pacome/content/pacomechgmdp.xul", "", "chrome,modal,centerscreen,titlebar", argchg);
+              EcritLog("Ouverture boite changement mot de passe", "chrome://pacome/content/pacomechgmdp.xhtml");
+              window.openDialog("chrome://pacome/content/pacomechgmdp.xhtml", "", "chrome,modal,centerscreen,titlebar", argchg);
+              EcritLog("Retour boite changement mot de passe", argchg["nouveau"] ? "nouveau mdp saisi" : "annule");
 
               if (null != argchg["nouveau"]) {
-                EcritLog("le mot de passe a chang\u00e9", "");
+                EcritLog("Mot de passe change avec succes", "");
                 mdp = argchg["nouveau"];
+              } else {
+                EcritLog("Mot de passe non change - authentification avec ancien mdp", "");
               }
 
             }

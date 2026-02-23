@@ -5,87 +5,88 @@ const { FileUtils } = ChromeUtils.importESModule("resource:///modules/FileUtils.
 
 
 // si true active les traces debug dans la console (mode developpement)
-const PACOME_DEBUG=false;
+const PACOME_DEBUG = false;
 
 
-const VERSION_PACOME="10.0";
+const VERSION_PACOME = "10.0";
 
 
 // séparateur pour les identifiant de boites partagées
-export const PACOME_SEP_UID=".-.";
+export const PACOME_SEP_UID = ".-.";
 
 // pref pour les traces on/off
-const PACOME_PREF_TRACE="extensions.pacome.trace";
+const PACOME_PREF_TRACE = "extensions.pacome.trace";
 
 // préfixe pour les traces dans la console
-const PACOME_CONSOLE_PREFIX="[PACOME] ";
+const PACOME_CONSOLE_PREFIX = "[PACOME] ";
 
-const PACOME_CONSOLE_PREFIX_DEBUG="*** [PACOME] ";
+const PACOME_CONSOLE_PREFIX_DEBUG = "*** [PACOME] ";
 
 
 //préférence serveur pacomesrv
-export const PACOME_PREF_URLPARAM="extensions.pacome.urlparam";
+export const PACOME_PREF_URLPARAM = "extensions.pacome.urlparam";
 
 //préférence serveur pacomemdp2 de vérification de mot de passe
-export const PACOME_URL_VERIFMDP="extensions.pacome.urlmdp"
+export const PACOME_URL_VERIFMDP = "extensions.pacome.urlmdp"
 
 // nom de la préférence pour paramétrage authentifié
-export const PACOME_PREF_PARAM_AUTH="extensions.pacome.urlparam.auth";
+export const PACOME_PREF_PARAM_AUTH = "extensions.pacome.urlparam.auth";
 
 
 /* parametres de requete */
-const PACOMESRV_OP_PARAM="parcfg";
-const PACOMESRV_OP_MAJ="parmaj";
-const PACOMESRV_PARAM_CONFIG="cfg";
-const PACOMESRV_PARAM_VER="extver";
+const PACOMESRV_OP_PARAM = "parcfg";
+const PACOMESRV_OP_MAJ = "parmaj";
+const PACOMESRV_PARAM_CONFIG = "cfg";
+const PACOMESRV_PARAM_VER = "extver";
 
 
 /* fonctions d'enregistrement des evenements (fichier log) */
 //nom du fichier log
-const PACOME_FICHIER_LOG="pacome.log";
-const PACOME_FICHIER_LOG_SEP="\t";
+const PACOME_FICHIER_LOG = "pacome.log";
+const PACOME_FICHIER_LOG_SEP = "\t";
 //v2.6 - taille maxi du fichier de logs avant rotation
-const PACOME_LOGS_MAX=1000000;
-const PACOME_FICHIER_LOG1="pacome-1.log";
+const PACOME_LOGS_MAX = 1000000;
+const PACOME_FICHIER_LOG1 = "pacome-1.log";
 
 //source d'evenement
-export const PACOME_LOGS_MODULE="PACOME";
-export const PACOME_LOGS_ASSISTANT="ASSISTANT";
-export const PACOME_LOGS_MAJ="MISE_A_JOUR";
-export const PACOME_LOGS_MAJAUTO="MAJ_AUTO";
-export const PACOME_LOGS_MDP="VERIF_MDP";
-export const PACOME_LOGS_CHGMDP="CHANGE_MDP";
-export const PACOME_LOGS_AG="AGENDAS";
-export const PACOME_LOGS_REQ="Requete serveur";
+export const PACOME_LOGS_MODULE = "PACOME";
+export const PACOME_LOGS_ASSISTANT = "ASSISTANT";
+export const PACOME_LOGS_MAJ = "MISE_A_JOUR";
+export const PACOME_LOGS_MAJAUTO = "MAJ_AUTO";
+export const PACOME_LOGS_MDP = "VERIF_MDP";
+export const PACOME_LOGS_AUTH = "AUTH";
+export const PACOME_LOGS_CHGMDP = "CHANGE_MDP";
+export const PACOME_LOGS_AG = "AGENDAS";
+export const PACOME_LOGS_REQ = "Requete serveur";
 
 
 
 
 // pacome.properties
-var gPacomeBundle=null;
+var gPacomeBundle = null;
 
-export const PacomeUtils={
+export const PacomeUtils = {
 
-	_init:false,
+	_init: false,
 
 	// traces
 	_traces: false,
 
 	// fixé par SetErreurEx
-	_codeErreur:0,
-	_msgErreur:"",
-	_exErreur:null,
+	_codeErreur: 0,
+	_msgErreur: "",
+	_exErreur: null,
 
-	InitUtils(){
-		
-		if (!this._init){
-			
-			gPacomeBundle=Services.strings.createBundle("chrome://pacome/locale/pacome.properties");
+	InitUtils() {
 
-			this._traces=Services.prefs.getBoolPref(PACOME_PREF_TRACE, false);
+		if (!this._init) {
 
-			this._init=true;
-			
+			gPacomeBundle = Services.strings.createBundle("chrome://pacome/locale/pacome.properties");
+
+			this._traces = Services.prefs.getBoolPref(PACOME_PREF_TRACE, false);
+
+			this._init = true;
+
 			this.PacomeTrace("initialisation PacomeUtils");
 		}
 	},
@@ -96,47 +97,47 @@ export const PacomeUtils={
 	},
 
 	// retourne la chaine correspondante dans pacome.properties
-	MessageFromId(msgId){
+	MessageFromId(msgId) {
 		//this.PacomeTrace("*** MessageFromId msgId:"+msgId);
 		return gPacomeBundle.GetStringFromName(msgId);
 	},
 
 	// retourne la partie gauche de l'identifiant
-	GetUidReduit(uid){
+	GetUidReduit(uid) {
 		return uid.split(PACOME_SEP_UID)[0];
 	},
 
 
 	// trace dans la console
-	PacomeTrace(msg){
+	PacomeTrace(msg) {
 
-		if (this._traces) Services.console.logStringMessage(PACOME_CONSOLE_PREFIX+msg);
+		if (this._traces) Services.console.logStringMessage(PACOME_CONSOLE_PREFIX + msg);
 	},
 
 	// traces en mode développement
-	logMsgDebug(msg){
+	logMsgDebug(msg) {
 
-		if (PACOME_DEBUG) Services.console.logStringMessage(PACOME_CONSOLE_PREFIX_DEBUG+msg);
+		if (PACOME_DEBUG) Services.console.logStringMessage(PACOME_CONSOLE_PREFIX_DEBUG + msg);
 	},
 
 	// Mémorise une erreur (usage exceptions)
 	// + trace console
 	// code erreur, message, exception
-	SetErreurEx(code, msg, ex=null){
+	SetErreurEx(code, msg, ex = null) {
 
-		this._codeErreur=code
-		this._msgErreur=msg;
-		this._exErreur=ex;
+		this._codeErreur = code
+		this._msgErreur = msg;
+		this._exErreur = ex;
 
-		if (ex) this.PacomeTrace(msg+"\nDétail de l'exception:"+ex);
+		if (ex) this.PacomeTrace(msg + "\nDétail de l'exception:" + ex);
 		else this.PacomeTrace(msg);
 	},
 
-	ClearErreurEx(){
+	ClearErreurEx() {
 
-		this._codeErreur=0
-		this._msgErreur="";
-		this._exErreur=null;
+		this._codeErreur = 0
+		this._msgErreur = "";
+		this._exErreur = null;
 	},
 
 
@@ -148,103 +149,103 @@ export const PacomeUtils={
 	*  bmaj : si true requete de mise à jour
 	*  creds : si non null login/password (creds.uid && creds.mdp)
 	*/
-	RequeteParametrage(config, fncrappel, bmaj, creds=null){
+	RequeteParametrage(config, fncrappel, bmaj, creds = null) {
 
 		try {
 			// PacomeUtils.SetErreurEx("code test", this.MessageFromId("pacomesrverr-"+404));
 			this.PacomeTrace("RequeteParametrage");
 
-			let httpRequest=new XMLHttpRequest();
+			let httpRequest = new XMLHttpRequest();
 
 			//url
-			const url=Services.prefs.getCharPref(PACOME_PREF_URLPARAM, "");
-			if (url==""){
+			const url = Services.prefs.getCharPref(PACOME_PREF_URLPARAM, "");
+			if (url == "") {
 				this.PacomeTrace("RequeteParametrage url non definie");
 				this.EcritLog(PACOME_LOGS_REQ, "Requete parametrage url non definie", "");
 				return -1;
 			}
 
-			this.PacomeTrace("RequeteParametrage url serveur:"+url);
+			this.PacomeTrace("RequeteParametrage url serveur:" + url);
 			this.EcritLog(PACOME_LOGS_REQ, "url du serveur pacome", url);
 
 			//parametres
-			let param=null;
+			let param = null;
 			if (bmaj)
-				param="op="+PACOMESRV_OP_MAJ;
+				param = "op=" + PACOMESRV_OP_MAJ;
 			else
-				param="op="+PACOMESRV_OP_PARAM;
+				param = "op=" + PACOMESRV_OP_PARAM;
 
-			param+="&"+PACOMESRV_PARAM_CONFIG+"="+encodeURIComponent(config);
-			param+="&"+PACOMESRV_PARAM_VER+"="+encodeURIComponent(VERSION_PACOME);
+			param += "&" + PACOMESRV_PARAM_CONFIG + "=" + encodeURIComponent(config);
+			param += "&" + PACOMESRV_PARAM_VER + "=" + encodeURIComponent(VERSION_PACOME);
 
 			httpRequest.open("POST", url, true);
 
-			httpRequest.setRequestHeader("Content-Type","application/x-www-form-urlencoded; charset=UTF-8");
+			httpRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
 
 			// authentification si creds non null
-			if (creds && creds.uid && creds.mdp){
-				httpRequest.setRequestHeader("Authorization", "Basic "+btoa(creds.uid+":"+creds.mdp));
+			if (creds && creds.uid && creds.mdp) {
+				httpRequest.setRequestHeader("Authorization", "Basic " + btoa(creds.uid + ":" + creds.mdp));
 			}
 
-			httpRequest.onreadystatechange=function(){
+			httpRequest.onreadystatechange = function () {
 
-				switch(httpRequest.readyState) {
+				switch (httpRequest.readyState) {
 
-				case 4:
-					let statut=0;
-					try{
-						statut=httpRequest.status;
-					}
-					catch(ex1){
-						PacomeUtils.PacomeTrace("RequeteParametrage exception httpRequest.status");
-						//statut=0;
-						//v1.1.1
-						let req=httpRequest.channel.QueryInterface(Components.interfaces.nsIRequest);
-						statut=req.status;
-					}
-					// statut=404;// simul echec
-					PacomeUtils.PacomeTrace("RequeteParametrage httpRequest.status:"+statut);
-		
-					if(statut!=200){
-
-						PacomeUtils.EcritLog(PACOME_LOGS_REQ, "code de reponse du serveur", statut);
-
-						if (0==statut){
-
-							PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurAccesSrv"));
+					case 4:
+						let statut = 0;
+						try {
+							statut = httpRequest.status;
 						}
-						else{
-							try{
-								//v1.11
-								PacomeUtils.SetErreurEx(statut, PacomeUtils.MessageFromId("pacomesrverr-"+statut));
-							}
-							catch(ex1){
-								PacomeUtils.SetErreurEx(statut, PacomeUtils.MessageFromId("PacomeErreurSrv"), ex1);
-							}
+						catch (ex1) {
+							PacomeUtils.PacomeTrace("RequeteParametrage exception httpRequest.status");
+							//statut=0;
+							//v1.1.1
+							let req = httpRequest.channel.QueryInterface(Components.interfaces.nsIRequest);
+							statut = req.status;
 						}
+						// statut=404;// simul echec
+						PacomeUtils.PacomeTrace("RequeteParametrage httpRequest.status:" + statut);
 
-						fncrappel(statut, null);
-						return;
-					}
-					else{
+						if (statut != 200) {
 
-						//PacomeUtils.logMsgDebug(httpRequest.responseText);
+							PacomeUtils.EcritLog(PACOME_LOGS_REQ, "code de reponse du serveur", statut);
 
-						fncrappel(statut, httpRequest.responseXML);
+							if (0 == statut) {
 
-						return;
-					}
+								PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurAccesSrv"));
+							}
+							else {
+								try {
+									//v1.11
+									PacomeUtils.SetErreurEx(statut, PacomeUtils.MessageFromId("pacomesrverr-" + statut));
+								}
+								catch (ex1) {
+									PacomeUtils.SetErreurEx(statut, PacomeUtils.MessageFromId("PacomeErreurSrv"), ex1);
+								}
+							}
+
+							fncrappel(statut, null);
+							return;
+						}
+						else {
+
+							//PacomeUtils.logMsgDebug(httpRequest.responseText);
+
+							fncrappel(statut, httpRequest.responseXML);
+
+							return;
+						}
 					default: break;
 				}
 			}
 
-			this.PacomeTrace("RequeteParametrage send param:"+param);
+			this.PacomeTrace("RequeteParametrage send param:" + param);
 			this.EcritLog(PACOME_LOGS_REQ, "envoie des parametres", param);
 			httpRequest.send(param);
 
 			return true;
 
-		} catch(ex){
+		} catch (ex) {
 			this.SetErreurEx(-1, this.MessageFromId("PacomeErreurReqEx"), ex);
 			this.EcritLog(PACOME_LOGS_REQ, "exception", ex);
 			return false;
@@ -257,30 +258,30 @@ export const PacomeUtils={
 	*  @return true si code erreur = 0
 	* sinon retourne false (erreur globale dans gPacomeMsgErreur)
 	*/
-	AnalyseErreurDoc(docXML){
+	AnalyseErreurDoc(docXML) {
 
-		const racine=docXML.documentElement;
+		const racine = docXML.documentElement;
 
-		if (null==racine || "pacome"!=racine.nodeName){
+		if (null == racine || "pacome" != racine.nodeName) {
 			PacomeUtils.SetErreurEx(-1, PacomeMessageFromId("PacomeErreurFormatDoc"));
 			return false;
 		}
 
-		const resultat=racine.querySelectorAll("pacome > resultat");
-		if (null==resultat || 0==resultat.length){
+		const resultat = racine.querySelectorAll("pacome > resultat");
+		if (null == resultat || 0 == resultat.length) {
 			PacomeUtils.SetErreurEx(-1, PacomeMessageFromId("PacomeErreurFormatDoc"));
 			return false;
 		}
 
 		PacomeUtils.SetErreurEx(resultat[0].getAttribute("code"), resultat[0].getAttribute("erreur"));
 
-		if (PacomeUtils._codeErreur!=0){
+		if (PacomeUtils._codeErreur != 0) {
 			return false;
 		}
 
 		//verification pacome_ui
-		const pacomeui=docXML.querySelector("pacome_ui");
-		if (null==pacomeui){
+		const pacomeui = docXML.querySelector("pacome_ui");
+		if (null == pacomeui) {
 			PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurPacomeUI"));
 			return false;
 		}
@@ -290,62 +291,62 @@ export const PacomeUtils={
 
 
 	/* fonctions de log fichier */
-	_fichierLogs:null,
+	_fichierLogs: null,
 
-	InitLogs(){
+	InitLogs() {
 
-		let fichier=Services.dirsvc.get("ProfD", Components.interfaces.nsIFile);
+		let fichier = Services.dirsvc.get("ProfD", Components.interfaces.nsIFile);
 		fichier.append(PACOME_FICHIER_LOG);
 
-		if (fichier.exists()){
+		if (fichier.exists()) {
 			//v2.6 - test taille fichier
-			if (fichier.fileSize>PACOME_LOGS_MAX)
+			if (fichier.fileSize > PACOME_LOGS_MAX)
 				this.LogsRotate();
 		} else
 			fichier.create(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, FileUtils.PERMS_FILE);
 
-		this._fichierLogs=Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
-		this._fichierLogs.init(fichier, FileUtils.MODE_WRONLY|FileUtils.MODE_CREATE|FileUtils.MODE_APPEND, FileUtils.PERMS_FILE,0);
+		this._fichierLogs = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
+		this._fichierLogs.init(fichier, FileUtils.MODE_WRONLY | FileUtils.MODE_CREATE | FileUtils.MODE_APPEND, FileUtils.PERMS_FILE, 0);
 	},
 
-	EcritLog(source, message, donnees){
+	EcritLog(source, message, donnees) {
 
-		if (null==this._fichierLogs){
+		if (null == this._fichierLogs) {
 			this.PacomeTrace("PacomeEcritLog fichier non initialise");
 			this.InitLogs();
 			return;
 		}
 
 		//date heure
-		let dh=new Date();
-		let strdh="["+dh.getDate()+"/"+(dh.getMonth()+1)+"/"+dh.getFullYear()+" "+dh.getHours()+":"+dh.getMinutes()+":"+dh.getSeconds()+"]";
-		let src="";
-		if (null!=source)	src=source;
-		let desc="";
-		if (null!=message) desc=message;
-		let don="";
-		if (null!=donnees) don=donnees;
+		let dh = new Date();
+		let strdh = "[" + dh.getDate() + "/" + (dh.getMonth() + 1) + "/" + dh.getFullYear() + " " + dh.getHours() + ":" + dh.getMinutes() + ":" + dh.getSeconds() + "]";
+		let src = "";
+		if (null != source) src = source;
+		let desc = "";
+		if (null != message) desc = message;
+		let don = "";
+		if (null != donnees) don = donnees;
 
-		let msg=strdh+PACOME_FICHIER_LOG_SEP+"["+src+"]"+PACOME_FICHIER_LOG_SEP+
-						"\""+desc+"\""+PACOME_FICHIER_LOG_SEP+"\""+don+"\"\x0D\x0A";
+		let msg = strdh + PACOME_FICHIER_LOG_SEP + "[" + src + "]" + PACOME_FICHIER_LOG_SEP +
+			"\"" + desc + "\"" + PACOME_FICHIER_LOG_SEP + "\"" + don + "\"\x0D\x0A";
 
 		this._fichierLogs.write(msg, msg.length);
 		this._fichierLogs.flush();
 	},
 
-	LogsRotate(){
+	LogsRotate() {
 
 		this.PacomeTrace("LogsRotate.");
 
-		let fichier=Services.dirsvc.get("ProfD", Components.interfaces.nsIFile);
+		let fichier = Services.dirsvc.get("ProfD", Components.interfaces.nsIFile);
 		fichier.append(PACOME_FICHIER_LOG);
 		fichier.moveTo(null, PACOME_FICHIER_LOG1);
 	},
 
-	passerHorsLigne(){
+	passerHorsLigne() {
 
-		Services.io.manageOfflineStatus=false;
-		Services.io.offline=true;
+		Services.io.manageOfflineStatus = false;
+		Services.io.offline = true;
 	}
 };
 

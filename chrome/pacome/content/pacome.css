@@ -124,3 +124,26 @@
 	margin-left: 5px;
 	white-space: nowrap;
 }
+
+
+/* --- Boite changement de mot de passe (code 0xFFFF) --- */
+
+.pacomechgmdp-body {
+	padding: 16px;
+	box-sizing: border-box;
+	width: 100%;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+}
+
+.pacomechgmdp-info {
+	margin: 0;
+	font-size: 0.95em;
+}
+
+.pacomechgmdp-boutons {
+	display: flex;
+	justify-content: flex-end;
+}
