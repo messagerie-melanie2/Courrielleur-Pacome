@@ -8,14 +8,15 @@
     <title>Changement de mot de passe</title>
     <link rel="stylesheet" href="chrome://messenger/skin/messenger.css" />
     <link rel="stylesheet" href="chrome://pacome/content/pacome.css" />
+    <script src="chrome://pacome/content/pacomechgmdp.js"></script>
 </head>
 
 <body class="pacomechgmdp-body">
 
-    <p class="pacomechgmdp-info">Merci de changer votre mot de passe au plus vite.</p>
+    <p id="pacomechgmdp-message" class="pacomechgmdp-info">Merci de changer votre mot de passe au plus vite.</p>
 
     <div class="pacomechgmdp-boutons">
-        <button onclick="window.close();">OK</button>
+        <button onclick="OuvrirEtFermer();">OK</button>
     </div>
 
 </body>

@@ -28,6 +28,7 @@ export const PacomeAuthUtils = {
   _regServeursAppM2: null,
   _ExpProxyAmande: null,
   _lastSavedPassword: null,
+  _authRetryCount: {},
 
   Init() {
     try {
@@ -39,6 +40,112 @@ export const PacomeAuthUtils = {
       }
     }
     catch { }
+
+    // Observer les échecs d'authentification IMAP silencieux
+    // Thunderbird émet ces notifications quand l'auth IMAP échoue sans rappeler promptPassword
+    if (!this._imapAuthObserver) {
+      this._imapAuthObserver = {
+        _utils: this,
+        observe(subject, topic, data) {
+          Services.console.logStringMessage("[Pacome] Init observer topic:" + topic + " data:" + data);
+          try {
+            // subject est un nsIMsgIncomingServer
+            const server = subject.QueryInterface(Ci.nsIMsgIncomingServer);
+            const host = server.hostName;
+            Services.console.logStringMessage("[Pacome] Init observer IMAP auth failure host:" + host + " user:" + server.username);
+
+            if (this._utils.TestServeurMelanie2(host) == NON_MELANIE2) return;
+
+            // Réinitialiser le mot de passe en mémoire pour forcer un nouveau prompt
+            server.password = null;
+
+            // Afficher le dialog Pacome
+            const uid = this._utils.GetUidReduit(server.username);
+            Services.console.logStringMessage("[Pacome] Init observer → ouverture dialog Pacome pour uid:" + uid);
+            const mdp = {};
+            const checkBox = {};
+            const res = this._utils.PromptPacomeMdp(null, uid, mdp, checkBox);
+            Services.console.logStringMessage("[Pacome] Init observer PromptPacomeMdp résultat:" + res
+              + " checkBox.value=" + checkBox.value + " (type:" + typeof checkBox.value + ")");
+            if (res == 1 && mdp.value) {
+              const saveToManager = !!checkBox.value;
+              Services.console.logStringMessage("[Pacome] Init observer modifyMdpPacome saveToManager:" + saveToManager);
+              this._utils.modifyMdpPacome(uid, mdp.value, saveToManager);
+            }
+          } catch (e) {
+            Services.console.logStringMessage("[Pacome] Init observer erreur:" + e);
+          }
+        }
+      };
+
+      // Topics possibles selon la version de Thunderbird
+      for (const topic of [
+        "imap-autologin-failed", "mail:imap-autologin-failed", "autologin-failed",
+        "mail:loginFailed", "imap:loginFailed", "msgDBView:msgAdded"
+      ]) {
+        try {
+          Services.obs.addObserver(this._imapAuthObserver, topic);
+          Services.console.logStringMessage("[Pacome] Init observer enregistré pour topic:" + topic);
+        } catch (e) { /* topic non supporté */ }
+      }
+
+      // Listener de dossier via nsIMsgMailSession pour catcher les erreurs IMAP
+      try {
+        const folderListener = {
+          _utils: this,
+          onFolderAdded() { },
+          onMessageAdded() { },
+          onFolderRemoved() { },
+          onMessageRemoved() { },
+          onFolderPropertyChanged() { },
+          onFolderIntPropertyChanged(folder, property, oldValue, newValue) { },
+          onFolderBoolPropertyChanged() { },
+          onFolderUnicharPropertyChanged() { },
+          onFolderPropertyFlagChanged() { },
+          onFolderEvent(folder, event) {
+            // Log tous les événements pour identifier celui de l'échec d'auth
+            Services.console.logStringMessage("[Pacome] folderListener.onFolderEvent event:" + event
+              + " folder:" + (folder ? folder.URI : "null"));
+
+            // Événements connus pour l'échec d'auth IMAP dans Thunderbird
+            const authFailEvents = ["ImapLoginFailed", "LoginFailed", "autologin-failed"];
+            if (!authFailEvents.includes(event)) return;
+
+            try {
+              const server = folder.server;
+              if (!server) return;
+              const host = server.hostName;
+              Services.console.logStringMessage("[Pacome] folderListener auth failure détecté host:" + host);
+
+              if (this._utils.TestServeurMelanie2(host) == NON_MELANIE2) return;
+
+              // Réinitialiser le mot de passe en mémoire
+              server.password = null;
+
+              const uid = this._utils.GetUidReduit(server.username);
+              Services.console.logStringMessage("[Pacome] folderListener → ouverture dialog Pacome pour uid:" + uid);
+              const mdp = {};
+              const checkBox = {};
+              const res = this._utils.PromptPacomeMdp(null, uid, mdp, checkBox);
+              Services.console.logStringMessage("[Pacome] folderListener PromptPacomeMdp résultat:" + res
+                + " checkBox.value=" + checkBox.value + " (type:" + typeof checkBox.value + ")");
+              if (res == 1 && mdp.value) {
+                const saveToManager = !!checkBox.value;
+                Services.console.logStringMessage("[Pacome] folderListener modifyMdpPacome saveToManager:" + saveToManager);
+                this._utils.modifyMdpPacome(uid, mdp.value, saveToManager);
+              }
+            } catch (e) {
+              Services.console.logStringMessage("[Pacome] folderListener erreur:" + e);
+            }
+          }
+
+        };
+        MailServices.mailSession.AddFolderListener(folderListener, Ci.nsIFolderListener.all);
+        Services.console.logStringMessage("[Pacome] Init folderListener enregistré");
+      } catch (e) {
+        Services.console.logStringMessage("[Pacome] Init folderListener erreur:" + e);
+      }
+    }
   },
 
   // test si origin est du type melanie2
@@ -603,7 +710,10 @@ export const PacomeAuthUtils = {
   // si mdp null => mot de passe réinitialise.
   modifyMdpPacome: function (uid, mdp, saveToManager = true, realm = null) {
 
-    this.logMsg("modifyMdpPacome uid:" + uid + " saveToManager:" + saveToManager + " realm:" + realm);
+    this.logMsg("modifyMdpPacome uid:" + uid
+      + " saveToManager:" + saveToManager
+      + " (type:" + typeof saveToManager + ")"
+      + " realm:" + realm);
 
 
     const uidReduit = this.GetUidReduit(uid);
@@ -631,6 +741,7 @@ export const PacomeAuthUtils = {
     };
 
     // Mise à jour en mémoire des serveurs entrants
+    // (nsIMsgIncomingServer.password est un setter en mémoire uniquement — pas de persistance sur disque)
     for (const serveur of MailServices.accounts.allServers) {
       if ((serveur.type == "imap" || serveur.type == "pop3") &&
         this.isMelanie2Host(serveur.hostName)) {
@@ -641,7 +752,7 @@ export const PacomeAuthUtils = {
       }
     }
 
-    // Mise à jour en mémoire des serveurs sortants
+    // Mise à jour des serveurs sortants (même logique : setter en mémoire)
     for (let serveur of MailServices.outgoingServer.servers) {
       if (serveur.type != "smtp") continue;
       serveur = serveur.QueryInterface(Ci.nsISmtpServer);
