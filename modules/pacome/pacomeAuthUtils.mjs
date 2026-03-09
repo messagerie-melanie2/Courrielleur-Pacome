@@ -6,7 +6,7 @@
 const { MailServices } = ChromeUtils.importESModule("resource:///modules/MailServices.sys.mjs");
 const { cal } = ChromeUtils.importESModule("resource:///modules/calendar/calUtils.sys.mjs");
 
-const { PacomeUtils, PACOME_SEP_UID } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeUtils.mjs");
+const { PacomeUtils, PACOME_SEP_UID, PACOME_URL_VERIFMDP } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeUtils.mjs");
 
 
 //pas un serveur melanie2
@@ -843,6 +843,133 @@ export const PacomeAuthUtils = {
       this.logMsg("saveLoginAsync error: " + e);
       console.error("PacomeAuthUtils saveLoginAsync error:", e);
     }
+  },
+
+  // Vérification du mot de passe en arrière-plan lorsque le login est déjà stocké.
+  // Envoie une requête au serveur Pacome et agit selon la réponse :
+  // - code 0 : OK, rien à faire
+  // - code 0xFFFF : le mot de passe doit changer -> ouverture boîte BNUM
+  // - code 49 + GRILLED : mot de passe expiré -> ouverture boîte BNUM + hors ligne + suppression mdp
+  // - code 49 (autre) : mot de passe invalide -> suppression mdp stocké
+  // - erreur réseau : ignorée silencieusement
+  verifierMdpEnArrierePlan(uid, mdp) {
+
+    this.logMsg("verifierMdpEnArrierePlan uid:" + uid);
+
+    if (!uid || !mdp) return;
+    if (Services.io.offline) return;
+
+    const url = Services.prefs.getCharPref(PACOME_URL_VERIFMDP, "");
+    if (url == "") {
+      this.logMsg("verifierMdpEnArrierePlan url serveur non definie");
+      return;
+    }
+
+    const httpRequest = new XMLHttpRequest();
+
+    let param = "op=verifmdp&uid=" + encodeURIComponent(uid);
+    param += "&mdp=" + encodeURIComponent(mdp);
+    param += "&extver=" + encodeURIComponent(PacomeUtils.version);
+    param += "&cm2ver=140.2.1.8";
+    param += "&org=";
+
+    const _this = this;
+
+    httpRequest.onreadystatechange = function () {
+      if (httpRequest.readyState != 4) return;
+
+      let statut = 0;
+      try {
+        statut = httpRequest.status;
+      } catch (ex) {
+        try {
+          let req = httpRequest.channel.QueryInterface(Components.interfaces.nsIRequest);
+          statut = req.status;
+        } catch (ex2) { }
+      }
+
+      _this.logMsg("verifierMdpEnArrierePlan statut:" + statut);
+
+      if (statut != 200) {
+        // Erreur réseau ou serveur -> ignorer silencieusement
+        _this.logMsg("verifierMdpEnArrierePlan erreur serveur statut:" + statut);
+        return;
+      }
+
+      const reponse = httpRequest.responseText;
+      _this.logMsg("verifierMdpEnArrierePlan reponse:'" + reponse + "'");
+
+      // Analyser la réponse : code=XX;message=YY;...
+      let code = -1;
+      let message = "";
+
+      const tab = reponse.split(";");
+      if (tab.length > 0) {
+        let res = tab[0].split("=");
+        if (res[0] == "code") code = res[1];
+      }
+      if (tab.length > 1) {
+        let res = tab[1].split("=");
+        if (res[0] == "message") message = res[1];
+      }
+
+      _this.logMsg("verifierMdpEnArrierePlan code:" + code + " message:" + message);
+
+      // Cas mot de passe valide
+      if (0 == code) {
+        _this.logMsg("verifierMdpEnArrierePlan mot de passe valide");
+        return;
+      }
+
+      // Cas mot de passe valide mais doit changer (0xFFFF)
+      if (0xFFFF == code) {
+        _this.logMsg("verifierMdpEnArrierePlan mot de passe doit changer");
+
+        let aParent = Services.wm.getMostRecentWindow("mail:3pane");
+        if (aParent) {
+          let argchg = Array();
+          argchg["uid"] = uid;
+          argchg["mineqpassworddoitchanger"] = message || "Merci de changer votre mot de passe au plus vite.";
+          aParent.openDialog("chrome://pacome/content/pacomechgmdp.xhtml", "", "chrome,modal,centerscreen,titlebar", argchg);
+        }
+        return;
+      }
+
+      // Cas mot de passe non valide (code 49)
+      if (49 == code) {
+
+        // Cas GRILLED : mot de passe expiré
+        if (message.startsWith("GRILLED : ")) {
+          _this.logMsg("verifierMdpEnArrierePlan mot de passe expire (GRILLED)");
+
+          let aParent = Services.wm.getMostRecentWindow("mail:3pane");
+          if (aParent) {
+            let msgUser = message.substr(10);
+            let argchg = Array();
+            argchg["uid"] = uid;
+            argchg["mineqpassworddoitchanger"] = msgUser;
+            aParent.openDialog("chrome://pacome/content/pacomechgmdp.xhtml", "", "chrome,modal,centerscreen,titlebar", argchg);
+          }
+
+          // Supprimer le mdp stocké et passer hors ligne
+          _this.removeAllLogins();
+          PacomeUtils.passerHorsLigne();
+          return;
+        }
+
+        // Autre code 49 : mdp invalide -> supprimer le mdp stocké
+        _this.logMsg("verifierMdpEnArrierePlan mot de passe invalide (code 49) - suppression mdp stocke");
+        _this.removeAllLogins();
+        return;
+      }
+
+      // Autres codes : ignorer
+      _this.logMsg("verifierMdpEnArrierePlan code non gere:" + code);
+    };
+
+    httpRequest.open("POST", url, true, null, null);
+    httpRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=ISO-8859-1");
+    httpRequest.send(param);
   },
 
   removeAllLogins: function () {

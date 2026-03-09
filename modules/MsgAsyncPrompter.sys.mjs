@@ -362,7 +362,7 @@ export class MsgAuthPrompt {
       let loging2 = PacomeAuthUtils.findLogins(origin, null, null);
       Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword findLogins count:" + loging2.length);
 
-      if (loging2.length) {
+      if (loging2.length && !Services.io.offline) {
         Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword login trouvé, utilisation du mdp stocké");
         aPassword.value = loging2[0].password;
 
@@ -394,13 +394,17 @@ export class MsgAuthPrompt {
           Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword error saving realm login: " + ex);
         }
 
+        // Vérification en arrière-plan du mot de passe stocké
+        PacomeAuthUtils.verifierMdpEnArrierePlan(loging2[0].username || username, aPassword.value);
+
         return true;
       }
 
       // demande mdp
-      Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword aucun login trouvé → ouverture dialog Pacome");
+      Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword aucun login trouvé (ou offline) → ouverture dialog Pacome");
       let outmdp = {};
-      let ok = PacomeAuthUtils.PromptPacomeMdp(null, username, outmdp, checkBox);
+      let autoValidateMdp = (loging2.length && Services.io.offline) ? loging2[0].password : null;
+      let ok = PacomeAuthUtils.PromptPacomeMdp(null, username, outmdp, checkBox, autoValidateMdp);
       Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword PromptPacomeMdp résultat:" + ok);
 
       // retour infos
@@ -426,7 +430,7 @@ export class MsgAuthPrompt {
         );
       }
 
-      if (!aPassword.value) {
+      if (!aPassword.value && !Services.io.offline) {
         // Look for existing logins.
         for (const login of Services.logins.findLogins(origin, null, realm)) {
           if (login.username == username) {
@@ -534,39 +538,25 @@ export class MsgAuthPrompt {
     if (null != channel && null != channel.URI &&
       (PacomeAuthUtils.isAuthProxyAmande(channel, authInfo) ||
         PacomeAuthUtils.TestServeurMelanie2(channel.URI.host) != NON_MELANIE2)) {
-      Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth host:" + channel.URI.host
-        + " AUTH_FAILED=" + !!(authInfo.flags & Ci.nsIAuthInformation.AUTH_FAILED)
-        + " flags=" + authInfo.flags);
 
-      // Compteur de retries par host pour détecter les boucles de mauvais mdp
-      // Thunderbird rappelle promptAuth sans AUTH_FAILED même après un échec
-      // Stocké dans PacomeAuthUtils (singleton) pour persister entre les appels
-      const host = channel.URI.host;
-      PacomeAuthUtils._authRetryCount[host] = (PacomeAuthUtils._authRetryCount[host] || 0) + 1;
-      const retryCount = PacomeAuthUtils._authRetryCount[host];
-      Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth retryCount pour " + host + ":" + retryCount);
+      const authFailedBit = 16; // Ci.nsIAuthInformation.PREVIOUS_FAILED
+      const authFailed = !!(authInfo.flags & authFailedBit);
+
+      Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth host:" + channel.URI.host
+        + " PREVIOUS_FAILED=" + authFailed + " flags=" + authInfo.flags);
 
       // rechercher login existant
       let origin = this._getFormattedOrigin(channel.URI);
       let loging = PacomeAuthUtils.findLogins(origin, channel.URI.host, null);
       Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth findLogins count:" + loging.length);
 
-      if (loging.length) {
-        // Si AUTH_FAILED ou si c'est un retry (>1 appel pour ce host) → ne pas réutiliser le mdp stocké
-        const authFailedBit = Ci.nsIAuthInformation.AUTH_FAILED;
-        const authFailedFlagSet = !!(authInfo.flags & authFailedBit);
-        const authFailed = authFailedFlagSet || retryCount > 1;
-        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth AUTH_FAILED bit="
-          + authFailedBit + " flagSet=" + authFailedFlagSet + " retryCount=" + retryCount + " authFailed=" + authFailed);
+      if (loging.length && !Services.io.offline) {
+        // Si PREVIOUS_FAILED (16) → ne pas réutiliser le mdp stocké car il vient d'échouer
         if (!authFailed) {
           Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth login trouvé, utilisation du mdp stocké");
           authInfo.username = loging[0].username;
           authInfo.password = loging[0].password;
           checkValue.value = false;
-
-          // Réinitialiser le compteur après un succès avec credentials stockés
-          // (sans ça, le prochain appel légitime pour ce host arriverait à retryCount=2)
-          delete PacomeAuthUtils._authRetryCount[host];
 
           // Ensure persistence with the correct Realm
           try {
@@ -594,9 +584,12 @@ export class MsgAuthPrompt {
             Services.console.logStringMessage("MsgAsyncPrompter.jsm promptAuth error saving realm login: " + ex);
           }
 
+          // Vérification en arrière-plan du mot de passe stocké
+          PacomeAuthUtils.verifierMdpEnArrierePlan(authInfo.username, authInfo.password);
+
           return true;
         } else {
-          Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth retry détecté (count=" + retryCount + ") → demande re-saisie mdp");
+          Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth PREVIOUS_FAILED détecté → bypass mdp stocké et demande re-saisie");
         }
       }
 
@@ -623,14 +616,18 @@ export class MsgAuthPrompt {
 
       //demande mot de passe
       Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth ouverture dialog Pacome pour uid:" + uid);
-      let res = PacomeAuthUtils.PromptPacomeMdp(null, uid, mdp, checkValue);
+      let autoValidateMdp = (loging.length && Services.io.offline) ? loging[0].password : null;
+      let res = PacomeAuthUtils.PromptPacomeMdp(null, uid, mdp, checkValue, autoValidateMdp);
+      if (res != 1) {
+        Services.console.logStringMessage("*** MsgAsyncPrompter.jsm echec authentification pacome ou annulation");
+        return false;
+      }
       Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth PromptPacomeMdp résultat:" + res);
 
       // retour infos
       if (res) {
         PacomeAuthUtils.modifyMdpPacome(uid, mdp.value, checkValue.value, authInfo.realm);
 
-        // Réinitialiser le compteur de retries après succès
         delete PacomeAuthUtils._authRetryCount[host];
 
         authInfo.username = uid;

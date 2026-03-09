@@ -129,13 +129,13 @@
 /* --- Boite changement de mot de passe (code 0xFFFF) --- */
 
 .pacomechgmdp-body {
-	padding: 16px;
+	padding: 8px;
 	box-sizing: border-box;
 	width: 100%;
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: 8px;
 }
 
 .pacomechgmdp-info {

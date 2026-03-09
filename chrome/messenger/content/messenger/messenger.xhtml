@@ -275,7 +275,7 @@
   <script defer="defer" src="chrome://messenger/content/shortcutsOverlay.js"></script>
 
   <script defer="defer" src="chrome://messenger/content/accountcreation/accountHub.js"></script>
-  
+
   <!-- pour mise a jour pacome -->
   <script defer="defer" src="chrome://pacome/content/pacomeMaj.js"></script>
 
@@ -3796,14 +3796,11 @@
     <button id="assistantPacome"
             class="spaces-toolbar-button"
             tabindex="-1"
-            style="border:solid 1px; width:20px; height:20px; margin-left:6px;"
+            title="Assistant de paramétrage des comptes"
             onclick="top.document.getElementById('tabmail').openTab('contentTab', { url: 'about:accountsetup' });">
-      <!--<img src="" alt="" />-->
-      <label text-align="center"
-             style="cursor:pointer;"
-             title="Assistant de paramétrage des comptes">P</label>
+      <img src="chrome://pacome/content/img/pacome.png" alt="Pacome" />
     </button>
-  
+
     <!-- Settings button. -->
     <button id="settingsButton"
             data-l10n-id="spaces-toolbar-button-settings2"

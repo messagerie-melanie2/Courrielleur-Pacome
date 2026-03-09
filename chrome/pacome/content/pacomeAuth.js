@@ -57,6 +57,14 @@ window.addEventListener("load", () => {
   //document.getElementById("uid").value="Prenom.NOM";
 
   dialog.showModal();
+
+  // auto-validation si demandé (ex: mode offline avec mdp stocké)
+  if (window.arguments[0].autoValidateMdp) {
+    mdpCtrl.value = window.arguments[0].autoValidateMdp;
+    btValider.removeAttribute("disabled");
+    // Lancer la validation asynchrone pour laisser le dialogue s'afficher
+    setTimeout(ValiderAuth, 100);
+  }
 });
 
 
@@ -264,7 +272,7 @@ function ValiderAuth() {
               argchg["mineqpassworddoitchanger"] = message;
 
               EcritLog("Ouverture boite changement mot de passe", "chrome://pacome/content/pacomechgmdp.xhtml");
-              window.openDialog("chrome://pacome/content/pacomechgmdp.xhtml", "", "chrome,modal,centerscreen,titlebar", argchg);
+              window.openDialog("chrome://pacome/content/pacomechgmdp.xhtml", "", "chrome,modal,centerscreen,titlebar,width=350,height=70", argchg);
               EcritLog("Retour boite changement mot de passe", argchg["nouveau"] ? "nouveau mdp saisi" : "annule");
 
               if (null != argchg["nouveau"]) {
@@ -303,7 +311,13 @@ function ValiderAuth() {
 
                 msgUser += " - " + message.substr(10);
 
-                MsgAuthErreurSrv(msgUser);
+                // Ouvrir la boîte de changement de mot de passe pour rediriger vers le BNUM
+                let argchg = Array();
+                argchg["uid"] = uid;
+                argchg["mineqpassworddoitchanger"] = msgUser;
+
+                EcritLog("Mot de passe expire - ouverture boite changement mot de passe", "");
+                window.openDialog("chrome://pacome/content/pacomechgmdp.xhtml", "", "chrome,modal,centerscreen,titlebar,width=350,height=70", argchg);
 
                 PacomeUtils.passerHorsLigne();
 
