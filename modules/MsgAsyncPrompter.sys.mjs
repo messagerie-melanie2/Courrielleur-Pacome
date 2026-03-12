@@ -362,9 +362,20 @@ export class MsgAuthPrompt {
       let loging2 = PacomeAuthUtils.findLogins(origin, null, null);
       Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword findLogins count:" + loging2.length);
 
-      if (loging2.length && !Services.io.offline) {
+      // Compteur de tentatives par origin pour détecter les boucles d'échec SMTP
+      // (SMTP n'a pas de flag PREVIOUS_FAILED contrairement à IMAP/promptAuth)
+      if (!PacomeAuthUtils._promptPasswordRetryCount) {
+        PacomeAuthUtils._promptPasswordRetryCount = {};
+      }
+      const retryCount = PacomeAuthUtils._promptPasswordRetryCount[origin] || 0;
+      Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword retryCount pour " + origin + ":" + retryCount);
+
+      if (loging2.length && !Services.io.offline && retryCount === 0) {
         Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword login trouvé, utilisation du mdp stocké");
         aPassword.value = loging2[0].password;
+
+        // Incrementer le compteur pour détecter l'échec au prochain appel
+        PacomeAuthUtils._promptPasswordRetryCount[origin] = retryCount + 1;
 
         // Ensure persistence with the correct Realm (added for promptPassword)
         try {
@@ -398,6 +409,12 @@ export class MsgAuthPrompt {
         PacomeAuthUtils.verifierMdpEnArrierePlan(loging2[0].username || username, aPassword.value);
 
         return true;
+      }
+
+      if (retryCount > 0) {
+        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword ECHEC détecté (retryCount=" + retryCount + ") → bypass mdp stocké, ouverture dialog Pacome");
+        // Remettre à zéro le compteur pour la prochaine saisie manuelle
+        PacomeAuthUtils._promptPasswordRetryCount[origin] = 0;
       }
 
       // demande mdp
