@@ -19,6 +19,21 @@ window.addEventListener("load", () => {
 
 function OuvrirEtFermer() {
     try {
+        // Effacer les cookies et données du BNUM pour forcer une ré-authentification
+        // Cela évite que Thunderbird réutilise une session BNUM précédente qui empêcherait
+        // la saisie d'un nouveau mot de passe.
+        try {
+            const bnumURI = Services.io.newURI(PACOME_URL_CHGMDP);
+            const bnumHost = bnumURI.host;
+
+            // Supprimer tous les cookies du domaine BNUM
+            Services.cookies.removeForExactHost(bnumHost, "");
+
+            // Supprimer également les cookies des sous-domaines éventuels
+            const bnumDomain = bnumHost.startsWith("www.") ? bnumHost.substring(4) : bnumHost;
+            Services.cookies.removeForExactHost(bnumDomain, "");
+        } catch (ex) { /* ne pas bloquer si nettoyage échoue */ }
+
         // Ouvrir l'URL dans un onglet Thunderbird
         const win = Services.wm.getMostRecentWindow("mail:3pane");
         if (win && win.openTrustedLinkIn) {
