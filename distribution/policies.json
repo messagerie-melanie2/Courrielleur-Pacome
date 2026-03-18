@@ -72,7 +72,7 @@
 			},
 			
 			"extensions.pacome.etiquettes.majauto":{
-        "Value": false,
+        "Value": true,
 				"Status": "default"
 			},
 			
