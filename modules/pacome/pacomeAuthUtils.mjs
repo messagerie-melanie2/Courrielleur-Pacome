@@ -972,6 +972,34 @@ export const PacomeAuthUtils = {
     httpRequest.send(param);
   },
 
+  // Interception de l'échec d'authentification SMTP pour les serveurs Mélanie2.
+  // Ouvre le dialogue Pacome au lieu d'afficher le message d'erreur générique.
+  // Retourne 0 (réessayer) si l'utilisateur a saisi un mot de passe,
+  //          1 (annuler) si l'utilisateur a annulé.
+  promptSmtpAuthFailed(smtpServer) {
+
+    this.logMsg("promptSmtpAuthFailed hostname:" + smtpServer.hostname
+      + " username:" + smtpServer.username);
+
+    const uid = this.GetUidReduit(smtpServer.username);
+    const mdp = {};
+    const checkBox = { value: false };
+
+    const res = this.PromptPacomeMdp(null, uid, mdp, checkBox);
+
+    this.logMsg("promptSmtpAuthFailed PromptPacomeMdp res:" + res
+      + " mdp:" + (mdp.value ? "(fourni)" : "(vide)"));
+
+    if (res && mdp.value) {
+      const saveToManager = !!checkBox.value;
+      this.logMsg("promptSmtpAuthFailed modifyMdpPacome saveToManager:" + saveToManager);
+      this.modifyMdpPacome(uid, mdp.value, saveToManager);
+      return 0; // retry
+    }
+
+    return 1; // cancel
+  },
+
   removeAllLogins: function () {
     this.logMsg("removeAllLogins");
 
