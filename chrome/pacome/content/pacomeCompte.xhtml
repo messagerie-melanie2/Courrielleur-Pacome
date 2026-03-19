@@ -64,17 +64,13 @@
 	<section class="main-container assistant-pages">
 		<aside id="setupView" class="assistant-contenu">
 			<form id="form" buttonpack="end">
-				<!-- Hidden submit field to enable the natural Enter keypress to
-          submit the form. We do this because we have the Continue and Done
-          button outside the form and we want to only handle the Enter to
-          submit on the primary fields inside the form. -->
-				<input type="submit" hidden="hidden" />
 				<label for="identifiant" data-l10n-id="pacome-compte-identifiant-libelle" data-l10n-attrs="accesskey">
 				</label>
 				<div class="input-control">
 					<input id="identifiant" type="text" autocomplete="off" class="input-field"
 						data-l10n-id="pacome-compte-identifiant" required="required" maxlength="64"
-						oninput="PacomeAssistant.onInputUid();" />
+						oninput="PacomeAssistant.onInputUid();"
+						onkeydown="if (event.key === 'Enter') { event.preventDefault(); if (!document.getElementById('btContinuer').disabled) document.getElementById('btContinuer').click(); }" />
 				</div>
 			</form>
 		</aside>
