@@ -29,6 +29,7 @@ export const PacomeAuthUtils = {
   _ExpProxyAmande: null,
   _lastSavedPassword: null,
   _authRetryCount: {},
+  _verificationEnCours: false,
 
   Init() {
     try {
@@ -592,10 +593,13 @@ export const PacomeAuthUtils = {
           addlogins(serveur);
       }
 
-      // Check Services.logins if origin is available
+      // Consulter le gestionnaire Pacome uniquement (realm unifié).
+      // On NE cherche PAS dans les logins natifs Thunderbird (standardLogins)
+      // ni dans d'anciens realms (realmsToCheck) : Thunderbird persiste
+      // server.password nativement, ce qui provoquerait des sauvegardes non
+      // souhaitées et des utilisations silencieuses de mdp périmés au démarrage.
       if (origin) {
         try {
-          // Chercher d'abord dans le realm unifié pacome-melanie2
           const pacomeUnifiedOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
           const pacomeUnifiedRealm = "pacome-melanie2";
           let unifiedPacomeLogins = Services.logins.findLogins(pacomeUnifiedOrigin, null, pacomeUnifiedRealm);
@@ -604,44 +608,6 @@ export const PacomeAuthUtils = {
               logins.push(login);
             }
           }
-
-          // 1. Standard search (Wildcard/Specific Realm passed in arg) - FALLBACK ancien système
-          let standardLogins = Services.logins.findLogins(origin, null, httpRealm);
-          for (let login of standardLogins) {
-            if (!logins.some(l => l.username == login.username && l.password == login.password)) {
-              logins.push(login);
-            }
-          }
-
-          let realmsToCheck = new Set();
-
-          const collectRealm = (serveur) => {
-            if (this.isMelanie2Host(serveur.hostName) || (serveur.hostname && this.isMelanie2Host(serveur.hostname))) {
-              let srvHost = serveur.hostName || serveur.hostname;
-              if (srvHost == parsedSrvName && serveur.username) {
-                let r = this.GetUidReduit(serveur.username);
-                if (r) realmsToCheck.add(r);
-              }
-            }
-          };
-
-          for (const s of MailServices.accounts.allServers) {
-            if (s.type == "imap" || s.type == "pop3") collectRealm(s);
-          }
-          for (let s of MailServices.outgoingServer.servers) {
-            if (s.type == "smtp") collectRealm(s.QueryInterface(Ci.nsISmtpServer));
-          }
-
-          for (let uRealm of realmsToCheck) {
-            let oldUnifiedLogins = Services.logins.findLogins(origin, null, uRealm);
-            for (let login of oldUnifiedLogins) {
-              // Avoid duplicates
-              if (!logins.some(l => l.username == login.username && l.password == login.password)) {
-                logins.push(login);
-              }
-            }
-          }
-
         } catch (ex) {
           this.logMsg("findLogins Services.logins error: " + ex);
         }
@@ -859,9 +825,20 @@ export const PacomeAuthUtils = {
     if (!uid || !mdp) return;
     if (Services.io.offline) return;
 
+    // Garde-fou : une seule vérification à la fois.
+    // promptAuth (IMAP) et promptPassword (SMTP) peuvent l'appeler simultanément
+    // au démarrage → sans ce garde, deux requêtes partiraient en parallèle et la
+    // boîte "mot de passe doit changer" apparaîtrait deux fois.
+    if (this._verificationEnCours) {
+      this.logMsg("verifierMdpEnArrierePlan déjà en cours → ignoré");
+      return;
+    }
+    this._verificationEnCours = true;
+
     const url = Services.prefs.getCharPref(PACOME_URL_VERIFMDP, "");
     if (url == "") {
       this.logMsg("verifierMdpEnArrierePlan url serveur non definie");
+      this._verificationEnCours = false;
       return;
     }
 
@@ -874,9 +851,22 @@ export const PacomeAuthUtils = {
     param += "&org=";
 
     const _this = this;
+    // Capturer le mdp au moment du lancement.
+    // Si l'utilisateur change son mdp pendant la requête (via le dialogue Pacome),
+    // la réponse sera périmée : on doit l'ignorer pour ne pas effacer le nouveau mdp.
+    const mdpAuLancement = mdp;
 
     httpRequest.onreadystatechange = function () {
       if (httpRequest.readyState != 4) return;
+
+      // Vérifier si le mdp a changé depuis le lancement (race condition :
+      // promptAuth pouvait encore avoir l'ancien mdp quand la verif a démarré,
+      // puis l'utilisateur a saisi un nouveau mdp via la boîte Pacome).
+      if (_this._lastSavedPassword && _this._lastSavedPassword.mdp !== mdpAuLancement) {
+        _this.logMsg("verifierMdpEnArrierePlan résultat périmé (mdp changé entre-temps) → ignoré");
+        _this._verificationEnCours = false;
+        return;
+      }
 
       let statut = 0;
       try {
@@ -893,6 +883,7 @@ export const PacomeAuthUtils = {
       if (statut != 200) {
         // Erreur réseau ou serveur -> ignorer silencieusement
         _this.logMsg("verifierMdpEnArrierePlan erreur serveur statut:" + statut);
+        _this._verificationEnCours = false;
         return;
       }
 
@@ -915,9 +906,13 @@ export const PacomeAuthUtils = {
 
       _this.logMsg("verifierMdpEnArrierePlan code:" + code + " message:" + message);
 
+      // Libérer le verrou dans tous les cas (le bloc finally est simulé par
+      // un reset systématique avant chaque return)
+
       // Cas mot de passe valide
       if (0 == code) {
         _this.logMsg("verifierMdpEnArrierePlan mot de passe valide");
+        _this._verificationEnCours = false;
         return;
       }
 
@@ -930,7 +925,11 @@ export const PacomeAuthUtils = {
           let argchg = Array();
           argchg["uid"] = uid;
           argchg["mineqpassworddoitchanger"] = message || "Merci de changer votre mot de passe au plus vite.";
+          // Libérer le verrou avant l'ouverture du dialogue (modal bloquant)
+          _this._verificationEnCours = false;
           aParent.openDialog("chrome://pacome/content/pacomechgmdp.xhtml", "", "chrome,modal,centerscreen,titlebar", argchg);
+        } else {
+          _this._verificationEnCours = false;
         }
         return;
       }
@@ -948,7 +947,11 @@ export const PacomeAuthUtils = {
             let argchg = Array();
             argchg["uid"] = uid;
             argchg["mineqpassworddoitchanger"] = msgUser;
+            // Libérer le verrou avant le dialogue
+            _this._verificationEnCours = false;
             aParent.openDialog("chrome://pacome/content/pacomechgmdp.xhtml", "", "chrome,modal,centerscreen,titlebar", argchg);
+          } else {
+            _this._verificationEnCours = false;
           }
 
           // Supprimer le mdp stocké et passer hors ligne
@@ -959,12 +962,14 @@ export const PacomeAuthUtils = {
 
         // Autre code 49 : mdp invalide -> supprimer le mdp stocké
         _this.logMsg("verifierMdpEnArrierePlan mot de passe invalide (code 49) - suppression mdp stocke");
+        _this._verificationEnCours = false;
         _this.removeAllLogins();
         return;
       }
 
       // Autres codes : ignorer
       _this.logMsg("verifierMdpEnArrierePlan code non gere:" + code);
+      _this._verificationEnCours = false;
     };
 
     httpRequest.open("POST", url, true, null, null);
@@ -1014,7 +1019,7 @@ export const PacomeAuthUtils = {
     }
 
     //serveurs sortants
-    for (const serveur of MailServices.outgoingServer.servers) {
+    for (let serveur of MailServices.outgoingServer.servers) {
 
       if (serveur.type != "smtp") continue;
 
@@ -1025,6 +1030,28 @@ export const PacomeAuthUtils = {
         this.logMsg("removeAllLogins reinitialisation mot de passe serveur sortant pour:" + serveur.username);
         serveur.password = null;
       }
+    }
+
+    // Vider le cache _lastSavedPassword pour éviter qu'il ne fournisse
+    // un mdp périmé à findLogins lors de la prochaine connexion
+    this._lastSavedPassword = null;
+
+    // Supprimer les entrées du gestionnaire de mots de passe Pacome unifié.
+    // CRITIQUE : sans ce nettoyage, au prochain démarrage findLogins retrouve
+    // l'ancien mdp invalide depuis le login manager, le retourne silencieusement
+    // à IMAP/SMTP, attend l'échec réseau (~10s), puis ouvre le dialogue.
+    // En supprimant les entrées ici, le prochain promptAuth/promptPassword ne trouve
+    // rien → ouvre le dialogue Pacome immédiatement.
+    try {
+      const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+      const pacomeRealm = "pacome-melanie2";
+      const logins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
+      for (const login of logins) {
+        this.logMsg("removeAllLogins suppression login manager: " + login.username);
+        Services.logins.removeLogin(login);
+      }
+    } catch (ex) {
+      this.logMsg("removeAllLogins erreur suppression login manager: " + ex);
     }
   },
 

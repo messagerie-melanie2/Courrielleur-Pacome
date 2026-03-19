@@ -362,60 +362,55 @@ export class MsgAuthPrompt {
       let loging2 = PacomeAuthUtils.findLogins(origin, null, null);
       Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword findLogins count:" + loging2.length);
 
-      // Compteur de tentatives par origin pour détecter les boucles d'échec SMTP
-      // (SMTP n'a pas de flag PREVIOUS_FAILED contrairement à IMAP/promptAuth)
-      if (!PacomeAuthUtils._promptPasswordRetryCount) {
-        PacomeAuthUtils._promptPasswordRetryCount = {};
+      // Vérifier si l'utilisateur a réellement sauvegardé son mdp SMTP
+      // (case "mémoriser" cochée → entrée dans le gestionnaire de mdp Pacome unifié).
+      //
+      // POURQUOI cette vérification ?
+      // findLogins() emprunte le mdp IMAP en mémoire même quand le mdp SMTP n'est
+      // pas sauvegardé. Sans cette vérification :
+      // - si l'utilisateur n'a PAS sauvegardé : on retournerait silencieusement le
+      //   mdp IMAP emprunté ← boucle infinie, le dialogue Pacome ne s'ouvre jamais
+      // - si l'utilisateur a sauvegardé un mdp expiré : même boucle infinie
+      //
+      // STRATÉGIE :
+      // - Pas de mdp sauvegardé → ouvrir le dialogue immédiatement
+      // - Mdp sauvegardé, 1er appel → utiliser silencieusement (retryCount = 1)
+      // - Mdp sauvegardé, retry (mdp refusé par le serveur) → ouvrir le dialogue
+      let hasManagerLogin = false;
+      try {
+        const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+        const pacomeRealm = "pacome-melanie2";
+        const uidReduit = PacomeAuthUtils.GetUidReduit(username);
+        const storedLogins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
+        hasManagerLogin = storedLogins.some(l => l.username == uidReduit);
+        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword hasManagerLogin:" + hasManagerLogin + " pour uidReduit:" + uidReduit);
+      } catch (ex) {
+        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword erreur vérif login manager:" + ex);
       }
-      const retryCount = PacomeAuthUtils._promptPasswordRetryCount[origin] || 0;
-      Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword retryCount pour " + origin + ":" + retryCount);
 
-      if (loging2.length && !Services.io.offline && retryCount === 0) {
-        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword login trouvé, utilisation du mdp stocké");
-        aPassword.value = loging2[0].password;
+      if (loging2.length && !Services.io.offline && hasManagerLogin) {
+        if (!PacomeAuthUtils._promptPasswordRetryCount) {
+          PacomeAuthUtils._promptPasswordRetryCount = {};
+        }
+        const retryCount = PacomeAuthUtils._promptPasswordRetryCount[origin] || 0;
+        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword retryCount:" + retryCount);
 
-        // Incrementer le compteur pour détecter l'échec au prochain appel
-        PacomeAuthUtils._promptPasswordRetryCount[origin] = retryCount + 1;
+        if (retryCount === 0) {
+          Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword mdp sauvegardé → utilisation silencieuse");
+          aPassword.value = loging2[0].password;
+          PacomeAuthUtils._promptPasswordRetryCount[origin] = 1;
 
-        // Ensure persistence with the correct Realm (added for promptPassword)
-        try {
-          let checkUsername = loging2[0].username || username;
-          // Use unified Pacome realm
-          const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
-          const pacomeRealm = "pacome-melanie2";
-          let uidReduit = PacomeAuthUtils.GetUidReduit(checkUsername);
+          // Vérification en arrière-plan du mot de passe stocké
+          PacomeAuthUtils.verifierMdpEnArrierePlan(loging2[0].username || username, aPassword.value);
 
-          let specificLogins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
-          let match = specificLogins.find(l => l.username == uidReduit);
-
-          if (!match && uidReduit) {
-            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword saving login for unified Pacome realm");
-            const newLogin = new LoginInfo(
-              pacomeOrigin,
-              null,
-              pacomeRealm,
-              uidReduit,
-              aPassword.value,
-              null,
-              null
-            );
-            Services.logins.addLoginAsync(newLogin);
-          }
-        } catch (ex) {
-          Services.console.logStringMessage("MsgAsyncPrompter.jsm promptPassword error saving realm login: " + ex);
+          return true;
         }
 
-        // Vérification en arrière-plan du mot de passe stocké
-        PacomeAuthUtils.verifierMdpEnArrierePlan(loging2[0].username || username, aPassword.value);
-
-        return true;
-      }
-
-      if (retryCount > 0) {
-        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword ECHEC détecté (retryCount=" + retryCount + ") → bypass mdp stocké, ouverture dialog Pacome");
-        // Remettre à zéro le compteur pour la prochaine saisie manuelle
+        // 2ème appel = Thunderbird signale un échec du mdp → ouvrir le dialogue
+        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword ECHEC mdp sauvegardé → ouverture dialogue Pacome");
         PacomeAuthUtils._promptPasswordRetryCount[origin] = 0;
       }
+
 
       // demande mdp
       Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword aucun login trouvé (ou offline) → ouverture dialog Pacome");
@@ -575,34 +570,25 @@ export class MsgAuthPrompt {
           authInfo.password = loging[0].password;
           checkValue.value = false;
 
-          // Ensure persistence with the correct Realm
+          // Vérification en arrière-plan du mot de passe stocké.
+          // On ne vérifie que si le login vient du realm Pacome unifié
+          // (case "mémoriser" cochée). Si le login vient uniquement du Filelink
+          // realm ou de la mémoire en session, on ne vérifie pas pour éviter
+          // des messages serveur intempestifs.
           try {
-            let uidReduit = PacomeAuthUtils.GetUidReduit(authInfo.username);
-            // Use unified Pacome realm
             const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
             const pacomeRealm = "pacome-melanie2";
-
-            let specificLogins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
-            let match = specificLogins.find(l => l.username == uidReduit);
-            if (!match && uidReduit) {
-              Services.console.logStringMessage("MsgAsyncPrompter.jsm promptAuth saving login for unified Pacome realm");
-              const newLogin = new LoginInfo(
-                pacomeOrigin,
-                null,
-                pacomeRealm,
-                uidReduit,
-                authInfo.password,
-                null,
-                null
-              );
-              Services.logins.addLoginAsync(newLogin);
+            const uidReduit = PacomeAuthUtils.GetUidReduit(authInfo.username);
+            const specificLogins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
+            const hasManagerLogin = specificLogins.some(l => l.username == uidReduit);
+            if (hasManagerLogin) {
+              PacomeAuthUtils.verifierMdpEnArrierePlan(authInfo.username, authInfo.password);
+            } else {
+              Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth login non issu du realm Pacome unifié → pas de vérif arrière-plan");
             }
           } catch (ex) {
-            Services.console.logStringMessage("MsgAsyncPrompter.jsm promptAuth error saving realm login: " + ex);
+            Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptAuth erreur vérif realm: " + ex);
           }
-
-          // Vérification en arrière-plan du mot de passe stocké
-          PacomeAuthUtils.verifierMdpEnArrierePlan(authInfo.username, authInfo.password);
 
           return true;
         } else {
