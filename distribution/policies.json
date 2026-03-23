@@ -94,7 +94,7 @@
         "pacome": {
         
 					"regServeursMel2": "^amelie-([\\d]{1,2}\\.ac|ida01(\\.ida)?)\\.melanie2\\.i2$|^(amelie|smtp)\\.s2\\.m2\\.e2\\.rie\\.gouv\\.fr$",
-					"regServeursAppM2": "^(pacome|pacome\\.ida|melanie2web|agenor|edroh|davy\\.ida|davy|yvad|syncon|nocnys)(\\.melanie2\\.i2|defi\\.application\\.i2|\\.s2\\.m2\\.e2\\.rie\\.gouv\\.fr)$",
+					"regServeursAppM2": "^(.+\\.m2\\.e2\\.rie\\.gouv\\.fr|bnum\\.din\\.gouv\\.fr)$",
 					"ExpProxyAmande": "(.e2.rie.gouv.fr|.i2)$"
         }
       }
