@@ -73,7 +73,12 @@ export const PacomeTagsSync = {
       const confid = serveur.getStringValue("pacome.confid") ?? "";
       if (("imap" === serveur.type || "pop3" === serveur.type) &&
         "" !== confid) {
-        const uid = PacomeAuthUtils.GetUidReduit(serveur.username);
+        // Pour les BALP (username contenant ".-.", ex. "uid1.-.balp_nom"), conserver l'UID
+        // complet afin que le serveur les reconnaisse comme BALP (il cherche ".-." dans l'uid).
+        // Pour les BALI, réduire l'UID normalement.
+        const uid = serveur.username.includes(".-.")
+          ? serveur.username
+          : PacomeAuthUtils.GetUidReduit(serveur.username);
         boites.push(uid);
       }
     }
