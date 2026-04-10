@@ -4,6 +4,10 @@
 	"AppAutoUpdate": false,
 	"DisableAppUpdate": true,
 	"ExtensionSettings": {
+	  "signala@developpement-durable.fr": {
+		"installation_mode": "force_installed",
+		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/signala@developpement-durable.fr.xpi"
+	  },
 	  "archibald@developpement-durable.fr": {
 		"installation_mode": "force_installed",
 		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/archibald@developpement-durable.fr.xpi"
