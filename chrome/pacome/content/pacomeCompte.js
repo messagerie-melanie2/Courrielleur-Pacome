@@ -576,6 +576,11 @@ const PacomeAssistant = {
 			this.AfficheMsgExit("Erreur", PacomeUtils._msgErreur);
 			return;
 		}
+		// si aucun agenda disponible, afficher un message informatif
+		if (0==nb){
+			this.pacomeTexte2.textContent=PacomeUtils.MessageFromId("PacomeErreurListeCals");
+			this.pacomeTexte3.textContent="";
+		}
 	},
 
 
@@ -591,8 +596,8 @@ const PacomeAssistant = {
 
 			const agendas=this._docPacome.GetAgendasUI();
 			if (null==agendas || 0==agendas.length){
-				PacomeUtils.SetErreurEx(-1, PacomeUtils.MessageFromId("PacomeErreurListeCals"));
-				return -1;
+				// pas une erreur : aucun agenda à afficher
+				return 0;
 			}
 			const nb=agendas.length;
 			for (let i=0;i<nb;i++){
