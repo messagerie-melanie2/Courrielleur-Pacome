@@ -95,6 +95,15 @@
     href="chrome://messenger/skin/openpgp/inlineNotification.css"
   />
   <link rel="stylesheet" href="chrome://messenger/skin/spacesToolbar.css" />
+  <style>
+    #assistantPacome img {
+      transform: scale(1.1);
+    }
+    :root[theme="dark"] #assistantPacome img,
+    :root[style*="color-scheme: dark"] #assistantPacome img {
+      content: url("chrome://pacome/content/img/restartparam_dark.svg") !important;
+    }
+  </style>
   <link
     rel="stylesheet"
     href="chrome://messenger/skin/shared/unifiedToolbar.css"
@@ -3798,7 +3807,7 @@
             tabindex="-1"
             title="Assistant de paramétrage des comptes"
             onclick="top.document.getElementById('tabmail').openTab('contentTab', { url: 'about:accountsetup' });">
-      <img src="chrome://pacome/content/img/pacome.png" alt="Pacome" />
+      <img src="chrome://pacome/content/img/restartparam_light.svg" alt="Pacome" />
     </button>
 
     <!-- Settings button. -->
