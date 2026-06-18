@@ -46,7 +46,6 @@ export const PacomeAuthUtils = {
     // Thunderbird émet ces notifications quand l'auth IMAP échoue sans rappeler promptPassword
     if (!this._imapAuthObserver) {
       this._imapAuthObserver = {
-        _utils: this,
         observe(subject, topic, data) {
           Services.console.logStringMessage("[Pacome] Init observer topic:" + topic + " data:" + data);
           try {
@@ -55,23 +54,23 @@ export const PacomeAuthUtils = {
             const host = server.hostName;
             Services.console.logStringMessage("[Pacome] Init observer IMAP auth failure host:" + host + " user:" + server.username);
 
-            if (this._utils.TestServeurMelanie2(host) == NON_MELANIE2) return;
+            if (PacomeAuthUtils.TestServeurMelanie2(host) == NON_MELANIE2) return;
 
             // Réinitialiser le mot de passe en mémoire pour forcer un nouveau prompt
             server.password = null;
 
             // Afficher le dialog Pacome
-            const uid = this._utils.GetUidReduit(server.username);
+            const uid = PacomeAuthUtils.GetUidReduit(server.username);
             Services.console.logStringMessage("[Pacome] Init observer → ouverture dialog Pacome pour uid:" + uid);
             const mdp = {};
             const checkBox = {};
-            const res = this._utils.PromptPacomeMdp(null, uid, mdp, checkBox);
+            const res = PacomeAuthUtils.PromptPacomeMdp(null, uid, mdp, checkBox);
             Services.console.logStringMessage("[Pacome] Init observer PromptPacomeMdp résultat:" + res
               + " checkBox.value=" + checkBox.value + " (type:" + typeof checkBox.value + ")");
             if (res == 1 && mdp.value) {
               const saveToManager = !!checkBox.value;
               Services.console.logStringMessage("[Pacome] Init observer modifyMdpPacome saveToManager:" + saveToManager);
-              this._utils.modifyMdpPacome(uid, mdp.value, saveToManager);
+              PacomeAuthUtils.modifyMdpPacome(uid, mdp.value, saveToManager);
             }
           } catch (e) {
             Services.console.logStringMessage("[Pacome] Init observer erreur:" + e);
@@ -93,8 +92,27 @@ export const PacomeAuthUtils = {
       // Listener de dossier via nsIMsgMailSession pour catcher les erreurs IMAP
       try {
         const folderListener = {
-          _utils: this,
-          onFolderAdded() { },
+          onFolderAdded(folder) {
+            try {
+              const Cc = globalThis.Cc || Components.classes;
+              const Ci = globalThis.Ci || Components.interfaces;
+              // On ne traite pas le dossier racine car il ne supporte pas d'abonnement (subscribed = true lèverait NS_ERROR_XPC_CANT_MODIFY_PROP_ON_WN)
+              if (folder && folder.parent && folder.server && folder.server.type == "imap" && PacomeAuthUtils.TestServeurMelanie2(folder.server.hostName) != NON_MELANIE2) {
+                Services.console.logStringMessage("[Pacome] folderListener.onFolderAdded: " + folder.URI);
+                if (!folder.subscribed) {
+                  Services.console.logStringMessage("[Pacome] folderListener.onFolderAdded: forçage de l'abonnement pour " + folder.URI);
+                  folder.subscribed = true;
+                  const specialNames = ["sent", "drafts", "trash", "templates", "archives", "junk", "corbeille", "brouillons", "envoyés", "envoyes"];
+                  if (specialNames.includes(folder.name.toLowerCase())) {
+                    Services.console.logStringMessage("[Pacome] folderListener.onFolderAdded : appel setSpecialFolders suite à l'ajout de " + folder.name);
+                    MailServices.accounts.setSpecialFolders();
+                  }
+                }
+              }
+            } catch (ex) {
+              Services.console.logStringMessage("[Pacome] folderListener.onFolderAdded erreur: " + ex);
+            }
+          },
           onMessageAdded() { },
           onFolderRemoved() { },
           onMessageRemoved() { },
@@ -108,6 +126,63 @@ export const PacomeAuthUtils = {
             Services.console.logStringMessage("[Pacome] folderListener.onFolderEvent event:" + event
               + " folder:" + (folder ? folder.URI : "null"));
 
+            if (event == "FolderLoaded" && folder && folder.URI.toLowerCase().endsWith("/inbox")) {
+              try {
+                const Cc = globalThis.Cc || Components.classes;
+                const Ci = globalThis.Ci || Components.interfaces;
+                const server = folder.server;
+                if (server && server.type == "imap" && PacomeAuthUtils.TestServeurMelanie2(server.hostName) != NON_MELANIE2) {
+                  const imapSrv = server.QueryInterface(Ci.nsIImapIncomingServer);
+                  if (!imapSrv.hasDiscoveredFolders) {
+                    Services.console.logStringMessage("[Pacome] folderListener : FolderLoaded INBOX détecté sans découverte → planification de la découverte");
+                    
+                    if (PacomeAuthUtils._discoveryTimer) {
+                      PacomeAuthUtils._discoveryTimer.cancel();
+                    }
+                    PacomeAuthUtils._discoveryTimer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+                    PacomeAuthUtils._discoveryTimer.initWithCallback({
+                      notify: (timer) => {
+                        try {
+                          Services.console.logStringMessage("[Pacome] folderListener : début de la découverte distante...");
+
+                          const rootFolder = imapSrv.rootMsgFolder;
+                          const mainWin = Services.wm.getMostRecentWindow("mail:3pane");
+                          const msgWin = mainWin ? mainWin.msgWindow : null;
+
+                          // Création d'un listener pour finaliser la découverte à la fin des requêtes IMAP
+                          const urlListener = {
+                            OnStartRunningUrl(url) {},
+                            OnStopRunningUrl(url, status) {
+                              Services.console.logStringMessage("[Pacome] folderListener : découverte terminée avec statut : " + status);
+                              try {
+                                imapSrv.hasDiscoveredFolders = true;
+                                imapSrv.discoveryDone();
+                                MailServices.accounts.setSpecialFolders();
+                                Services.console.logStringMessage("[Pacome] folderListener : discoveryDone exécuté après découverte");
+                              } catch (e) {
+                                Services.console.logStringMessage("[Pacome] folderListener : erreur lors de discoveryDone : " + e);
+                              }
+                            },
+                            QueryInterface: ChromeUtils.generateQI(["nsIUrlListener"])
+                          };
+
+                          // Déclenchement de la découverte via les commandes distantes LSUB/LIST
+                          MailServices.imap.discoverAllAndSubscribedFolders(rootFolder, urlListener, msgWin);
+
+                        } catch (ex) {
+                          Services.console.logStringMessage("[Pacome] folderListener : erreur lors du déclenchement de la découverte : " + ex);
+                        } finally {
+                          PacomeAuthUtils._discoveryTimer = null;
+                        }
+                      }
+                    }, 1500, Ci.nsITimer.TYPE_ONE_SHOT);
+                  }
+                }
+              } catch (e) {
+                Services.console.logStringMessage("[Pacome] folderListener exception lors du traitement FolderLoaded: " + e);
+              }
+            }
+
             // Événements connus pour l'échec d'auth IMAP dans Thunderbird
             const authFailEvents = ["ImapLoginFailed", "LoginFailed", "autologin-failed"];
             if (!authFailEvents.includes(event)) return;
@@ -118,22 +193,22 @@ export const PacomeAuthUtils = {
               const host = server.hostName;
               Services.console.logStringMessage("[Pacome] folderListener auth failure détecté host:" + host);
 
-              if (this._utils.TestServeurMelanie2(host) == NON_MELANIE2) return;
+              if (PacomeAuthUtils.TestServeurMelanie2(host) == NON_MELANIE2) return;
 
               // Réinitialiser le mot de passe en mémoire
               server.password = null;
 
-              const uid = this._utils.GetUidReduit(server.username);
+              const uid = PacomeAuthUtils.GetUidReduit(server.username);
               Services.console.logStringMessage("[Pacome] folderListener → ouverture dialog Pacome pour uid:" + uid);
               const mdp = {};
               const checkBox = {};
-              const res = this._utils.PromptPacomeMdp(null, uid, mdp, checkBox);
+              const res = PacomeAuthUtils.PromptPacomeMdp(null, uid, mdp, checkBox);
               Services.console.logStringMessage("[Pacome] folderListener PromptPacomeMdp résultat:" + res
                 + " checkBox.value=" + checkBox.value + " (type:" + typeof checkBox.value + ")");
               if (res == 1 && mdp.value) {
                 const saveToManager = !!checkBox.value;
                 Services.console.logStringMessage("[Pacome] folderListener modifyMdpPacome saveToManager:" + saveToManager);
-                this._utils.modifyMdpPacome(uid, mdp.value, saveToManager);
+                PacomeAuthUtils.modifyMdpPacome(uid, mdp.value, saveToManager);
               }
             } catch (e) {
               Services.console.logStringMessage("[Pacome] folderListener erreur:" + e);
