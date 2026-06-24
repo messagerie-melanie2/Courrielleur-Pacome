@@ -99,9 +99,14 @@
     #assistantPacome img {
       transform: scale(1.1);
     }
+    @media (prefers-color-scheme: dark) {
+      #assistantPacome img {
+        content: url("chrome://pacome/content/img/restartparam_light.svg") !important;
+      }
+    }
     :root[theme="dark"] #assistantPacome img,
     :root[style*="color-scheme: dark"] #assistantPacome img {
-      content: url("chrome://pacome/content/img/restartparam_dark.svg") !important;
+      content: url("chrome://pacome/content/img/restartparam_light.svg") !important;
     }
   </style>
   <link
@@ -3807,7 +3812,7 @@
             tabindex="-1"
             title="Assistant de paramétrage des comptes"
             onclick="top.document.getElementById('tabmail').openTab('contentTab', { url: 'about:accountsetup' });">
-      <img src="chrome://pacome/content/img/restartparam_light.svg" alt="Pacome" />
+      <img src="chrome://pacome/content/img/restartparam_dark.svg" alt="Pacome" />
     </button>
 
     <!-- Settings button. -->
