@@ -388,27 +388,18 @@ export class MsgAuthPrompt {
         Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword erreur vérif login manager:" + ex);
       }
 
+      // Si un login est enregistré dans le gestionnaire Pacome, l'utiliser
+      // directement pour tous les comptes (BALI et BALP).
+      // Note : pas de mécanisme de retry ici, car la vérification en arrière-plan
+      // (verifierMdpEnArrierePlan) détecte et supprime les mdp expirés/invalides.
       if (loging2.length && !Services.io.offline && hasManagerLogin) {
-        if (!PacomeAuthUtils._promptPasswordRetryCount) {
-          PacomeAuthUtils._promptPasswordRetryCount = {};
-        }
-        const retryCount = PacomeAuthUtils._promptPasswordRetryCount[origin] || 0;
-        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword retryCount:" + retryCount);
+        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword mdp sauvegardé → utilisation silencieuse pour: " + username);
+        aPassword.value = loging2[0].password;
 
-        if (retryCount === 0) {
-          Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword mdp sauvegardé → utilisation silencieuse");
-          aPassword.value = loging2[0].password;
-          PacomeAuthUtils._promptPasswordRetryCount[origin] = 1;
+        // Vérification en arrière-plan du mot de passe stocké
+        PacomeAuthUtils.verifierMdpEnArrierePlan(PacomeAuthUtils.GetUidReduit(loging2[0].username || username), aPassword.value);
 
-          // Vérification en arrière-plan du mot de passe stocké
-          PacomeAuthUtils.verifierMdpEnArrierePlan(loging2[0].username || username, aPassword.value);
-
-          return true;
-        }
-
-        // 2ème appel = Thunderbird signale un échec du mdp → ouvrir le dialogue
-        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword ECHEC mdp sauvegardé → ouverture dialogue Pacome");
-        PacomeAuthUtils._promptPasswordRetryCount[origin] = 0;
+        return true;
       }
 
 
