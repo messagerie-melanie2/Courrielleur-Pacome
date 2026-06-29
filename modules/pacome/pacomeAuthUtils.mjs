@@ -8,6 +8,35 @@ const { cal } = ChromeUtils.importESModule("resource:///modules/calendar/calUtil
 
 const { PacomeUtils, PACOME_SEP_UID, PACOME_URL_VERIFMDP } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeUtils.mjs");
 
+// Monkey-patch de ImapIncomingServer pour convertir trash_folder_name en MUTF-7 lors de la lecture interne par Thunderbird
+try {
+  const { ImapIncomingServer } = ChromeUtils.import("resource:///modules/ImapIncomingServer.jsm");
+  if (ImapIncomingServer && ImapIncomingServer.prototype) {
+    Object.defineProperty(ImapIncomingServer.prototype, "trashFolderName", {
+      get() {
+        let name = this.getUnicharValue("trash_folder_name") || "Trash";
+        if (name && name !== "Trash" && /[^\x00-\x7F]/.test(name)) {
+          try {
+            const Cc = globalThis.Cc || Components.classes;
+            const Ci = globalThis.Ci || Components.interfaces;
+            const charsetManager = Cc["@mozilla.org/charset-converter-manager;1"]
+              .getService(Ci.nsICharsetConverterManager);
+            name = charsetManager.unicodeToMutf7(name);
+          } catch (e) {
+            // En cas d'erreur de conversion, conserver la valeur originale
+          }
+        }
+        return name;
+      },
+      configurable: true,
+      enumerable: true
+    });
+    Services.console.logStringMessage("[Pacome] Monkey-patch de ImapIncomingServer.prototype.trashFolderName appliqué avec succès.");
+  }
+} catch (exPatch) {
+  Services.console.logStringMessage("[Pacome] Erreur lors de l'application du monkey-patch sur ImapIncomingServer : " + exPatch);
+}
+
 
 //pas un serveur melanie2
 export const NON_MELANIE2 = 0;
@@ -103,8 +132,16 @@ export const PacomeAuthUtils = {
                 // Rétablir la corbeille si le dossier ajouté correspond à la corbeille paramétrée
 				// (Nécessaire pour empêcher Thunderbird140+ de retomber dans la pref par défaut Trash)
                 const trashFolderUri = folder.server.getStringValue("trash_folder");
-                if (trashFolderUri && folder.URI.toLowerCase() == trashFolderUri.toLowerCase()) {
-                  PacomeAuthUtils.retablitCorbeille(folder.server);
+                if (trashFolderUri) {
+                  let match = false;
+                  try {
+                    match = (decodeURIComponent(folder.URI).toLowerCase() == decodeURIComponent(trashFolderUri).toLowerCase());
+                  } catch (e) {
+                    match = (folder.URI.toLowerCase() == trashFolderUri.toLowerCase());
+                  }
+                  if (match) {
+                    PacomeAuthUtils.retablitCorbeille(folder.server);
+                  }
                 }
 
                 if (!folder.subscribed) {
@@ -1158,15 +1195,26 @@ export const PacomeAuthUtils = {
       const match = trashFolderUri.match(/^imap:\/\/[^\/]+\/(.+)$/);
       if (!match) return;
 
-      const expectedTrashName = match[1];
+      const expectedTrashNameMutf7 = match[1];
+
+      // Conversion de MUTF-7 en Unicode/UTF-8 pour la préférence trash_folder_name
+      let expectedTrashNameUtf8 = expectedTrashNameMutf7;
+      try {
+        const charsetManager = Cc["@mozilla.org/charset-converter-manager;1"]
+          .getService(Ci.nsICharsetConverterManager);
+        expectedTrashNameUtf8 = charsetManager.mutf7ToUnicode(expectedTrashNameMutf7);
+      } catch (exConvert) {
+        Services.console.logStringMessage("[Pacome] Erreur conversion mutf7ToUnicode: " + exConvert);
+      }
+
       const currentTrashName = server.getStringValue("trash_folder_name");
 
-      if (currentTrashName != expectedTrashName) {
-        Services.console.logStringMessage("[Pacome] Rétablissement de trash_folder_name pour " + server.key + " : " + expectedTrashName + " (était: " + currentTrashName + ")");
+      if (currentTrashName != expectedTrashNameUtf8) {
+        Services.console.logStringMessage("[Pacome] Rétablissement de trash_folder_name (UTF-8) pour " + server.key + " : " + expectedTrashNameUtf8 + " (était: " + currentTrashName + ")");
 
-        // 1. Mettre à jour la préférence
+        // 1. Mettre à jour la préférence (en UTF-8)
         const prefName = "mail.server." + server.key + ".trash_folder_name";
-        Services.prefs.setStringPref(prefName, expectedTrashName);
+        Services.prefs.setStringPref(prefName, expectedTrashNameUtf8);
 
         // 2. Trouver le dossier physique et lui assigner le drapeau Trash
         try {
