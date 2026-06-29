@@ -99,6 +99,14 @@ export const PacomeAuthUtils = {
               // On ne traite pas le dossier racine car il ne supporte pas d'abonnement (subscribed = true lèverait NS_ERROR_XPC_CANT_MODIFY_PROP_ON_WN)
               if (folder && folder.parent && folder.server && folder.server.type == "imap" && PacomeAuthUtils.TestServeurMelanie2(folder.server.hostName) != NON_MELANIE2) {
                 Services.console.logStringMessage("[Pacome] folderListener.onFolderAdded: " + folder.URI);
+                
+                // Rétablir la corbeille si le dossier ajouté correspond à la corbeille paramétrée
+				// (Nécessaire pour empêcher Thunderbird140+ de retomber dans la pref par défaut Trash)
+                const trashFolderUri = folder.server.getStringValue("trash_folder");
+                if (trashFolderUri && folder.URI.toLowerCase() == trashFolderUri.toLowerCase()) {
+                  PacomeAuthUtils.retablitCorbeille(folder.server);
+                }
+
                 if (!folder.subscribed) {
                   Services.console.logStringMessage("[Pacome] folderListener.onFolderAdded: forçage de l'abonnement pour " + folder.URI);
                   folder.subscribed = true;
@@ -133,6 +141,10 @@ export const PacomeAuthUtils = {
                 const server = folder.server;
                 if (server && server.type == "imap" && PacomeAuthUtils.TestServeurMelanie2(server.hostName) != NON_MELANIE2) {
                   const imapSrv = server.QueryInterface(Ci.nsIImapIncomingServer);
+                  
+                  // Tenter de rétablir la corbeille dès la connexion
+                  PacomeAuthUtils.retablitCorbeille(server);
+
                   if (!imapSrv.hasDiscoveredFolders) {
                     Services.console.logStringMessage("[Pacome] folderListener : FolderLoaded INBOX détecté sans découverte → planification de la découverte");
                     
@@ -157,6 +169,10 @@ export const PacomeAuthUtils = {
                               try {
                                 imapSrv.hasDiscoveredFolders = true;
                                 imapSrv.discoveryDone();
+                                
+                                // Rétablir la corbeille après la découverte complète des dossiers distants
+                                PacomeAuthUtils.retablitCorbeille(server);
+                                
                                 MailServices.accounts.setSpecialFolders();
                                 Services.console.logStringMessage("[Pacome] folderListener : discoveryDone exécuté après découverte");
                               } catch (e) {
@@ -1127,6 +1143,48 @@ export const PacomeAuthUtils = {
       }
     } catch (ex) {
       this.logMsg("removeAllLogins erreur suppression login manager: " + ex);
+    }
+  },
+
+  retablitCorbeille(server) {
+    try {
+      const Cc = globalThis.Cc || Components.classes;
+      const Ci = globalThis.Ci || Components.interfaces;
+
+      const trashFolderUri = server.getStringValue("trash_folder");
+      this.logMsg("retablitCorbeille server=" + server.key + " trash_folder=" + trashFolderUri);
+      if (!trashFolderUri) return;
+
+      const match = trashFolderUri.match(/^imap:\/\/[^\/]+\/(.+)$/);
+      if (!match) return;
+
+      const expectedTrashName = match[1];
+      const currentTrashName = server.getStringValue("trash_folder_name");
+
+      if (currentTrashName != expectedTrashName) {
+        Services.console.logStringMessage("[Pacome] Rétablissement de trash_folder_name pour " + server.key + " : " + expectedTrashName + " (était: " + currentTrashName + ")");
+
+        // 1. Mettre à jour la préférence
+        const prefName = "mail.server." + server.key + ".trash_folder_name";
+        Services.prefs.setStringPref(prefName, expectedTrashName);
+
+        // 2. Trouver le dossier physique et lui assigner le drapeau Trash
+        try {
+          const trashFolder = server.rootMsgFolder.getChildWithURI(trashFolderUri, true, false);
+          if (trashFolder) {
+            trashFolder.setFlag(Ci.nsMsgFolderFlags.Trash);
+            Services.console.logStringMessage("[Pacome] Drapeau Corbeille assigné à : " + trashFolder.URI);
+          }
+        } catch (e) {
+          Services.console.logStringMessage("[Pacome] Impossible d'assigner le drapeau Corbeille sur le dossier physique: " + e);
+        }
+
+        // 3. Notifier l'account manager pour mettre à jour l'affichage
+        MailServices.accounts.setSpecialFolders();
+        Services.prefs.savePrefFile(null);
+      }
+    } catch (ex) {
+      Services.console.logStringMessage("[Pacome] Erreur lors du rétablissement de la corbeille : " + ex);
     }
   },
 
