@@ -622,7 +622,9 @@ export class MsgAuthPrompt {
       if (res) {
         PacomeAuthUtils.modifyMdpPacome(uid, mdp.value, checkValue.value, authInfo.realm);
 
-        delete PacomeAuthUtils._authRetryCount[host];
+        if (PacomeAuthUtils._authRetryCount && channel && channel.URI && channel.URI.host) {
+          delete PacomeAuthUtils._authRetryCount[channel.URI.host];
+        }
 
         authInfo.username = uid;
         authInfo.password = mdp.value;

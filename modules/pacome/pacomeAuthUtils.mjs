@@ -275,6 +275,35 @@ export const PacomeAuthUtils = {
         Services.console.logStringMessage("[Pacome] Init folderListener erreur:" + e);
       }
     }
+
+    // Si le carnet CardDAV n'a pas encore été configuré et qu'un mot de passe sauvegardé existe déjà dans le profil
+    try {
+      const isCardDavConfigured = Services.prefs.getBoolPref("extensions.pacome.carddav.configured", false);
+      if (!isCardDavConfigured) {
+        const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+        const pacomeRealm = "pacome-melanie2";
+        let hasSavedLogin = false;
+        try {
+          const logins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
+          if (logins && logins.length > 0) {
+            hasSavedLogin = true;
+          }
+        } catch (exLogins) { }
+
+        if (hasSavedLogin) {
+          const uidCarnet = this.GetUidComptePrincipal();
+          if (uidCarnet) {
+            Services.console.logStringMessage("[Pacome] Init → Mot de passe sauvegardé présent, création carnet CardDAV pour: " + uidCarnet);
+            const { PacomeParam } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeParam.mjs");
+            if (PacomeParam) {
+              PacomeParam.ParamCarnetAdressesCardDAV(uidCarnet);
+            }
+          }
+        }
+      }
+    } catch (exInitCardDav) {
+      Services.console.logStringMessage("[Pacome] Init CardDAV check exception: " + exInitCardDav);
+    }
   },
 
   // test si origin est du type melanie2
@@ -875,14 +904,47 @@ export const PacomeAuthUtils = {
       const filelinkRealm = "filelink-nextcloud-melanie2";
       requestSave(filelinkOrigin, filelinkRealm, uid, mdp);
     }
+
+    // CARDDAV / CALDAV: Save credentials to davy origin so CardDAVDirectory can authenticate
+    if (mdp) {
+      this.logMsg("modifyMdpPacome saving to davy origin for: " + uidReduit);
+      const davyOrigin = "https://davy.s2.m2.e2.rie.gouv.fr";
+      requestSave(davyOrigin, null, uidReduit, mdp);
+    }
+
+    // Configuration automatique du carnet d'adresses CardDAV Mélanie2
+    // Déclenché après la première saisie d'un mot de passe
+    if (mdp) {
+      try {
+        const { PacomeParam } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeParam.mjs");
+        if (PacomeParam) {
+          Services.console.logStringMessage("[Pacome] modifyMdpPacome → Vérification carnet CardDAV pour uid: " + uidReduit);
+          PacomeParam.ParamCarnetAdressesCardDAV(uidReduit);
+        } else {
+          Services.console.logStringMessage("[Pacome] modifyMdpPacome → PacomeParam non disponible, carnet CardDAV ignoré");
+        }
+      } catch (exCarnet) {
+        Services.console.logStringMessage("[Pacome] modifyMdpPacome → ParamCarnetAdressesCardDAV exception: " + exCarnet);
+      }
+    }
   },
 
   // Helper to asynchronously save login
-  saveLoginAsync: function (origin, realm, username, mdp) {
-    this.logMsg("saveLoginAsync origin:" + origin + " username:" + username);
+  saveLoginAsync: async function (origin, realm, username, mdp) {
+    this.logMsg("saveLoginAsync origin:" + origin + " username:" + username + " realm:" + realm);
     try {
-      // findLogins is typically synchronous
-      let logins = Services.logins.findLogins(origin, null, realm);
+      let logins = [];
+      try {
+        let rawLogins = Services.logins.findLogins(origin, null, realm || null);
+        if (rawLogins) {
+          logins = Array.from(rawLogins);
+        }
+      } catch (eFind) {
+        try {
+          let rawAll = Services.logins.getAllLogins();
+          logins = Array.from(rawAll).filter(l => l.hostname === origin);
+        } catch (eAll) { }
+      }
 
       let found = false;
       for (let login of logins) {
@@ -892,18 +954,8 @@ export const PacomeAuthUtils = {
             this.logMsg("saveLoginAsync updating existing login");
             let newLogin = login.clone();
             newLogin.password = mdp;
-            // Trying modifyLoginAsync, capturing error if it doesn't exist
             if (Services.logins.modifyLoginAsync) {
-              Services.logins.modifyLoginAsync(login, newLogin).then(() => {
-              }).catch(e => {
-                this.logMsg("saveLoginAsync modifyLoginAsync error: " + e);
-                console.error("PacomeAuthUtils saveLoginAsync modifyLoginAsync error:", e);
-              });
-            } else {
-              // Fallback attempt: remove then add (if modifyLogin is missing)
-              this.logMsg("saveLoginAsync modifyLoginAsync missing, using remove+addAsync");
-              Services.logins.removeLogin(login);
-              Services.logins.addLoginAsync(newLogin);
+              await Services.logins.modifyLoginAsync(login, newLogin);
             }
           } else {
             this.logMsg("saveLoginAsync login already exists and matches");
@@ -915,27 +967,20 @@ export const PacomeAuthUtils = {
       if (!found) {
         this.logMsg("saveLoginAsync creating new login");
         let newLogin = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
-        // Fix: realm must be non-null (empty string for wildcard/none)
         newLogin.init(origin, null, realm || "", username, mdp, null, null);
-        Services.logins.addLoginAsync(newLogin).then(() => {
-        }).catch(e => {
-          // Robustness: Ignore "This login already exists" error, as it implies race condition success or pre-existence
-          if (e.message && e.message.includes("This login already exists")) {
-            this.logMsg("saveLoginAsync addLoginAsync race condition ignored: " + e);
-            return;
-          } else if (e.result == Cr.NS_ERROR_FAILURE) {
-            // Sometimes error message is not propagated, but result code is failure.
-            // We assume duplicate/race here too if it failed to add.
-            this.logMsg("saveLoginAsync addLoginAsync failed (possibly exists): " + e);
-            return;
+        try {
+          await Services.logins.addLoginAsync(newLogin);
+          Services.console.logStringMessage("[Pacome] saveLoginAsync succès pour origin: " + origin);
+        } catch (exAdd) {
+          if (!exAdd || !exAdd.message || !exAdd.message.includes("already exists")) {
+            throw exAdd;
           }
-          this.logMsg("saveLoginAsync addLoginAsync error: " + e);
-          console.error("PacomeAuthUtils saveLoginAsync addLoginAsync error:", e);
-        });
+        }
       }
     } catch (e) {
-      this.logMsg("saveLoginAsync error: " + e);
-      console.error("PacomeAuthUtils saveLoginAsync error:", e);
+      if (!e.message || !e.message.includes("already exists")) {
+        Services.console.logStringMessage("[Pacome] saveLoginAsync exception: " + e);
+      }
     }
   },
 
