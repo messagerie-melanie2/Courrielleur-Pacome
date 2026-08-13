@@ -7000,6 +7000,22 @@
       <hbox class="statusbarpanel">
         <toolbarbutton id="offline-status" oncommand="MailOfflineMgr.toggleOfflineStatus();"/>
       </hbox>
+      <label id="courrielleurVersionStatus" class="statusbarpanel" style="font-weight: bold; opacity: 0.85; margin-inline: 8px; align-self: center;"/>
+      <script defer="defer">
+        window.addEventListener("DOMContentLoaded", () => {
+          try {
+            let ver = "";
+            try { ver = Services.prefs.getStringPref("courrielleur.version", ""); } catch(e1) {}
+            if (!ver) {
+              try { ver = Services.prefs.getCharPref("courrielleur.version", ""); } catch(e2) {}
+            }
+            const el = document.getElementById("courrielleurVersionStatus");
+            if (el) {
+              el.value = "Courrielleur " + (ver || "140.2.1.26");
+            }
+          } catch(e) {}
+        });
+      </script>
       <label id="urlText" class="statusbarpanel" value="" flex="2" collapsed="true" crop="end"/>
       <label id="statusText" class="statusbarpanel" value="&statusText.label;" flex="1" crop="end"/>
       <hbox id="statusbar-progresspanel" class="statusbarpanel statusbarpanel-progress" collapsed="true">

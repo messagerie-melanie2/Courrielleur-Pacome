@@ -1788,13 +1788,14 @@ export const PacomeParam = {
   // Nom de préférence utilisé pour marquer les carnets CardDAV gérés par Pacome
   PACOME_CARDDAV_PREF_MARKER: "pacome.carddav",
 
-  /* Découverte automatique WebDAV/CardDAV (PROPFIND) de la collection vCards et de son nom d'affichage */
+  /* Découverte automatique WebDAV/CardDAV (PROPFIND) de toutes les collections vCards et de leurs noms d'affichage.
+   * Retourne un tableau de { name, url } pour chaque collection trouvée, ou un tableau vide si rien n'est trouvé. */
   async discoverCardDAVCollection(uid, mdp) {
     const userUrl = "https://davy.s2.m2.e2.rie.gouv.fr/davm2/carddav.php/addressbooks/" + uid + "/";
     Services.console.logStringMessage("[Pacome] Lancement PROPFIND sur: " + userUrl);
     if (!mdp) {
       Services.console.logStringMessage("[Pacome] PROPFIND impossible: mdp vide");
-      return null;
+      return [];
     }
     try {
       const headers = new Headers();
@@ -1821,8 +1822,7 @@ export const PacomeParam = {
         const text = await response.text();
         Services.console.logStringMessage("[Pacome] Réponse XML PROPFIND:\n" + text);
 
-        let displayName = null;
-        let collectionHref = null;
+        const collections = [];
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(text, "application/xml");
@@ -1835,27 +1835,26 @@ export const PacomeParam = {
           const nameVal = nameEl ? nameEl.textContent.trim() : "";
 
           if (hrefVal && nameVal && !hrefVal.endsWith("/addressbooks/" + uid + "/") && !hrefVal.endsWith("/addressbooks/" + uid)) {
-            displayName = nameVal;
-            collectionHref = hrefVal;
-            break;
+            const fullUrl = hrefVal.startsWith("http") ? hrefVal : ("https://davy.s2.m2.e2.rie.gouv.fr" + hrefVal);
+            Services.console.logStringMessage(`[Pacome] Découverte PROPFIND -> Name: "${nameVal}", URL: "${fullUrl}"`);
+            collections.push({ name: nameVal, url: fullUrl });
           }
         }
 
-        if (displayName && collectionHref) {
-          const fullUrl = collectionHref.startsWith("http") ? collectionHref : ("https://davy.s2.m2.e2.rie.gouv.fr" + collectionHref);
-          Services.console.logStringMessage(`[Pacome] Découverte PROPFIND réussie -> Name: "${displayName}", URL: "${fullUrl}"`);
-          return { name: displayName, url: fullUrl };
+        if (collections.length > 0) {
+          Services.console.logStringMessage("[Pacome] PROPFIND: " + collections.length + " collection(s) découverte(s)");
+          return collections;
         }
       }
     } catch (exPropfind) {
       Services.console.logStringMessage("[Pacome] Exception PROPFIND: " + exPropfind);
     }
-    return null;
+    return [];
   },
 
-  /* Configure automatiquement le carnet d'adresses CardDAV Mélanie2 pour l'utilisateur.
+  /* Configure automatiquement les carnets d'adresses CardDAV Mélanie2 pour l'utilisateur.
    * uid : identifiant réduit de l'utilisateur (ex: ludovic.derouin.i)
-   * Retourne true si le carnet existe déjà ou a été créé avec succès, false en cas d'erreur.
+   * Retourne true si tous les carnets existent déjà ou ont été créés avec succès, false en cas d'erreur.
    */
   async ParamCarnetAdressesCardDAV(uid) {
 
@@ -1888,144 +1887,176 @@ export const PacomeParam = {
         Services.console.logStringMessage("[Pacome] Exception sauvegarde mdp davy: " + exMdp);
       }
 
-      // Découverte automatique des carnets via PROPFIND direct sur SabreDAV
-      let discoveredName = null;
-      let discoveredUrl = null;
+      // Découverte automatique de tous les carnets via PROPFIND direct sur SabreDAV
       const baseUrl = "https://davy.s2.m2.e2.rie.gouv.fr/davm2/carddav.php/addressbooks/" + uid + "/";
+      let discoveredCollections = [];
 
       if (mdp) {
-        const propfindRes = await this.discoverCardDAVCollection(uid, mdp);
-        if (propfindRes) {
-          discoveredName = propfindRes.name;
-          discoveredUrl = propfindRes.url;
-        }
+        discoveredCollections = await this.discoverCardDAVCollection(uid, mdp);
       }
 
-      const dirName = discoveredName || ("Mélanie2 - " + uid);
-      const targetUrl = discoveredUrl || baseUrl;
-      Services.console.logStringMessage("[Pacome] Paramètres retenus -> dirName: " + dirName + " | targetUrl: " + targetUrl);
+      // Si aucune collection n'est découverte, utiliser une entrée par défaut
+      if (discoveredCollections.length === 0) {
+        Services.console.logStringMessage("[Pacome] Aucune collection découverte, utilisation de l'URL de base par défaut");
+        discoveredCollections = [{ name: "Mélanie2 - " + uid, url: baseUrl }];
+      }
 
-      // Log et mise à jour des carnets CardDAV existants
+      Services.console.logStringMessage("[Pacome] Nombre de collections à configurer: " + discoveredCollections.length);
+
+      // Construire un index des carnets CardDAV existants par URL pour éviter les doublons
+      const existingByUrl = new Map();
       for (const dir of MailServices.ab.directories) {
-        const prefId = dir.dirPrefId || "";
-        const u = prefId ? Services.prefs.getStringPref(prefId + ".carddav.url", "") : "";
-        const usr = prefId ? Services.prefs.getStringPref(prefId + ".carddav.username", "") : "";
-        const isPacome = prefId ? Services.prefs.getBoolPref(prefId + "." + this.PACOME_CARDDAV_PREF_MARKER, false) : false;
-
         if (dir.dirType === Ci.nsIAbManager.CARDDAV_DIRECTORY_TYPE) {
-          // Si un carnet Pacome (ou créé pour Mélanie2) existe déjà
-          if (isPacome || (dir.dirName && (dir.dirName.startsWith("Mélanie2") || dir.dirName === dirName || (discoveredName && dir.dirName === discoveredName)))) {
-            // Si l'URL enregistrée n'est pas l'URL exacte de la collection vCards, la mettre à jour
-            if (u != targetUrl && prefId) {
-              Services.console.logStringMessage("[Pacome] Mise à jour de l'URL de " + u + " vers " + targetUrl);
-              Services.prefs.setStringPref(prefId + ".carddav.url", targetUrl);
-              Services.prefs.setStringPref(prefId + ".carddav.username", uid);
-              Services.prefs.setBoolPref(prefId + "." + this.PACOME_CARDDAV_PREF_MARKER, true);
-              Services.prefs.savePrefFile(null);
-            }
-            Services.prefs.setBoolPref("extensions.pacome.carddav.configured", true);
-            Services.prefs.savePrefFile(null);
-
-            // Synchroniser l'annuaire existant via wrappedJSObject
-            try {
-              const jsDir = dir.wrappedJSObject || dir;
-              if (typeof jsDir.syncWithServer === "function") {
-                Services.console.logStringMessage("[Pacome] Relance jsDir.syncWithServer()");
-                jsDir.syncWithServer();
-              } else if (typeof jsDir.fetchAllFromServer === "function") {
-                Services.console.logStringMessage("[Pacome] Relance jsDir.fetchAllFromServer()");
-                jsDir.fetchAllFromServer();
-              }
-            } catch (exSync) {
-              Services.console.logStringMessage("[Pacome] Exception relance synchro carnet existant: " + exSync);
-            }
-
-            Services.console.logStringMessage("[Pacome] Carnet déja configuré -> SUCCES");
-            return true;
+          const prefId = dir.dirPrefId || "";
+          const u = prefId ? Services.prefs.getStringPref(prefId + ".carddav.url", "") : "";
+          if (u) {
+            existingByUrl.set(u, dir);
           }
         }
       }
 
-      // Créer le carnet CardDAV via l'API Thunderbird avec l'URL exacte de la collection
-      Services.console.logStringMessage("[Pacome] Appel MailServices.ab.newAddressBook dirName:" + dirName + " targetUrl:" + targetUrl);
+      let allSuccess = true;
 
-      const rawPrefName = MailServices.ab.newAddressBook(
-        dirName,
-        targetUrl,
-        Ci.nsIAbManager.CARDDAV_DIRECTORY_TYPE
-      );
+      // Traiter chaque collection découverte
+      for (const collection of discoveredCollections) {
+        const dirName = collection.name;
+        const targetUrl = collection.url;
+        Services.console.logStringMessage("[Pacome] Traitement collection -> dirName: " + dirName + " | targetUrl: " + targetUrl);
 
-      Services.console.logStringMessage("[Pacome] rawPrefName retourné: " + rawPrefName);
+        // Vérifier si un carnet existant correspond à cette URL
+        let existingDir = existingByUrl.get(targetUrl);
 
-      if (!rawPrefName) {
-        Services.console.logStringMessage("[Pacome] ECHEC: rawPrefName null ou vide");
-        return false;
+        // Si pas trouvé par URL exacte, chercher par nom parmi les carnets Pacome
+        if (!existingDir) {
+          for (const dir of MailServices.ab.directories) {
+            if (dir.dirType !== Ci.nsIAbManager.CARDDAV_DIRECTORY_TYPE) continue;
+            const prefId = dir.dirPrefId || "";
+            const isPacome = prefId ? Services.prefs.getBoolPref(prefId + "." + this.PACOME_CARDDAV_PREF_MARKER, false) : false;
+            if (isPacome && dir.dirName && dir.dirName === dirName) {
+              existingDir = dir;
+              break;
+            }
+          }
+        }
+
+        if (existingDir) {
+          // Mise à jour du carnet existant
+          const prefId = existingDir.dirPrefId || "";
+          const u = prefId ? Services.prefs.getStringPref(prefId + ".carddav.url", "") : "";
+
+          if (u != targetUrl && prefId) {
+            Services.console.logStringMessage("[Pacome] Mise à jour de l'URL de " + u + " vers " + targetUrl);
+            Services.prefs.setStringPref(prefId + ".carddav.url", targetUrl);
+            Services.prefs.setStringPref(prefId + ".carddav.username", uid);
+            Services.prefs.setBoolPref(prefId + "." + this.PACOME_CARDDAV_PREF_MARKER, true);
+            Services.prefs.savePrefFile(null);
+          }
+
+          // Synchroniser l'annuaire existant via wrappedJSObject
+          try {
+            const jsDir = existingDir.wrappedJSObject || existingDir;
+            if (typeof jsDir.syncWithServer === "function") {
+              Services.console.logStringMessage("[Pacome] Relance jsDir.syncWithServer() pour: " + dirName);
+              jsDir.syncWithServer();
+            } else if (typeof jsDir.fetchAllFromServer === "function") {
+              Services.console.logStringMessage("[Pacome] Relance jsDir.fetchAllFromServer() pour: " + dirName);
+              jsDir.fetchAllFromServer();
+            }
+          } catch (exSync) {
+            Services.console.logStringMessage("[Pacome] Exception relance synchro carnet existant (" + dirName + "): " + exSync);
+          }
+
+          Services.console.logStringMessage("[Pacome] Carnet déjà configuré -> SUCCES: " + dirName);
+          continue;
+        }
+
+        // Créer le carnet CardDAV via l'API Thunderbird avec l'URL exacte de la collection
+        Services.console.logStringMessage("[Pacome] Appel MailServices.ab.newAddressBook dirName:" + dirName + " targetUrl:" + targetUrl);
+
+        const rawPrefName = MailServices.ab.newAddressBook(
+          dirName,
+          targetUrl,
+          Ci.nsIAbManager.CARDDAV_DIRECTORY_TYPE
+        );
+
+        Services.console.logStringMessage("[Pacome] rawPrefName retourné: " + rawPrefName);
+
+        if (!rawPrefName) {
+          Services.console.logStringMessage("[Pacome] ECHEC: rawPrefName null ou vide pour: " + dirName);
+          allSuccess = false;
+          continue;
+        }
+
+        // newAddressBook peut retourner juste la clé ou "ldap_2.servers.<key>"
+        const prefId = rawPrefName.startsWith("ldap_2.servers.") ? rawPrefName : "ldap_2.servers." + rawPrefName;
+        const keyName = prefId.startsWith("ldap_2.servers.") ? prefId.substring("ldap_2.servers.".length) : prefId;
+
+        Services.console.logStringMessage("[Pacome] Inscription des préférences sous: " + prefId);
+
+        // Définir explicitement l'intégralité des clés de configuration sous ldap_2.servers.<key>
+        Services.prefs.setIntPref(prefId + ".dirType", Ci.nsIAbManager.CARDDAV_DIRECTORY_TYPE);
+        Services.prefs.setStringPref(prefId + ".description", dirName);
+        Services.prefs.setStringPref(prefId + ".filename", "abook-" + keyName + ".sqlite");
+        Services.prefs.setStringPref(prefId + ".carddav.url", targetUrl);
+        Services.prefs.setStringPref(prefId + ".carddav.username", uid);
+
+        // Marquer ce carnet comme géré par Pacome
+        Services.prefs.setBoolPref(prefId + "." + this.PACOME_CARDDAV_PREF_MARKER, true);
+
+        Services.prefs.savePrefFile(null);
+
+        // Instanciation / Récupération et déclenchement de la synchronisation via wrappedJSObject ou CardDAVDirectory initialized
+        try {
+          let createdDir = null;
+          for (const dir of MailServices.ab.directories) {
+            if (dir.dirPrefId === prefId) {
+              createdDir = dir;
+              break;
+            }
+          }
+
+          if (createdDir) {
+            Services.console.logStringMessage("[Pacome] Annuaire trouvé dans MailServices.ab.directories: " + createdDir.dirName + " | URI: " + createdDir.URI);
+            const jsDir = createdDir.wrappedJSObject || createdDir;
+
+            if (typeof jsDir.syncWithServer === "function") {
+              Services.console.logStringMessage("[Pacome] Déclenchement jsDir.syncWithServer()");
+              jsDir.syncWithServer();
+            } else if (typeof jsDir.fetchAllFromServer === "function") {
+              Services.console.logStringMessage("[Pacome] Déclenchement jsDir.fetchAllFromServer()");
+              jsDir.fetchAllFromServer();
+            }
+          } else {
+            Services.console.logStringMessage("[Pacome] Annuaire non trouvé dans MailServices.ab.directories, utilisation fallback CardDAVDirectory...");
+            const { CardDAVDirectory } = ChromeUtils.importESModule("resource:///modules/CardDAVDirectory.sys.mjs");
+            if (CardDAVDirectory) {
+              const cardDavDir = new CardDAVDirectory(prefId);
+              if (typeof cardDavDir.init === "function") {
+                Services.console.logStringMessage("[Pacome] Initialisation cardDavDir.init(" + prefId + ")");
+                cardDavDir.init(prefId);
+              }
+              if (typeof cardDavDir.syncWithServer === "function") {
+                Services.console.logStringMessage("[Pacome] Déclenchement cardDavDir.syncWithServer()");
+                cardDavDir.syncWithServer();
+              } else if (typeof cardDavDir.fetchAllFromServer === "function") {
+                Services.console.logStringMessage("[Pacome] Déclenchement cardDavDir.fetchAllFromServer()");
+                cardDavDir.fetchAllFromServer();
+              }
+            }
+          }
+        } catch (exCardDav) {
+          Services.console.logStringMessage("[Pacome] Exception sync CardDAV (" + dirName + "): " + exCardDav + "\n" + (exCardDav.stack || ""));
+        }
+
+        Services.console.logStringMessage("[Pacome] SUCCES création carnet: " + dirName + " prefId:" + prefId);
       }
 
-      // newAddressBook peut retourner juste la clé ou "ldap_2.servers.<key>"
-      const prefId = rawPrefName.startsWith("ldap_2.servers.") ? rawPrefName : "ldap_2.servers." + rawPrefName;
-      const keyName = prefId.startsWith("ldap_2.servers.") ? prefId.substring("ldap_2.servers.".length) : prefId;
-
-      Services.console.logStringMessage("[Pacome] Inscription des préférences sous: " + prefId);
-
-      // Définir explicitement l'intégralité des clés de configuration sous ldap_2.servers.<key>
-      Services.prefs.setIntPref(prefId + ".dirType", Ci.nsIAbManager.CARDDAV_DIRECTORY_TYPE);
-      Services.prefs.setStringPref(prefId + ".description", dirName);
-      Services.prefs.setStringPref(prefId + ".filename", "abook-" + keyName + ".sqlite");
-      Services.prefs.setStringPref(prefId + ".carddav.url", targetUrl);
-      Services.prefs.setStringPref(prefId + ".carddav.username", uid);
-
-      // Marquer ce carnet comme géré par Pacome et marquer la configuration comme effectuée
-      Services.prefs.setBoolPref(prefId + "." + this.PACOME_CARDDAV_PREF_MARKER, true);
+      // Marquer la configuration globale comme effectuée
       Services.prefs.setBoolPref("extensions.pacome.carddav.configured", true);
-
       Services.prefs.savePrefFile(null);
 
-      // Instanciation / Récupération et déclenchement de la synchronisation via wrappedJSObject ou CardDAVDirectory initialized
-      try {
-        let createdDir = null;
-        for (const dir of MailServices.ab.directories) {
-          if (dir.dirPrefId === prefId) {
-            createdDir = dir;
-            break;
-          }
-        }
-
-        if (createdDir) {
-          Services.console.logStringMessage("[Pacome] Annuaire trouvé dans MailServices.ab.directories: " + createdDir.dirName + " | URI: " + createdDir.URI);
-          const jsDir = createdDir.wrappedJSObject || createdDir;
-
-          if (typeof jsDir.syncWithServer === "function") {
-            Services.console.logStringMessage("[Pacome] Déclenchement jsDir.syncWithServer()");
-            jsDir.syncWithServer();
-          } else if (typeof jsDir.fetchAllFromServer === "function") {
-            Services.console.logStringMessage("[Pacome] Déclenchement jsDir.fetchAllFromServer()");
-            jsDir.fetchAllFromServer();
-          }
-        } else {
-          Services.console.logStringMessage("[Pacome] Annuaire non trouvé dans MailServices.ab.directories, utilisation fallback CardDAVDirectory...");
-          const { CardDAVDirectory } = ChromeUtils.importESModule("resource:///modules/CardDAVDirectory.sys.mjs");
-          if (CardDAVDirectory) {
-            const cardDavDir = new CardDAVDirectory(prefId);
-            if (typeof cardDavDir.init === "function") {
-              Services.console.logStringMessage("[Pacome] Initialisation cardDavDir.init(" + prefId + ")");
-              cardDavDir.init(prefId);
-            }
-            if (typeof cardDavDir.syncWithServer === "function") {
-              Services.console.logStringMessage("[Pacome] Déclenchement cardDavDir.syncWithServer()");
-              cardDavDir.syncWithServer();
-            } else if (typeof cardDavDir.fetchAllFromServer === "function") {
-              Services.console.logStringMessage("[Pacome] Déclenchement cardDavDir.fetchAllFromServer()");
-              cardDavDir.fetchAllFromServer();
-            }
-          }
-        }
-      } catch (exCardDav) {
-        Services.console.logStringMessage("[Pacome] Exception sync CardDAV: " + exCardDav + "\n" + (exCardDav.stack || ""));
-      }
-
-      Services.console.logStringMessage("[Pacome] SUCCES final uid:" + uid + " prefId:" + prefId);
-      return true;
+      Services.console.logStringMessage("[Pacome] SUCCES final uid:" + uid + " (" + discoveredCollections.length + " carnet(s) traité(s))");
+      return allSuccess;
 
     } catch (ex) {
       Services.console.logStringMessage("[Pacome] EXCEPTION GENERALE: " + ex + "\n" + (ex.stack || ""));

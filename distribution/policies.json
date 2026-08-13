@@ -1,112 +1,100 @@
 {
-  "policies": {
-	"BlockAboutConfig": false,
-	"AppAutoUpdate": false,
-	"DisableAppUpdate": true,
-	"ExtensionSettings": {
-	  "webapps@developpement-durable.fr": {
-		"installation_mode": "force_installed",
-		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/webapps@developpement-durable.fr.xpi"
-	  },
-	  "signala@developpement-durable.fr": {
-		"installation_mode": "force_installed",
-		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/signala@developpement-durable.fr.xpi"
-	  },
-	  "archibald@developpement-durable.fr": {
-		"installation_mode": "force_installed",
-		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/archibald@developpement-durable.fr.xpi"
-	  },
-	  "lookout@s3_fix_version": {
-		"installation_mode": "force_installed",
-		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/lookout@s3_fix_version.xpi"
-	  },
-	  "pauline@developpement-durable.fr": {
-		"installation_mode": "force_installed",
-		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/pauline@developpement-durable.fr.xpi"
-	  },
-	  "sendlater3@kamens.us": {
-		"installation_mode": "force_installed",
-		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/sendlater3@kamens.us.xpi"
-	  },
-	  "simplemailredirection@ggbs.de": {
-		"installation_mode": "force_installed",
-		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/simplemailredirection@ggbs.de.xpi"
-	  },
-	  "cloud@johannes-endres.de": {
-		"installation_mode": "force_installed",
-		"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/cloud@johannes-endres.de.xpi"
-	  }
-	},
-    "Preferences":{
-			
-			"extensions.pacome.trace":{
-        "Value": false,
+	"policies": {
+		"BlockAboutConfig": false,
+		"AppAutoUpdate": false,
+		"DisableAppUpdate": true,
+		"ExtensionSettings": {
+			"webapps@developpement-durable.fr": {
+				"installation_mode": "force_installed",
+				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/webapps@developpement-durable.fr.xpi"
+			},
+			"signala@developpement-durable.fr": {
+				"installation_mode": "force_installed",
+				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/signala@developpement-durable.fr.xpi"
+			},
+			"archibald@developpement-durable.fr": {
+				"installation_mode": "force_installed",
+				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/archibald@developpement-durable.fr.xpi"
+			},
+			"lookout@s3_fix_version": {
+				"installation_mode": "force_installed",
+				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/lookout@s3_fix_version.xpi"
+			},
+			"pauline@developpement-durable.fr": {
+				"installation_mode": "force_installed",
+				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/pauline@developpement-durable.fr.xpi"
+			},
+			"sendlater3@kamens.us": {
+				"installation_mode": "force_installed",
+				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/sendlater3@kamens.us.xpi"
+			},
+			"simplemailredirection@ggbs.de": {
+				"installation_mode": "force_installed",
+				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/simplemailredirection@ggbs.de.xpi"
+			},
+			"cloud@johannes-endres.de": {
+				"installation_mode": "force_installed",
+				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/cloud@johannes-endres.de.xpi"
+			}
+		},
+		"Preferences": {
+			"extensions.pacome.trace": {
+				"Value": false,
 				"Status": "default"
 			},
-			
-			"extensions.pacome.majauto":{
-        "Value": true,
+			"extensions.pacome.majauto": {
+				"Value": true,
 				"Status": "default"
 			},
-			
-			"extensions.pacome.delaimaj":{
-        "Value": 10,
+			"extensions.pacome.delaimaj": {
+				"Value": 10,
 				"Status": "default"
 			},
-			
-			"extensions.pacome.urlparam":{
+			"extensions.pacome.urlparam": {
 				"Value": "https://pacome.s2.m2.e2.rie.gouv.fr/param.php",
-        "Status": "locked"
-			},	
-			
-			"extensions.pacome.urlmdp":{
-				"Value": "https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php",
-        "Status": "locked"
+				"Status": "locked"
 			},
-			
-			"extensions.pacome.urlparam.auth":{
-        "Value": false,
+			"extensions.pacome.urlmdp": {
+				"Value": "https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php",
+				"Status": "locked"
+			},
+			"extensions.pacome.urlparam.auth": {
+				"Value": false,
 				"Status": "default"
 			},
-			
-			"extensions.pacome.chgmdp":{
+			"extensions.pacome.chgmdp": {
 				"Value": "https://pacome.s2.m2.e2.rie.gouv.fr/pacomemdp2.php",
-        "Status": "locked"
+				"Status": "locked"
 			},
-			
-			"extensions.pacome.etiquettes.service":{
+			"extensions.pacome.etiquettes.service": {
 				"Value": "https://pacome.s2.m2.e2.rie.gouv.fr/pacometags.php",
-        "Status": "locked"
+				"Status": "locked"
 			},
-			
-			"extensions.pacome.etiquettes.majauto":{
-        "Value": true,
+			"extensions.pacome.etiquettes.majauto": {
+				"Value": true,
 				"Status": "default"
 			},
-			
-			"extensions.pacome.etiquettes.rapportdetest":{
-        "Value": false,
+			"extensions.pacome.etiquettes.rapportdetest": {
+				"Value": false,
 				"Status": "default"
 			},
-			
-		"mail.compose.big_attachments.threshold_kb":{
-			"Value": 7168,
-			"Status": "default"
-		}
-    },
-		
+			"mail.compose.big_attachments.threshold_kb": {
+				"Value": 7168,
+				"Status": "default"
+			},
+			"courrielleur.version": {
+				"Value": "140.2.1.26",
+				"Status": "locked"
+			}
+		},
 		"3rdparty": {
-			
-      "Extensions": {
-			
-        "pacome": {
-        
+			"Extensions": {
+				"pacome": {
 					"regServeursMel2": "^amelie-([\\d]{1,2}\\.ac|ida01(\\.ida)?)\\.melanie2\\.i2$|^(amelie|smtp)\\.s2\\.m2\\.e2\\.rie\\.gouv\\.fr$",
 					"regServeursAppM2": "^(.+\\.m2\\.e2\\.rie\\.gouv\\.fr|bnum\\.din\\.gouv\\.fr)$",
 					"ExpProxyAmande": "(.e2.rie.gouv.fr|.i2)$"
-        }
-      }
-    }
-
-  }
+				}
+			}
+		}
+	}
 }
