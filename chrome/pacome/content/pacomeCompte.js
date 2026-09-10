@@ -225,6 +225,33 @@ const PacomeAssistant = {
 		// afficher 1ere page
 		(this.AffichePage(ConfigAssistant.debut))();
 
+		// S'assurer que l'onglet Pacome et son champ de saisie prennent le focus au démarrage
+		try {
+			const tabmail = gMainWindow?.document?.getElementById("tabmail");
+			if (tabmail) {
+				for (let i = 0; i < tabmail.tabInfo.length; i++) {
+					const tab = tabmail.tabInfo[i];
+					if (tab._isPacomeTab ||
+					    tab.urlbar?.value?.includes("pacomeCompte.xhtml") ||
+					    (tab.browser && (tab.browser.contentWindow === window || tab.browser.currentURI?.spec?.includes("pacomeCompte.xhtml")))) {
+						tabmail.switchToTab(i);
+						break;
+					}
+				}
+			}
+		} catch (e) {}
+		window.focus();
+		if (this.ctrlIdentifiant) {
+			this.ctrlIdentifiant.focus();
+			this.ctrlIdentifiant.select();
+		}
+		window.setTimeout(() => {
+			if (this.ctrlIdentifiant) {
+				this.ctrlIdentifiant.focus();
+				this.ctrlIdentifiant.select();
+			}
+		}, 100);
+
 		this.logMsgDebug("onLoad fin");
 	},
 
@@ -907,7 +934,9 @@ const PacomeAssistant = {
 		this.EcritLog("Succès des opérations de paramétrage", "");
 
 		// #8529 Si tout a fonctionné, on peut lancer la toolbar et fermer cette fenêtre
-		gMainWindow.parent.gSpacesToolbar.onLoad();
+		try {
+			(gMainWindow?.gSpacesToolbar || gMainWindow?.parent?.gSpacesToolbar)?.onLoad?.();
+		} catch(e) {}
 		window.close();
 
 		// Une autre façon serait d'afficher un message de validation de la configuration:

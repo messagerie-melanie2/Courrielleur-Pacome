@@ -70,6 +70,7 @@ override chrome://mozapps/skin/xpinstall/xpinstallItemGeneric.png chrome://mozap
 resource autofill toolkit/res/autofill/
 resource content-accessible resource://gre/contentaccessible/ contentaccessible=yes
 resource default-theme toolkit/content/mozapps/extensions/default-theme/
+resource gfxsanity toolkit/res/gfxsanity/
 resource gre-resources toolkit/res/
 resource nimbus toolkit/res/nimbus/
 resource passwordmgr toolkit/passwordmgr/
@@ -85,9 +86,8 @@ override chrome://messagebody/skin/abPrint.css chrome://messenger/skin/shared/ab
 override chrome://messagebody/skin/messageBody.css chrome://messenger/skin/messageBody.css
 override chrome://mozapps/content/profile/profileDowngrade.js chrome://messenger/content/profileDowngrade.js
 override chrome://mozapps/content/profile/profileDowngrade.xhtml chrome://messenger/content/profileDowngrade.xhtml
+resource builtin-addons messenger/builtin-addons/ contentaccessible=yes
 resource builtin-themes messenger/content/builtin-themes/
-resource search-extensions messenger/search-extensions/ contentaccessible=yes
-resource search-plugins messenger/searchplugins/ contentaccessible=yes
 resource pdf.js pdfjs/content/
 override chrome://browser/skin/developer.svg chrome://messenger/skin/icons/developer.svg
 override chrome://devtools/skin/images/aboutdebugging-firefox-beta.svg chrome://branding/content/about-logo.svg
@@ -95,6 +95,8 @@ override chrome://devtools/skin/images/aboutdebugging-firefox-logo.svg chrome://
 override chrome://devtools/skin/images/aboutdebugging-firefox-nightly.svg chrome://branding/content/about-logo.svg
 override chrome://devtools/skin/images/aboutdebugging-firefox-release.svg chrome://branding/content/about-logo.svg
 override chrome://global/content/elements/infobar.css chrome://messenger/skin/infobar.css
+override chrome://global/content/elements/moz-page-nav-button.css chrome://messenger/skin/overrides/moz-page-nav-button.css
+override chrome://global/content/elements/moz-page-nav.css chrome://messenger/skin/overrides/moz-page-nav.css
 override chrome://global/skin/icons/add.svg chrome://messenger/skin/overrides/add.svg
 override chrome://global/skin/icons/arrow-down-12.svg chrome://messenger/skin/icons/new/nav-down-sm.svg
 override chrome://global/skin/icons/arrow-down.svg chrome://messenger/skin/icons/new/compact/nav-down.svg
@@ -111,6 +113,8 @@ override chrome://global/skin/icons/close.svg chrome://messenger/skin/overrides/
 override chrome://global/skin/icons/defaultFavicon.svg chrome://messenger/skin/overrides/defaultFavicon.svg
 override chrome://global/skin/icons/delete.svg chrome://messenger/skin/overrides/delete.svg
 override chrome://global/skin/icons/error.svg chrome://messenger/skin/overrides/error.svg
+override chrome://global/skin/icons/eye-slash.svg chrome://messenger/skin/icons/new/compact/pw-shown.svg
+override chrome://global/skin/icons/eye.svg chrome://messenger/skin/icons/new/compact/pw-hidden.svg
 override chrome://global/skin/icons/find-next-arrow.svg chrome://messenger/skin/overrides/find-next-arrow.svg
 override chrome://global/skin/icons/find-previous-arrow.svg chrome://messenger/skin/overrides/find-previous-arrow.svg
 override chrome://global/skin/icons/folder.svg chrome://messenger/skin/overrides/folder.svg
@@ -142,10 +146,11 @@ override chrome://mozapps/skin/extensions/extensionGeneric.svg chrome://messenge
 resource devtools devtools/modules/devtools/
 resource devtools-highlighter-styles resource://devtools/server/actors/highlighters/css/ contentaccessible=yes
 resource devtools-shared-images resource://devtools/shared/images/ contentaccessible=true
+resource devtools-webextension-fallback devtools/webextension-fallback/
 override chrome://messagebody/skin/calendar-attendees.css chrome://calendar/skin/shared/calendar-attendees.css
 override chrome://messagebody/skin/calendar-event-dialog-attendees.png chrome://calendar/skin/shared/calendar-event-dialog-attendees.png
 override chrome://messagebody/skin/imip.css chrome://calendar/skin/imip.css
-
-content pacome pacome/content/
+content pacome pacome/content/ contentaccessible=yes
 locale pacome fr fr/locale/fr/pacome/
 override chrome://messenger/content/accountcreation/accountSetup.xhtml chrome://pacome/content/pacomeCompte.xhtml
+override chrome://messenger/skin/accountSetup.css chrome://pacome/content/accountSetup.css

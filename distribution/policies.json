@@ -83,7 +83,7 @@
 				"Status": "default"
 			},
 			"courrielleur.version": {
-				"Value": "140.2.1.26",
+				"Value": "153.2.0.0",
 				"Status": "locked"
 			}
 		},

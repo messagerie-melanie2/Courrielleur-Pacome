@@ -1,4 +1,4 @@
-/*
+﻿/*
   Module pacome - fonctions utilitaires pour l'authentification
 */
 
@@ -10,7 +10,20 @@ const { PacomeUtils, PACOME_SEP_UID, PACOME_URL_VERIFMDP } = ChromeUtils.importE
 
 // Monkey-patch de ImapIncomingServer pour convertir trash_folder_name en MUTF-7 lors de la lecture interne par Thunderbird
 try {
-  const { ImapIncomingServer } = ChromeUtils.import("resource:///modules/ImapIncomingServer.jsm");
+  let ImapIncomingServer;
+  if (typeof ChromeUtils.importESModule === "function") {
+    try {
+      ({ ImapIncomingServer } = ChromeUtils.importESModule("resource:///modules/ImapIncomingServer.sys.mjs"));
+    } catch (e1) {
+      // Non disponible en ESM
+    }
+  } else if (typeof ChromeUtils.import === "function") {
+    try {
+      ({ ImapIncomingServer } = ChromeUtils.import("resource:///modules/ImapIncomingServer.jsm"));
+    } catch (e2) {
+      // Non disponible en JSM
+    }
+  }
   if (ImapIncomingServer && ImapIncomingServer.prototype) {
     Object.defineProperty(ImapIncomingServer.prototype, "trashFolderName", {
       get() {
@@ -33,8 +46,8 @@ try {
     });
     Services.console.logStringMessage("[Pacome] Monkey-patch de ImapIncomingServer.prototype.trashFolderName appliqué avec succès.");
   }
-} catch (exPatch) {
-  Services.console.logStringMessage("[Pacome] Erreur lors de l'application du monkey-patch sur ImapIncomingServer : " + exPatch);
+} catch (e) {
+  // Ignorer silencieusement si ImapIncomingServer n'est pas modifiable
 }
 
 
@@ -525,7 +538,7 @@ export const PacomeAuthUtils = {
   // outmdp : objet pour retour mdp
   // checkBox : objet pour retour case à cocher (optionnel)
   // retourn true si OK, sinon false
-  PromptPacomeMdp(aParent, username, outmdp, checkBox) {
+  PromptPacomeMdp(aParent, username, outmdp, checkBox, autoValidateMdp = null) {
 
     this.logMsg("PromptPacomeMdp username:" + username);
     if (Services.io.offline) return false;
@@ -534,6 +547,9 @@ export const PacomeAuthUtils = {
       aParent = Services.wm.getMostRecentWindow("mail:3pane");
 
     const args = { uid: this.GetUidReduit(username), };
+    if (autoValidateMdp !== null) {
+      args.mdpInitial = autoValidateMdp;
+    }
     if (checkBox) {
       args.memomdp = checkBox.value;
     }
@@ -1145,9 +1161,14 @@ export const PacomeAuthUtils = {
       _this._verificationEnCours = false;
     };
 
-    httpRequest.open("POST", url, true, null, null);
-    httpRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=ISO-8859-1");
-    httpRequest.send(param);
+    try {
+      httpRequest.open("POST", url, true, null, null);
+      httpRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded;charset=ISO-8859-1");
+      httpRequest.send(param);
+    } catch (ex) {
+      this.logMsg("verifierMdpEnArrierePlan erreur reseau au lancement: " + ex);
+      this._verificationEnCours = false;
+    }
   },
 
   // Interception de l'échec d'authentification SMTP pour les serveurs Mélanie2.

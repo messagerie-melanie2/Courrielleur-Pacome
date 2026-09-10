@@ -1,10 +1,10 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
+﻿/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 import { MailCryptoUtils } from "resource:///modules/MailCryptoUtils.sys.mjs";
-
 import { MailStringUtils } from "resource:///modules/MailStringUtils.sys.mjs";
+import { OAuth2Module } from "resource:///modules/OAuth2Module.sys.mjs";
 
 // Pacome : interception de l'echec d'auth SMTP
 import { PacomeAuthUtils, MSG_MELANIE2 } from "resource:///modules/pacome/pacomeAuthUtils.mjs";
@@ -279,11 +279,17 @@ export class SmtpAuthenticator extends MailAuthenticator {
     return btoa("\0" + this.username + "\0" + this.getByteStringPassword());
   }
 
-  async getOAuthToken() {
-    const oauth2Module = Cc["@mozilla.org/mail/oauth2-module;1"].createInstance(
-      Ci.msgIOAuth2Module
-    );
+  getOAuthModule() {
+    const oauth2Module = new OAuth2Module();
     if (!oauth2Module.initFromOutgoing(this._server)) {
+      return null;
+    }
+    return oauth2Module;
+  }
+
+  async getOAuthToken() {
+    const oauth2Module = this.getOAuthModule();
+    if (!oauth2Module) {
       return Promise.reject(
         `initFromOutgoing failed, hostname: ${this.hostname}`
       );
@@ -332,7 +338,7 @@ class IncomingServerAuthenticator extends MailAuthenticator {
   }
 
   get hostname() {
-    return this._server.hostName;
+    return this._server.hostname;
   }
 
   get username() {
@@ -385,6 +391,14 @@ class IncomingServerAuthenticator extends MailAuthenticator {
   }
 
   promptAuthFailed(msgWindow) {
+    // Pacome : si serveur Melanie2, afficher le dialogue Pacome a la place
+    try {
+      if (PacomeAuthUtils.TestServeurMelanie2(this.hostname) == MSG_MELANIE2) {
+        return PacomeAuthUtils.promptSmtpAuthFailed(this._server);
+      }
+    } catch (e) {
+      Services.console.logStringMessage("[Pacome] promptAuthFailed IMAP/POP3 erreur: " + e);
+    }
     return this._promptAuthFailed(msgWindow, this._server.prettyName);
   }
 }
@@ -420,14 +434,14 @@ export class Pop3Authenticator extends IncomingServerAuthenticator {
     const composeBundle = Services.strings.createBundle(
       "chrome://messenger/locale/localMsgs.properties"
     );
-    const params = [this._server.username, this._server.hostName];
+    const params = [this._server.username, this._server.hostname];
     const promptString = composeBundle.formatStringFromName(
       "pop3EnterPasswordPrompt",
       params
     );
     const promptTitle = composeBundle.formatStringFromName(
       "pop3EnterPasswordPromptTitleWithUsername",
-      [this._server.hostName]
+      [this._server.hostname]
     );
     return this._server.wrappedJSObject.getPasswordWithUIAsync(
       promptString,
@@ -449,14 +463,14 @@ export class ImapAuthenticator extends IncomingServerAuthenticator {
     const composeBundle = Services.strings.createBundle(
       "chrome://messenger/locale/imapMsgs.properties"
     );
-    const params = [this._server.username, this._server.hostName];
+    const params = [this._server.username, this._server.hostname];
     const promptString = composeBundle.formatStringFromName(
       "imapEnterServerPasswordPrompt",
       params
     );
     const promptTitle = composeBundle.formatStringFromName(
       "imapEnterPasswordPromptTitleWithUsername",
-      [this._server.hostName]
+      [this._server.hostname]
     );
     return this._server.wrappedJSObject.getPasswordWithUIAsync(
       promptString,

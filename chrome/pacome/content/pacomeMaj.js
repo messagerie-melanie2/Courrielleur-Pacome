@@ -253,3 +253,101 @@ var PacomeMaj = {
 }
 
 PacomeMaj.Init();
+
+// Interception de l'Account Hub pour router la création de compte messagerie vers Pacome
+(function hookAccountHub() {
+	if (typeof window === "undefined") {
+		return;
+	}
+
+	function setupHook() {
+		// 1. Neutraliser switchToMailTab() au démarrage lorsque l'assistant Pacome est en cours d'affichage
+		if (typeof window.switchToMailTab === "function") {
+			const origSwitchToMailTab = window.switchToMailTab;
+			window.switchToMailTab = function () {
+				const tabmail = document.getElementById("tabmail");
+				// Ne pas forcer le retour sur le tab 0 si l'onglet Pacome est ouvert/actif
+				for (const tab of (tabmail?.tabInfo || [])) {
+					if (tab._isPacomeTab ||
+					    tab.urlbar?.value?.includes("pacomeCompte.xhtml") ||
+					    tab.browser?.currentURI?.spec?.includes("pacomeCompte.xhtml") ||
+					    (tab.mode?.name === "contentTab" && tab.title?.toLowerCase().includes("pacome"))) {
+						Services.console.logStringMessage("[Pacome] switchToMailTab neutralisé car l'assistant Pacome est ouvert");
+						return;
+					}
+				}
+				return origSwitchToMailTab.apply(this, arguments);
+			};
+		}
+
+		// 2. Interception openAccountHub
+		const origOpenAccountHub = window.openAccountHub;
+
+		window.openAccountHub = async function (type) {
+			// Si la demande concerne un compte mail (ou non spécifié comme au premier démarrage)
+			if (!type || type === "MAIL") {
+				Services.console.logStringMessage("[Pacome] Interception openAccountHub -> ouverture assistant Pacome");
+				const tabmail = document.getElementById("tabmail");
+				if (tabmail) {
+					// Si l'onglet Pacome est déjà ouvert, basculer dessus
+					for (let i = 0; i < tabmail.tabInfo.length; i++) {
+						const tab = tabmail.tabInfo[i];
+						if (tab._isPacomeTab ||
+						    tab.urlbar?.value?.includes("pacomeCompte.xhtml") ||
+						    tab.browser?.currentURI?.spec?.includes("pacomeCompte.xhtml")) {
+							tabmail.switchToTab(i);
+							return;
+						}
+					}
+					const newTab = tabmail.openTab("contentTab", {
+						url: "chrome://pacome/content/pacomeCompte.xhtml",
+						linkHandler: null,
+						background: false,
+					});
+					if (newTab) {
+						newTab._isPacomeTab = true;
+						tabmail.switchToTab(newTab);
+						// S'assurer que le focus reste sur l'onglet après les callbacks asynchrones du démarrage
+						setTimeout(() => {
+							try {
+								if (newTab && !newTab.closing) {
+									tabmail.switchToTab(newTab);
+								}
+							} catch (e) {}
+						}, 100);
+						setTimeout(() => {
+							try {
+								if (newTab && !newTab.closing) {
+									tabmail.switchToTab(newTab);
+								}
+							} catch (e) {}
+						}, 300);
+					}
+					return;
+				}
+
+				// Fallback si tabmail n'est pas disponible : ouverture en dialogue
+				window.openDialog(
+					"chrome://pacome/content/pacomeCompte.xhtml",
+					"_blank",
+					"chrome,modal,titlebar,centerscreen,resizable=yes"
+				);
+				return;
+			}
+
+			// Pour les autres types (ADDRESS_BOOK, CALENDAR, CHAT, etc.), déléguer à l'Account Hub natif
+			if (typeof origOpenAccountHub === "function") {
+				return origOpenAccountHub(type);
+			}
+		};
+
+		Services.console.logStringMessage("[Pacome] Hook openAccountHub et switchToMailTab installés avec succès.");
+	}
+
+	if (document.readyState === "loading") {
+		window.addEventListener("DOMContentLoaded", setupHook, { once: true });
+	} else {
+		setupHook();
+	}
+})();
+
