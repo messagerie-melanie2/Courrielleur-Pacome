@@ -6,35 +6,43 @@
 		"ExtensionSettings": {
 			"webapps@developpement-durable.fr": {
 				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/webapps@developpement-durable.fr.xpi"
+				"install_url": "${app}/distribution/extensions/webapps@developpement-durable.fr.xpi",
+				"updates_disabled": true
 			},
 			"signala@developpement-durable.fr": {
 				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/signala@developpement-durable.fr.xpi"
+				"install_url": "${app}/distribution/extensions/signala@developpement-durable.fr.xpi",
+				"updates_disabled": true
 			},
 			"archibald@developpement-durable.fr": {
 				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/archibald@developpement-durable.fr.xpi"
+				"install_url": "${app}/distribution/extensions/archibald@developpement-durable.fr.xpi",
+				"updates_disabled": true
 			},
 			"lookout@s3_fix_version": {
 				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/lookout@s3_fix_version.xpi"
+				"install_url": "${app}/distribution/extensions/lookout@s3_fix_version.xpi",
+				"updates_disabled": true
 			},
 			"pauline@developpement-durable.fr": {
 				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/pauline@developpement-durable.fr.xpi"
+				"install_url": "${app}/distribution/extensions/pauline@developpement-durable.fr.xpi",
+				"updates_disabled": true
 			},
 			"sendlater3@kamens.us": {
 				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/sendlater3@kamens.us.xpi"
+				"install_url": "${app}/distribution/extensions/sendlater3@kamens.us.xpi",
+				"updates_disabled": true
 			},
 			"simplemailredirection@ggbs.de": {
 				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/simplemailredirection@ggbs.de.xpi"
+				"install_url": "${app}/distribution/extensions/simplemailredirection@ggbs.de.xpi",
+				"updates_disabled": true
 			},
 			"cloud@johannes-endres.de": {
 				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/cloud@johannes-endres.de.xpi"
+				"install_url": "${app}/distribution/extensions/cloud@johannes-endres.de.xpi",
+				"updates_disabled": true
 			}
 		},
 		"Preferences": {

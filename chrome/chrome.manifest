@@ -35,7 +35,7 @@ content devtools-jsonview-styles devtools/modules/devtools/client/jsonview/css/ 
 skin devtools classic/1.0 devtools/skin/
 content openpgp openpgp/content/openpgp/
 content calendar calendar/content/
-skin calendar classic/1.0 calendar/skin/classic/calendar/ os=WINNT
+skin calendar classic/1.0 calendar/skin/classic/calendar/
 content remote remote/content/
 content pippki pippki/content/pippki/
 locale alerts fr fr/locale/fr/alerts/
