@@ -5,36 +5,28 @@
 		"DisableAppUpdate": true,
 		"ExtensionSettings": {
 			"webapps@developpement-durable.fr": {
-				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/webapps@developpement-durable.fr.xpi"
+				"installation_mode": "force_installed"
 			},
 			"signala@developpement-durable.fr": {
-				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/signala@developpement-durable.fr.xpi"
+				"installation_mode": "force_installed"
 			},
 			"archibald@developpement-durable.fr": {
-				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/archibald@developpement-durable.fr.xpi"
+				"installation_mode": "force_installed"
 			},
 			"lookout@s3_fix_version": {
-				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/lookout@s3_fix_version.xpi"
+				"installation_mode": "force_installed"
 			},
 			"pauline@developpement-durable.fr": {
-				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/pauline@developpement-durable.fr.xpi"
+				"installation_mode": "force_installed"
 			},
 			"sendlater3@kamens.us": {
-				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/sendlater3@kamens.us.xpi"
+				"installation_mode": "force_installed"
 			},
 			"simplemailredirection@ggbs.de": {
-				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/simplemailredirection@ggbs.de.xpi"
+				"installation_mode": "force_installed"
 			},
 			"cloud@johannes-endres.de": {
-				"installation_mode": "force_installed",
-				"install_url": "file:///C:/Program Files/Mozilla Thunderbird/distribution/extensions/cloud@johannes-endres.de.xpi"
+				"installation_mode": "force_installed"
 			}
 		},
 		"Preferences": {
