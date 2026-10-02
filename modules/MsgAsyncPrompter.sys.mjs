@@ -1,4 +1,4 @@
-﻿/* This Source Code Form is subject to the terms of the Mozilla Public
+/* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
@@ -406,23 +406,31 @@ export class MsgAuthPrompt {
         const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
         const pacomeRealm = "pacome-melanie2";
         const uidReduit = PacomeAuthUtils.GetUidReduit(username);
-        const storedLogins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
+        const storedLogins = await Services.logins.searchLoginsAsync({
+          origin: pacomeOrigin,
+          httpRealm: pacomeRealm,
+        });
         hasManagerLogin = storedLogins.some(l => l.username == uidReduit);
         Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword hasManagerLogin:" + hasManagerLogin + " pour uidReduit:" + uidReduit);
       } catch (ex) {
         Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword erreur vérif login manager:" + ex);
       }
 
-      // Si un login est enregistré dans le gestionnaire Pacome, l'utiliser
-      // directement pour tous les comptes (BALI et BALP).
-      // Note : pas de mécanisme de retry ici, car la vérification en arrière-plan
-      // (verifierMdpEnArrierePlan) détecte et supprime les mdp expirés/invalides.
-      if (loging2.length && !Services.io.offline && hasManagerLogin) {
-        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword mdp sauvegardé → utilisation silencieuse pour: " + username);
+      // Si un login est trouvé (dans le gestionnaire Pacome ou en mémoire de session),
+      // l'utiliser directement pour tous les comptes (BALI et BALP).
+      if (loging2.length && !Services.io.offline) {
+        Services.console.logStringMessage("[Pacome] MsgAsyncPrompter.promptPassword mdp trouvé (session ou stocké) → utilisation silencieuse pour: " + username);
         aPassword.value = loging2[0].password;
 
-        // Vérification en arrière-plan du mot de passe stocké
-        PacomeAuthUtils.verifierMdpEnArrierePlan(PacomeAuthUtils.GetUidReduit(loging2[0].username || username), aPassword.value);
+        const uidReduit = PacomeAuthUtils.GetUidReduit(loging2[0].username || username);
+        if (!PacomeAuthUtils._lastSavedPassword || PacomeAuthUtils._lastSavedPassword.uid === uidReduit) {
+          PacomeAuthUtils._lastSavedPassword = { uid: uidReduit, mdp: aPassword.value, username: username };
+        }
+
+        if (hasManagerLogin) {
+          // Vérification en arrière-plan du mot de passe stocké
+          PacomeAuthUtils.verifierMdpEnArrierePlan(uidReduit, aPassword.value);
+        }
 
         return true;
       }
@@ -588,6 +596,11 @@ export class MsgAuthPrompt {
           authInfo.password = loging[0].password;
           checkValue.value = false;
 
+          const uidReduit = PacomeAuthUtils.GetUidReduit(authInfo.username);
+          if (!PacomeAuthUtils._lastSavedPassword || PacomeAuthUtils._lastSavedPassword.uid === uidReduit) {
+            PacomeAuthUtils._lastSavedPassword = { uid: uidReduit, mdp: authInfo.password, username: authInfo.username };
+          }
+
           // Vérification en arrière-plan du mot de passe stocké.
           // On ne vérifie que si le login vient du realm Pacome unifié
           // (case "mémoriser" cochée). Si le login vient uniquement du Filelink
@@ -597,7 +610,10 @@ export class MsgAuthPrompt {
             const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
             const pacomeRealm = "pacome-melanie2";
             const uidReduit = PacomeAuthUtils.GetUidReduit(authInfo.username);
-            const specificLogins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
+            const specificLogins = PacomeAuthUtils.searchLoginsSync({
+              origin: pacomeOrigin,
+              httpRealm: pacomeRealm,
+            });
             const hasManagerLogin = specificLogins.some(l => l.username == uidReduit);
             if (hasManagerLogin) {
               PacomeAuthUtils.verifierMdpEnArrierePlan(authInfo.username, authInfo.password);

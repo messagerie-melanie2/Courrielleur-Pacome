@@ -170,9 +170,8 @@ export const PacomeParam = {
           pref = "mail.server." + cle + ".pacome.ts";
           const ts = Services.prefs.getCharPref(pref, "");
 
-          const nom = this.RemplaceCars(compte.incomingServer.prettyName);
-
-          let cfg = "<compte uid='" + compte.incomingServer.username + "' serveur='" + compte.incomingServer.hostName +
+          const srvHost = compte.incomingServer.hostname || compte.incomingServer.hostName;
+          let cfg = "<compte uid='" + compte.incomingServer.username + "' serveur='" + srvHost +
             "' confid='" + confid + "' version='" + ver;
           if (-1 != ts)
             cfg += "' ts='" + ts;
@@ -1866,7 +1865,7 @@ export const PacomeParam = {
     }
 
     try {
-      // Récupération du mot de passe en mémoire ou depuis LoginManager
+      // Récupération du mot de passe en mémoire ou depuis le realm Pacome unifié (pas d'entrée séparée pour davy)
       let mdp = null;
       try {
         const { PacomeAuthUtils } = ChromeUtils.importESModule("resource:///modules/pacome/pacomeAuthUtils.mjs");
@@ -1874,17 +1873,22 @@ export const PacomeParam = {
           mdp = PacomeAuthUtils._lastSavedPassword.mdp;
         }
         if (!mdp) {
-          const davyLogins = Services.logins.findLogins("https://davy.s2.m2.e2.rie.gouv.fr", null, null);
-          if (davyLogins && davyLogins.length > 0) {
-            mdp = davyLogins[0].password;
+          const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+          const pacomeRealm = "pacome-melanie2";
+          let pacomeLogins = [];
+          if (Services.logins && Services.logins.searchLoginsAsync) {
+            pacomeLogins = await Services.logins.searchLoginsAsync({
+              origin: pacomeOrigin,
+              httpRealm: pacomeRealm,
+            });
+          }
+          const userLogin = pacomeLogins.find(l => l.username == uid);
+          if (userLogin && userLogin.password) {
+            mdp = userLogin.password;
           }
         }
-        if (mdp && PacomeAuthUtils) {
-          Services.console.logStringMessage("[Pacome] Sauvegarde de l'identifiant pour origin davy...");
-          await PacomeAuthUtils.saveLoginAsync("https://davy.s2.m2.e2.rie.gouv.fr", null, uid, mdp);
-        }
       } catch (exMdp) {
-        Services.console.logStringMessage("[Pacome] Exception sauvegarde mdp davy: " + exMdp);
+        Services.console.logStringMessage("[Pacome] Exception récupération mdp pour CardDAV: " + exMdp);
       }
 
       // Découverte automatique de tous les carnets via PROPFIND direct sur SabreDAV

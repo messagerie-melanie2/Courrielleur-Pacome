@@ -1,4 +1,4 @@
-﻿/*
+/*
   Module pacome - fonctions utilitaires pour l'authentification
 */
 
@@ -93,7 +93,7 @@ export const PacomeAuthUtils = {
           try {
             // subject est un nsIMsgIncomingServer
             const server = subject.QueryInterface(Ci.nsIMsgIncomingServer);
-            const host = server.hostName;
+            const host = server.hostname || server.hostName;
             Services.console.logStringMessage("[Pacome] Init observer IMAP auth failure host:" + host + " user:" + server.username);
 
             if (PacomeAuthUtils.TestServeurMelanie2(host) == NON_MELANIE2) return;
@@ -123,7 +123,7 @@ export const PacomeAuthUtils = {
       // Topics possibles selon la version de Thunderbird
       for (const topic of [
         "imap-autologin-failed", "mail:imap-autologin-failed", "autologin-failed",
-        "mail:loginFailed", "imap:loginFailed", "msgDBView:msgAdded"
+        "mail:loginFailed", "imap:loginFailed"
       ]) {
         try {
           Services.obs.addObserver(this._imapAuthObserver, topic);
@@ -139,7 +139,8 @@ export const PacomeAuthUtils = {
               const Cc = globalThis.Cc || Components.classes;
               const Ci = globalThis.Ci || Components.interfaces;
               // On ne traite pas le dossier racine car il ne supporte pas d'abonnement (subscribed = true lèverait NS_ERROR_XPC_CANT_MODIFY_PROP_ON_WN)
-              if (folder && folder.parent && folder.server && folder.server.type == "imap" && PacomeAuthUtils.TestServeurMelanie2(folder.server.hostName) != NON_MELANIE2) {
+              const srvHost = folder && folder.server ? (folder.server.hostname || folder.server.hostName) : null;
+              if (folder && folder.parent && folder.server && folder.server.type == "imap" && PacomeAuthUtils.TestServeurMelanie2(srvHost) != NON_MELANIE2) {
                 Services.console.logStringMessage("[Pacome] folderListener.onFolderAdded: " + folder.URI);
                 
                 // Rétablir la corbeille si le dossier ajouté correspond à la corbeille paramétrée
@@ -189,7 +190,8 @@ export const PacomeAuthUtils = {
                 const Cc = globalThis.Cc || Components.classes;
                 const Ci = globalThis.Ci || Components.interfaces;
                 const server = folder.server;
-                if (server && server.type == "imap" && PacomeAuthUtils.TestServeurMelanie2(server.hostName) != NON_MELANIE2) {
+                const srvHost = server ? (server.hostname || server.hostName) : null;
+                if (server && server.type == "imap" && PacomeAuthUtils.TestServeurMelanie2(srvHost) != NON_MELANIE2) {
                   const imapSrv = server.QueryInterface(Ci.nsIImapIncomingServer);
                   
                   // Tenter de rétablir la corbeille dès la connexion
@@ -256,7 +258,7 @@ export const PacomeAuthUtils = {
             try {
               const server = folder.server;
               if (!server) return;
-              const host = server.hostName;
+              const host = server.hostname || server.hostName;
               Services.console.logStringMessage("[Pacome] folderListener auth failure détecté host:" + host);
 
               if (PacomeAuthUtils.TestServeurMelanie2(host) == NON_MELANIE2) return;
@@ -291,13 +293,25 @@ export const PacomeAuthUtils = {
 
     // Si le carnet CardDAV n'a pas encore été configuré et qu'un mot de passe sauvegardé existe déjà dans le profil
     try {
+      // Nettoyage de l'entrée davy obsolète si elle existe encore dans le gestionnaire de mots de passe
+      try {
+        const davyOrigin = "https://davy.s2.m2.e2.rie.gouv.fr";
+        const oldDavyLogins = this.searchLoginsSync({ origin: davyOrigin });
+        for (const oldLogin of oldDavyLogins) {
+          Services.console.logStringMessage("[Pacome] Init → Nettoyage entrée obsolète davy: " + oldLogin.username);
+          this.removeLoginSync(oldLogin);
+        }
+      } catch (exDavyClean) {
+        Services.console.logStringMessage("[Pacome] Init exception nettoyage davy: " + exDavyClean);
+      }
+
       const isCardDavConfigured = Services.prefs.getBoolPref("extensions.pacome.carddav.configured", false);
       if (!isCardDavConfigured) {
         const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
         const pacomeRealm = "pacome-melanie2";
         let hasSavedLogin = false;
         try {
-          const logins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
+          const logins = this.searchLoginsSync({ origin: pacomeOrigin, httpRealm: pacomeRealm });
           if (logins && logins.length > 0) {
             hasSavedLogin = true;
           }
@@ -548,10 +562,23 @@ export const PacomeAuthUtils = {
 
     const args = { uid: this.GetUidReduit(username), };
     if (autoValidateMdp !== null) {
+      args.autoValidateMdp = autoValidateMdp;
       args.mdpInitial = autoValidateMdp;
     }
     if (checkBox) {
-      args.memomdp = checkBox.value;
+      if (checkBox.value) {
+        args.memomdp = true;
+      } else {
+        // Si un login était déjà mémorisé dans le gestionnaire pour cet utilisateur, pré-cocher la case
+        try {
+          const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+          const pacomeRealm = "pacome-melanie2";
+          const storedLogins = this.searchLoginsSync({ origin: pacomeOrigin, httpRealm: pacomeRealm });
+          if (storedLogins.some(l => l.username == args.uid)) {
+            args.memomdp = true;
+          }
+        } catch (e) { }
+      }
     }
     args.wrappedJSObject = args;
 
@@ -633,9 +660,10 @@ export const PacomeAuthUtils = {
 
     for (const serveur of MailServices.accounts.allServers) {
 
+      const srvHost = serveur.hostname || serveur.hostName;
       if (("imap" == serveur.type || "pop3" == serveur.type) &&
         null != serveur.password && "" != serveur.password &&
-        MSG_MELANIE2 == this.TestServeurMelanie2(serveur.hostName)) {
+        MSG_MELANIE2 == this.TestServeurMelanie2(srvHost)) {
 
         //test sur uid reduit
         if (uidreduit == this.GetUidReduit(serveur.username)) {
@@ -658,10 +686,11 @@ export const PacomeAuthUtils = {
             //ici pas uidreduit mais username presente
             if (partage == username) {
               for (const serveur of MailServices.accounts.allServers) {
+                const srvHost2 = serveur ? (serveur.hostname || serveur.hostName) : null;
                 if (serveur &&
                   ("imap" == serveur.type || "pop3" == serveur.type) &&
                   null != serveur.password && "" != serveur.password &&
-                  MSG_MELANIE2 == this.TestServeurMelanie2(serveur.hostName)) {
+                  MSG_MELANIE2 == this.TestServeurMelanie2(srvHost2)) {
 
                   this.logMsg("searchLogins login.init srvname:" + srvname);
                   let login = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
@@ -678,6 +707,57 @@ export const PacomeAuthUtils = {
 
     this.logMsg("searchLogins logins.length:" + logins.length);
     return logins;
+  },
+
+  // Recherche synchrone de logins via searchLoginsAsync (remplaçant findLogins supprimé dans TB 153)
+  searchLoginsSync(matchData) {
+    try {
+      if (!Services.logins || !Services.logins.searchLoginsAsync) {
+        return [];
+      }
+      let finished = false;
+      let result = [];
+      Services.logins.searchLoginsAsync(matchData)
+        .then(logins => {
+          result = logins || [];
+        })
+        .catch(err => {
+          this.logMsg("searchLoginsSync error: " + err);
+        })
+        .finally(() => {
+          finished = true;
+        });
+
+      Services.tm.spinEventLoopUntilOrQuit(
+        "PacomeAuthUtils:searchLoginsSync",
+        () => finished
+      );
+      return result;
+    } catch (ex) {
+      this.logMsg("searchLoginsSync exception: " + ex);
+      return [];
+    }
+  },
+
+  // Suppression synchrone d'un login via removeLoginAsync (remplaçant removeLogin supprimé dans TB 153)
+  removeLoginSync(login) {
+    try {
+      if (!Services.logins || !Services.logins.removeLoginAsync || !login) return;
+      let finished = false;
+      Services.logins.removeLoginAsync(login)
+        .catch(err => {
+          this.logMsg("removeLoginSync error: " + err);
+        })
+        .finally(() => {
+          finished = true;
+        });
+      Services.tm.spinEventLoopUntilOrQuit(
+        "PacomeAuthUtils:removeLoginSync",
+        () => finished
+      );
+    } catch (ex) {
+      this.logMsg("removeLoginSync exception: " + ex);
+    }
   },
 
   // version melanie2 de storage-json.sys.mjs findLogins
@@ -720,18 +800,34 @@ export const PacomeAuthUtils = {
         }
         if (i == nb) {
           let password = srv.password;
-          // Check cache
-          if (_this._lastSavedPassword && _this.GetUidReduit(srv.username) == _this._lastSavedPassword.uid) {
+          const uidReduit = _this.GetUidReduit(srv.username);
+
+          // 1. Vérifier le cache en mémoire de session
+          if (_this._lastSavedPassword && uidReduit == _this._lastSavedPassword.uid) {
             _this.logMsg("addlogins using _lastSavedPassword for " + srv.username);
             password = _this._lastSavedPassword.mdp;
           }
 
+          // 2. Vérifier le gestionnaire de mots de passe (realm Pacome unifié)
+          if (!password) {
+            try {
+              const pacomeUnifiedOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+              const pacomeUnifiedRealm = "pacome-melanie2";
+              let unifiedLogins = _this.searchLoginsSync({ origin: pacomeUnifiedOrigin, httpRealm: pacomeUnifiedRealm });
+              let userLogin = unifiedLogins.find(l => l.username == uidReduit);
+              if (userLogin && userLogin.password) {
+                password = userLogin.password;
+                _this.logMsg("addlogins using pacome unified realm for " + srv.username);
+                _this._lastSavedPassword = { uid: uidReduit, mdp: password, username: srv.username };
+                srv.password = password;
+              }
+            } catch (ex) {
+              _this.logMsg("addlogins error checking unified realm: " + ex);
+            }
+          }
+
           if (null != password && "" != password) {
-            let srvname;
-            if (srv instanceof Ci.nsISmtpServer)
-              srvname = srv.hostname;
-            else
-              srvname = srv.hostName;
+            let srvname = srv.hostname || srv.hostName;
 
             _this.logMsg("findLogins login.init srvname:" + srvname);
 
@@ -746,10 +842,10 @@ export const PacomeAuthUtils = {
 
       // pop/imap
       for (const serveur of MailServices.accounts.allServers) {
-
+        const srvHost = serveur.hostname || serveur.hostName;
         if ((serveur.type == "imap" || serveur.type == "pop3") &&
-          this.isMelanie2Host(serveur.hostName) &&
-          parsedSrvName == serveur.hostName) {
+          this.isMelanie2Host(srvHost) &&
+          parsedSrvName == srvHost) {
 
           addlogins(serveur);
         }
@@ -760,9 +856,10 @@ export const PacomeAuthUtils = {
         if (serveur.type != "smtp") continue;
 
         serveur = serveur.QueryInterface(Ci.nsISmtpServer);
+        const srvHost = serveur.hostname || serveur.hostName;
 
-        if (this.isMelanie2Host(serveur.hostname) &&
-          parsedSrvName == serveur.hostName)
+        if (this.isMelanie2Host(srvHost) &&
+          parsedSrvName == srvHost)
           addlogins(serveur);
       }
 
@@ -775,65 +872,103 @@ export const PacomeAuthUtils = {
         try {
           const pacomeUnifiedOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
           const pacomeUnifiedRealm = "pacome-melanie2";
-          let unifiedPacomeLogins = Services.logins.findLogins(pacomeUnifiedOrigin, null, pacomeUnifiedRealm);
+          let unifiedPacomeLogins = this.searchLoginsSync({ origin: pacomeUnifiedOrigin, httpRealm: pacomeUnifiedRealm });
           for (let login of unifiedPacomeLogins) {
+            if (!this._lastSavedPassword || this._lastSavedPassword.uid === login.username) {
+              this._lastSavedPassword = { uid: login.username, mdp: login.password, username: login.username };
+            }
             if (!logins.some(l => l.username == login.username && l.password == login.password)) {
               logins.push(login);
             }
           }
         } catch (ex) {
-          this.logMsg("findLogins Services.logins error: " + ex);
+          this.logMsg("findLogins searchLoginsSync error: " + ex);
+        }
+      }
+
+      // Si aucun login n'a été trouvé via les serveurs ou le login manager,
+      // mais qu'un mot de passe de session est en cache mémoire pour cet utilisateur :
+      if (logins.length === 0 && this._lastSavedPassword && this._lastSavedPassword.mdp) {
+        const targetUid = httpRealm ? this.GetUidReduit(httpRealm) : null;
+        if (!targetUid || targetUid === this._lastSavedPassword.uid) {
+          this.logMsg("findLogins fallback sur _lastSavedPassword en mémoire de session");
+          const login = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
+          login.init(parsedSrvName || origin, null, null, this._lastSavedPassword.username, this._lastSavedPassword.mdp, null, null);
+          logins.push(login);
         }
       }
 
     } else if (APP_MELANIE2 == typeSrv) {
 
-      //v3.4 - cas agenda : rechercher uid
+      // Cas CalDAV / CardDAV : trouver l'uid concerné
+      let targetUsername = null;
+      let password = null;
+
+      // 1. Recherche par URL agenda si applicable
       if (formSubmitURL && "" != formSubmitURL) {
-
-        this.logMsg("findLogins recherche dans agenda");
-
+        this.logMsg("findLogins recherche dans agenda pour URL: " + formSubmitURL);
         const uid = this.GetUidAgenda(formSubmitURL);
-
         if (uid && "" != uid) {
-
-          //rechercher compte mail
           for (const serveur of MailServices.accounts.allServers) {
-
+            const srvHost = serveur.hostname || serveur.hostName;
             if (serveur.username == uid &&
               (serveur.type == "imap" || serveur.type == "pop3") &&
-              this.isMelanie2Host(serveur.hostName)) {
-
-              let password = serveur.password;
-              if (this._lastSavedPassword && this.GetUidReduit(serveur.username) == this._lastSavedPassword.uid) {
-                password = this._lastSavedPassword.mdp;
-              }
-
-              if (password && "" != password) {
-                const login = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
-                login.init(origin, null, null, uid, password, null, null);
-                logins.push(login);
-              }
-
-              return logins;
+              this.isMelanie2Host(srvHost)) {
+              targetUsername = serveur.username;
+              password = serveur.password;
+              break;
             }
           }
         }
       }
 
-      this.logMsg("findLogins prendre compte principal");
-
-      const compte = this.GetComptePrincipal();
-      if (null == compte || null == compte.incomingServer ||
-        null == compte.incomingServer.password || "" == compte.incomingServer.password) {
-
-        return logins;
+      // 2. Si pas trouvé par agenda, prendre le compte principal
+      if (!targetUsername) {
+        this.logMsg("findLogins APP_MELANIE2 prendre compte principal");
+        const compte = this.GetComptePrincipal();
+        if (compte && compte.incomingServer) {
+          targetUsername = compte.incomingServer.username;
+          password = compte.incomingServer.password;
+        }
       }
-      const login = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
 
-      login.init(origin, null, null, this.GetUidReduit(compte.incomingServer.username),
-        compte.incomingServer.password, null, null);
-      logins.push(login);
+      if (targetUsername) {
+        const uidReduit = this.GetUidReduit(targetUsername);
+
+        // 3. Vérifier le cache en mémoire de session
+        if (this._lastSavedPassword && uidReduit == this._lastSavedPassword.uid) {
+          this.logMsg("findLogins APP_MELANIE2 utilisation de _lastSavedPassword pour: " + uidReduit);
+          password = this._lastSavedPassword.mdp;
+        }
+
+        // 4. Si pas en mémoire, vérifier le gestionnaire de mots de passe (realm Pacome unifié)
+        if (!password) {
+          try {
+            const pacomeUnifiedOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+            const pacomeUnifiedRealm = "pacome-melanie2";
+            let unifiedLogins = this.searchLoginsSync({ origin: pacomeUnifiedOrigin, httpRealm: pacomeUnifiedRealm });
+            let userLogin = unifiedLogins.find(l => l.username == uidReduit);
+            if (userLogin && userLogin.password) {
+              password = userLogin.password;
+              this.logMsg("findLogins APP_MELANIE2 trouvé dans unified Pacome realm pour: " + uidReduit);
+              // Renseigner le cache de session et le compte
+              this._lastSavedPassword = { uid: uidReduit, mdp: password, username: targetUsername };
+              const compte = this.GetComptePrincipal();
+              if (compte && compte.incomingServer && this.GetUidReduit(compte.incomingServer.username) == uidReduit) {
+                compte.incomingServer.password = password;
+              }
+            }
+          } catch (ex) {
+            this.logMsg("findLogins APP_MELANIE2 erreur vérif unified realm: " + ex);
+          }
+        }
+
+        if (password && "" != password) {
+          const login = Cc["@mozilla.org/login-manager/loginInfo;1"].createInstance(Ci.nsILoginInfo);
+          login.init(origin || formSubmitURL, null, null, uidReduit, password, null, null);
+          logins.push(login);
+        }
+      }
     }
 
     this.logMsg("findLogins logins.length:" + logins.length);
@@ -882,8 +1017,9 @@ export const PacomeAuthUtils = {
     // Mise à jour en mémoire des serveurs entrants
     // (nsIMsgIncomingServer.password est un setter en mémoire uniquement — pas de persistance sur disque)
     for (const serveur of MailServices.accounts.allServers) {
+      const srvHost = serveur.hostname || serveur.hostName;
       if ((serveur.type == "imap" || serveur.type == "pop3") &&
-        this.isMelanie2Host(serveur.hostName)) {
+        this.isMelanie2Host(srvHost)) {
         const uid2 = this.GetUidReduit(serveur.username);
         if (uidReduit != uid2) continue;
         this.logMsg("modifyMdpPacome mise à jour mot de passe serveur entrant pour:" + serveur.username);
@@ -895,7 +1031,8 @@ export const PacomeAuthUtils = {
     for (let serveur of MailServices.outgoingServer.servers) {
       if (serveur.type != "smtp") continue;
       serveur = serveur.QueryInterface(Ci.nsISmtpServer);
-      if (this.isMelanie2Host(serveur.hostname)) {
+      const srvHost = serveur.hostname || serveur.hostName;
+      if (this.isMelanie2Host(srvHost)) {
         const uid2 = this.GetUidReduit(serveur.username);
         if (uidReduit != uid2) continue;
         this.logMsg("modifyMdpPacome mise à jour mot de passe serveur sortant pour:" + serveur.username);
@@ -910,6 +1047,22 @@ export const PacomeAuthUtils = {
       const pacomeRealm = "pacome-melanie2";
       this.logMsg("modifyMdpPacome saving to unified Pacome realm for: " + uidReduit);
       requestSave(pacomeOrigin, pacomeRealm, uidReduit, mdp);
+    } else if (mdp && !saveToManager) {
+      // Si l'utilisateur n'a pas coché la mémorisation, s'assurer qu'aucun ancien mot de passe
+      // ne reste persisté dans le gestionnaire pour le realm Pacome unifié
+      try {
+        const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
+        const pacomeRealm = "pacome-melanie2";
+        const oldLogins = this.searchLoginsSync({ origin: pacomeOrigin, httpRealm: pacomeRealm });
+        for (const oldLogin of oldLogins) {
+          if (oldLogin.username === uidReduit) {
+            this.logMsg("modifyMdpPacome suppression login Pacome existant car non mémorisé: " + uidReduit);
+            this.removeLoginSync(oldLogin);
+          }
+        }
+      } catch (exRemove) {
+        this.logMsg("modifyMdpPacome exception suppression login Pacome: " + exRemove);
+      }
     }
 
     // FILELINK: Save to dedicated realm (always, regardless of checkbox)
@@ -921,12 +1074,16 @@ export const PacomeAuthUtils = {
       requestSave(filelinkOrigin, filelinkRealm, uid, mdp);
     }
 
-    // CARDDAV / CALDAV: Save credentials to davy origin so CardDAVDirectory can authenticate
-    if (mdp) {
-      this.logMsg("modifyMdpPacome saving to davy origin for: " + uidReduit);
+    // CALDAV / CARDDAV : réutilise le realm Pacome unifié, AUCUNE entrée séparée pour davy.
+    // Nettoyer toute entrée davy résiduelle si existante.
+    try {
       const davyOrigin = "https://davy.s2.m2.e2.rie.gouv.fr";
-      requestSave(davyOrigin, null, uidReduit, mdp);
-    }
+      const oldDavyLogins = this.searchLoginsSync({ origin: davyOrigin });
+      for (const oldLogin of oldDavyLogins) {
+        this.logMsg("modifyMdpPacome nettoyage entrée obsolète davy: " + oldLogin.username);
+        this.removeLoginSync(oldLogin);
+      }
+    } catch (exCleanDavy) { }
 
     // Configuration automatique du carnet d'adresses CardDAV Mélanie2
     // Déclenché après la première saisie d'un mot de passe
@@ -949,17 +1106,15 @@ export const PacomeAuthUtils = {
   saveLoginAsync: async function (origin, realm, username, mdp) {
     this.logMsg("saveLoginAsync origin:" + origin + " username:" + username + " realm:" + realm);
     try {
+      const matchData = { origin };
+      if (realm) {
+        matchData.httpRealm = realm;
+      }
       let logins = [];
       try {
-        let rawLogins = Services.logins.findLogins(origin, null, realm || null);
-        if (rawLogins) {
-          logins = Array.from(rawLogins);
-        }
-      } catch (eFind) {
-        try {
-          let rawAll = Services.logins.getAllLogins();
-          logins = Array.from(rawAll).filter(l => l.hostname === origin);
-        } catch (eAll) { }
+        logins = await Services.logins.searchLoginsAsync(matchData);
+      } catch (eSearch) {
+        this.logMsg("saveLoginAsync searchLoginsAsync error: " + eSearch);
       }
 
       let found = false;
@@ -1204,8 +1359,9 @@ export const PacomeAuthUtils = {
 
     //serveurs entrants
     for (const serveur of MailServices.accounts.allServers) {
+      const srvHost = serveur.hostname || serveur.hostName;
       if ((serveur.type == "imap" || serveur.type == "pop3") &&
-        this.isMelanie2Host(serveur.hostName)) {
+        this.isMelanie2Host(srvHost)) {
 
         this.logMsg("removeAllLogins reinitialisation mot de passe serveur entrant pour:" + serveur.username);
         serveur.password = null;
@@ -1218,8 +1374,9 @@ export const PacomeAuthUtils = {
       if (serveur.type != "smtp") continue;
 
       serveur = serveur.QueryInterface(Ci.nsISmtpServer);
+      const srvHost = serveur.hostname || serveur.hostName;
 
-      if (this.isMelanie2Host(serveur.hostname)) {
+      if (this.isMelanie2Host(srvHost)) {
 
         this.logMsg("removeAllLogins reinitialisation mot de passe serveur sortant pour:" + serveur.username);
         serveur.password = null;
@@ -1239,14 +1396,24 @@ export const PacomeAuthUtils = {
     try {
       const pacomeOrigin = "https://pacome.s2.m2.e2.rie.gouv.fr";
       const pacomeRealm = "pacome-melanie2";
-      const logins = Services.logins.findLogins(pacomeOrigin, null, pacomeRealm);
+      const logins = this.searchLoginsSync({ origin: pacomeOrigin, httpRealm: pacomeRealm });
       for (const login of logins) {
         this.logMsg("removeAllLogins suppression login manager: " + login.username);
-        Services.logins.removeLogin(login);
+        this.removeLoginSync(login);
       }
     } catch (ex) {
       this.logMsg("removeAllLogins erreur suppression login manager: " + ex);
     }
+
+    // Nettoyage de toute entrée davy résiduelle
+    try {
+      const davyOrigin = "https://davy.s2.m2.e2.rie.gouv.fr";
+      const davyLogins = this.searchLoginsSync({ origin: davyOrigin });
+      for (const login of davyLogins) {
+        this.logMsg("removeAllLogins suppression davy: " + login.username);
+        this.removeLoginSync(login);
+      }
+    } catch (exDavy) { }
   },
 
   retablitCorbeille(server) {

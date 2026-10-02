@@ -1718,7 +1718,8 @@ class ModalPrompter {
 
       //demande mot de passe
       Services.console.logStringMessage("*** MsgAsyncPrompter.jsm authentification " + channel.URI.host + " - demande mot de passe");
-      let res = PacomeAuthUtils.PromptPacomeMdp(this.browsingContext?.associatedWindow || null, uid, mdp);
+      let checkBox = { value: false };
+      let res = PacomeAuthUtils.PromptPacomeMdp(this.browsingContext?.associatedWindow || null, uid, mdp, checkBox);
 
       if (res != 1) {
         Services.console.logStringMessage("*** MsgAsyncPrompter.jsm echec authentification pacome ou annulation");
@@ -1726,7 +1727,7 @@ class ModalPrompter {
       }
 
       // mettre à jour tous les comptes
-      PacomeAuthUtils.modifyMdpPacome(uid, mdp.value);
+      PacomeAuthUtils.modifyMdpPacome(uid, mdp.value, checkBox.value);
 
       authInfo.username = uid;
       authInfo.password = mdp.value;
