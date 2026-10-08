@@ -14,7 +14,11 @@
 			"SkipOnboarding": true,
 			"MoreFromMozilla": false
 		},
+		"ExtensionUpdate": false,
 		"ExtensionSettings": {
+			"*": {
+				"updates_disabled": true
+			},
 			"webapps@developpement-durable.fr": {
 				"installation_mode": "force_installed"
 			},
@@ -175,6 +179,18 @@
 			},
 			"mailnews.start_page.url": {
 				"Value": "",
+				"Status": "locked"
+			},
+			"mailnews.start_page.override_url": {
+				"Value": "",
+				"Status": "locked"
+			},
+			"mail.rights.version": {
+				"Value": 1,
+				"Status": "locked"
+			},
+			"mail.rights.override": {
+				"Value": true,
 				"Status": "locked"
 			},
 			"offline.download.download_messages": {
