@@ -78,6 +78,30 @@
 				"Value": "@mozilla.org/msgstore/maildirstore;1",
 				"Status": "default"
 			},
+			"mail.imap.mime_parts_on_demand": {
+				"Value": false,
+				"Status": "default"
+			},
+			"mail.server.default.mime_parts_on_demand": {
+				"Value": false,
+				"Status": "default"
+			},
+			"mail.server.default.offline_download": {
+				"Value": true,
+				"Status": "default"
+			},
+			"mail.server.default.autosync_offline_stores": {
+				"Value": true,
+				"Status": "default"
+			},
+			"mail.server.default.autosync_max_age_days": {
+				"Value": -1,
+				"Status": "default"
+			},
+			"mail.server.default.download_bodies_on_get_new_mail": {
+				"Value": true,
+				"Status": "default"
+			},
 			"courrielleur.version": {
 				"Value": "153.2.0.2",
 				"Status": "locked"
