@@ -26,6 +26,9 @@ export const PACOME_IGNORE_FLUX = "pacome.ignoreflux";
 //url séparés par PACOME_IGNORE_UID_SEP
 export const PACOME_IGNORE_CAL = "pacome.cal.ignorecals";
 
+// format de stockage maildir par defaut
+export const PACOME_STORE_MAILDIR = "@mozilla.org/msgstore/maildirstore;1";
+export const PACOME_PREF_STORE_DEFAULT = "mail.serverDefaultStoreContractID";
 
 // préférences de paramétrage
 const PACOME_PREF_PARAM_VERSION = "pacome.parametrage.version";
@@ -93,6 +96,18 @@ export const PacomeParam = {
 
   // instance PacomeDoc (document de paramétrage)
   _docPacome: null,
+
+  // S'assure que Thunderbird est configuré pour utiliser Maildir par défaut
+  AssureStoreMaildir() {
+    try {
+      if (Services.prefs.getCharPref(PACOME_PREF_STORE_DEFAULT, "") !== PACOME_STORE_MAILDIR) {
+        this.PacomeTrace("AssureStoreMaildir: positionnement de " + PACOME_PREF_STORE_DEFAULT + " a " + PACOME_STORE_MAILDIR);
+        Services.prefs.setCharPref(PACOME_PREF_STORE_DEFAULT, PACOME_STORE_MAILDIR);
+      }
+    } catch (ex) {
+      this.PacomeTrace("AssureStoreMaildir exception: " + ex);
+    }
+  },
 
   // contruit le document de configuration client
   // (équivalent pacome tb60 PacomeDocumentConfig)
@@ -711,6 +726,8 @@ export const PacomeParam = {
     }
     if (null == srventrant) {
       this.PacomeTrace("ParamServeurEntrant creation du serveur entrant.");
+      // S'assurer que le format par défaut est Maildir avant la création
+      this.AssureStoreMaildir();
       //creer nouveau
       srventrant = MailServices.accounts.createIncomingServer(uid, srvname, typein);
       if (null == srventrant) {
@@ -726,6 +743,19 @@ export const PacomeParam = {
     const elemprefs = elemsrventrant.querySelector("prefs");
     const prefix = "mail.server." + srventrant.key + ".";
     this.SetPrefs(elemprefs, prefix);
+
+    // Nouveau serveur entrant : s'assurer du storeContractID maildir si non spécifié dans elemprefs
+    if (bNouveau) {
+      try {
+        const storeId = srventrant.getStringValue("storeContractID", "");
+        if (!storeId) {
+          srventrant.setCharValue("storeContractID", PACOME_STORE_MAILDIR);
+          this.PacomeTrace("ParamServeurEntrant storeContractID positionne a maildir pour " + srventrant.key);
+        }
+      } catch (exStore) {
+        this.PacomeTrace("ParamServeurEntrant erreur positionnement storeContractID: " + exStore);
+      }
+    }
 
     //cas imap, désactiver le spam lors de la creation, repositionne au demarrage
     if (bNouveau && "imap" == srventrant.type &&
@@ -824,6 +854,9 @@ export const PacomeParam = {
       if (localMailServer == null) {
         this.PacomeTrace("CreeLocalFolders creation du compte dossiers locaux");
 
+        // S'assurer que le format par défaut est Maildir
+        this.AssureStoreMaildir();
+
         MailServices.accounts.createLocalMailAccount();
 
         try {
@@ -832,6 +865,18 @@ export const PacomeParam = {
         catch (ex2) {
           PacomeUtils.SetErreurEx(-1, "Erreur de creation du compte dossiers locaux", ex2);
           return -1;
+        }
+
+        if (localMailServer) {
+          try {
+            const storeId = localMailServer.getStringValue("storeContractID", "");
+            if (!storeId) {
+              localMailServer.setCharValue("storeContractID", PACOME_STORE_MAILDIR);
+              this.PacomeTrace("ParamDossiersLocaux storeContractID positionne a maildir pour Dossiers Locaux");
+            }
+          } catch (exStore) {
+            this.PacomeTrace("ParamDossiersLocaux erreur positionnement storeContractID: " + exStore);
+          }
         }
       }
 
@@ -862,10 +907,19 @@ export const PacomeParam = {
 
       this.PacomeTrace("pacomeCreeCompteFlux");
 
+      this.AssureStoreMaildir();
+
       const elemSrv = params.querySelector("serveur");
 
       let serveur = MailServices.accounts.createIncomingServer(elemSrv.getAttribute("userName"), elemSrv.getAttribute("hostname"), elemSrv.getAttribute("type"));
       serveur.prettyName = params.getAttribute("libelle");
+
+      try {
+        const storeId = serveur.getStringValue("storeContractID", "");
+        if (!storeId) {
+          serveur.setCharValue("storeContractID", PACOME_STORE_MAILDIR);
+        }
+      } catch (exStore) {}
 
       let account = MailServices.accounts.createAccount();
       account.incomingServer = serveur;

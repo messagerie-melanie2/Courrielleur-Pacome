@@ -182,6 +182,9 @@ const PacomeAssistant = {
 
 		this.EcritLog("initialiation", "");
 
+		// S'assurer que le format de stockage par défaut pour les nouveaux comptes est Maildir
+		PacomeParam.AssureStoreMaildir();
+
 		// Store the main window.
     gMainWindow = Services.wm.getMostRecentWindow("mail:3pane");
 
