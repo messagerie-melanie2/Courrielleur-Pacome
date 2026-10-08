@@ -3,6 +3,17 @@
 		"BlockAboutConfig": false,
 		"AppAutoUpdate": false,
 		"DisableAppUpdate": true,
+		"DisableTelemetry": true,
+		"DisableCrashReporter": true,
+		"DisableFeedbackCommands": true,
+		"OverrideFirstRunPage": "",
+		"OverridePostUpdatePage": "",
+		"UserMessaging": {
+			"ExtensionRecommendations": false,
+			"FeatureRecommendations": false,
+			"SkipOnboarding": true,
+			"MoreFromMozilla": false
+		},
 		"ExtensionSettings": {
 			"webapps@developpement-durable.fr": {
 				"installation_mode": "force_installed"
@@ -100,6 +111,74 @@
 			},
 			"mail.server.default.download_bodies_on_get_new_mail": {
 				"Value": true,
+				"Status": "default"
+			},
+			"datareporting.healthreport.uploadEnabled": {
+				"Value": false,
+				"Status": "locked"
+			},
+			"datareporting.policy.dataSubmissionEnabled": {
+				"Value": false,
+				"Status": "locked"
+			},
+			"datareporting.policy.dataSubmissionPolicyBypassNotification": {
+				"Value": true,
+				"Status": "locked"
+			},
+			"datareporting.policy.dataSubmissionPolicyAcceptedVersion": {
+				"Value": 2,
+				"Status": "locked"
+			},
+			"toolkit.telemetry.enabled": {
+				"Value": false,
+				"Status": "locked"
+			},
+			"toolkit.telemetry.unified": {
+				"Value": false,
+				"Status": "locked"
+			},
+			"toolkit.telemetry.archive.enabled": {
+				"Value": false,
+				"Status": "locked"
+			},
+			"mail.inappnotifications.enabled": {
+				"Value": false,
+				"Status": "locked"
+			},
+			"app.donation.eoy.version.viewed": {
+				"Value": 999,
+				"Status": "locked"
+			},
+			"app.donation.eoy.url": {
+				"Value": "",
+				"Status": "locked"
+			},
+			"mail.shell.checkDefaultClient": {
+				"Value": false,
+				"Status": "locked"
+			},
+			"mail.shell.checkDefaultMail": {
+				"Value": false,
+				"Status": "locked"
+			},
+			"mail.winsearch.enable": {
+				"Value": false,
+				"Status": "locked"
+			},
+			"mail.winsearch.firstRunDone": {
+				"Value": true,
+				"Status": "locked"
+			},
+			"mailnews.start_page.enabled": {
+				"Value": false,
+				"Status": "locked"
+			},
+			"mailnews.start_page.url": {
+				"Value": "",
+				"Status": "locked"
+			},
+			"offline.download.download_messages": {
+				"Value": 2,
 				"Status": "default"
 			},
 			"courrielleur.version": {
