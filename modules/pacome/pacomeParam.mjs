@@ -186,6 +186,7 @@ export const PacomeParam = {
           const ts = Services.prefs.getCharPref(pref, "");
 
           const srvHost = compte.incomingServer.hostname || compte.incomingServer.hostName;
+          const nom = this.RemplaceCars(compte.incomingServer.prettyName || "");
           let cfg = "<compte uid='" + compte.incomingServer.username + "' serveur='" + srvHost +
             "' confid='" + confid + "' version='" + ver;
           if (-1 != ts)
@@ -2453,9 +2454,9 @@ export const PacomeParam = {
       const res = PacomeParam.ParamAppli(this._docPacome.GetParamsAppli(), action);
 
       if (-1 == res)
-        this.EcritLog("Erreur de paramétrage courrielleur (mode silencieux)", libelle);
+        this.EcritLog("Erreur de paramétrage courrielleur (mode silencieux)", action);
       else
-        this.EcritLog("Paramétrage courrielleur (mode silencieux)", libelle);
+        this.EcritLog("Paramétrage courrielleur (mode silencieux)", action);
 
       return res;
 
@@ -2489,9 +2490,9 @@ export const PacomeParam = {
       const res = PacomeParam.ParamProxy(params);
 
       if (-1 == res)
-        this.EcritLog("Erreur de paramétrage proxy (mode silencieux)", libelle);
+        this.EcritLog("Erreur de paramétrage proxy (mode silencieux)", action);
       else
-        this.EcritLog("Paramétrage proxy (mode silencieux)", libelle);
+        this.EcritLog("Paramétrage proxy (mode silencieux)", action);
 
       return res;
 
