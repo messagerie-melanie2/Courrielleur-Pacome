@@ -208,6 +208,14 @@
 					"regServeursMel2": "^amelie-([\\d]{1,2}\\.ac|ida01(\\.ida)?)\\.melanie2\\.i2$|^(amelie|smtp)\\.s2\\.m2\\.e2\\.rie\\.gouv\\.fr$",
 					"regServeursAppM2": "^(.+\\.m2\\.e2\\.rie\\.gouv\\.fr|bnum\\.din\\.gouv\\.fr)$",
 					"ExpProxyAmande": "(.e2.rie.gouv.fr|.i2)$"
+				},
+				"webapps@developpement-durable.fr": {
+					"shortcuts": {
+						"BnumHome": true,
+						"PSIN": true,
+						"Pegase": true,
+						"Bnum": true
+					}
 				}
 			}
 		}
