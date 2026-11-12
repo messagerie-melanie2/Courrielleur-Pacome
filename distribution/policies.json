@@ -1,5 +1,8 @@
 {
 	"policies": {
+		"Certificates": {
+			"ImportEnterpriseRoots": true
+		},
 		"BlockAboutConfig": false,
 		"AppAutoUpdate": false,
 		"DisableAppUpdate": true,
